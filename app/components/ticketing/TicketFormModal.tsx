@@ -1,0 +1,306 @@
+// ============================================
+// app/components/ticketing/TicketFormModal.tsx
+// Modal for creating tickets with dynamic form
+// UPDATED WITH THEME CONTEXT
+// ============================================
+
+import React, { useState } from 'react';
+import { X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useTheme } from '@/app/context/ThemeContext';
+import DynamicFormField from './DynamicFormField';
+
+interface Functionality {
+  _id: string;
+  name: string;
+  description: string;
+  department: string;
+  formSchema: {
+    fields: any[];
+    useDefaultFields: boolean;
+  };
+}
+
+interface Props {
+  functionality: Functionality;
+  onClose: () => void;
+  onSuccess: (ticketNumber: string) => void;
+}
+
+export default function TicketFormModal({ functionality, onClose, onSuccess }: Props) {
+  const { colors, cardCharacters } = useTheme();
+  const charColors = cardCharacters.informative;
+  
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleFieldChange = (fieldId: string, value: any) => {
+    setFormData(prev => ({ ...prev, [fieldId]: value }));
+    if (errors[fieldId]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldId];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    functionality.formSchema.fields.forEach(field => {
+      if (field.required) {
+        const value = formData[field.id];
+        if (!value || (Array.isArray(value) && value.length === 0)) {
+          newErrors[field.id] = `${field.label} is required`;
+        }
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      setErrorMessage('Please fill in all required fields');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        throw new Error('User not logged in');
+      }
+
+      const user = JSON.parse(userData);
+      
+      const userId = user._id || user.id || user.userId || user.username || user.employeeNumber;
+      
+      if (!userId) {
+        throw new Error('User ID not found. Please log in again.');
+      }
+
+      const raisedByData = {
+        userId: String(userId),
+        name: user.basicDetails?.name || user.displayName || user.username || 'Unknown User',
+        email: user.email || user.basicDetails?.email || user.username + '@company.com'
+      };
+
+      const response = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          functionalityId: functionality._id,
+          formData,
+          raisedBy: raisedByData
+        })
+      });
+
+      let responseData;
+      try {
+        const text = await response.text();
+        responseData = text ? JSON.parse(text) : {};
+      } catch (jsonError) {
+        throw new Error('Invalid response from server');
+      }
+
+      if (!response.ok) {
+        throw new Error(responseData.error || `Server error: ${response.status}`);
+      }
+
+      setTicketNumber(responseData.ticket.ticketNumber);
+      setSubmitted(true);
+
+      setTimeout(() => {
+        onSuccess(responseData.ticket.ticketNumber);
+      }, 2500);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to create ticket. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Success screen
+  if (submitted) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+        <div 
+          className={`relative overflow-hidden w-full max-w-md rounded-2xl p-10 text-center shadow-2xl border-2 animate-in zoom-in duration-500 bg-gradient-to-br ${cardCharacters.completed.bg} ${cardCharacters.completed.border}`}
+        >
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+          
+          <div className="relative mb-6 flex justify-center">
+            <div className="relative">
+              <div className={`absolute inset-0 rounded-full blur-3xl opacity-60 animate-pulse`} style={{ backgroundColor: cardCharacters.completed.iconColor.replace('text-', '') }} />
+              <CheckCircle className={`relative w-24 h-24 animate-in zoom-in duration-700 ${cardCharacters.completed.iconColor}`} />
+            </div>
+          </div>
+          
+          <h2 className={`text-3xl font-black ${cardCharacters.completed.text} mb-3`}>
+            Success!
+          </h2>
+          
+          <p className={`text-sm ${colors.textSecondary} mb-6`}>
+            Your ticket has been created and submitted to the workflow.
+          </p>
+          
+          <div 
+            className={`relative overflow-hidden p-5 rounded-xl mb-8 border-2 bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.border}`}
+          >
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+            <p className={`relative text-xs font-semibold ${colors.textSecondary} mb-2`}>
+              Ticket Number
+            </p>
+            <p className={`relative text-3xl font-black tracking-wide ${cardCharacters.completed.text}`}>
+              {ticketNumber}
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className={`group relative w-full py-3.5 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 overflow-hidden border-2 bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}
+          >
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{ boxShadow: `inset 0 0 30px ${colors.glowPrimary}` }}
+            ></div>
+            <span className="relative z-10">Close</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+      <div 
+        className={`w-full max-w-3xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl border-2 bg-white dark:bg-[#0a0a1a] animate-in zoom-in duration-300`}
+        style={{ borderColor: charColors.border.replace('border-', '') }}
+      >
+        {/* Header */}
+        <div 
+          className={`relative overflow-hidden p-6 border-b-2 flex items-center justify-between bg-gradient-to-br ${charColors.bg} backdrop-blur-sm`}
+          style={{ borderColor: charColors.border.replace('border-', '') }}
+        >
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+          
+          <div className="relative flex-1">
+            <h2 className={`text-2xl font-black ${charColors.text} mb-2`}>
+              Create New Ticket
+            </h2>
+            <p className={`text-sm ${colors.textSecondary} flex items-center gap-2`}>
+              <span className={`px-3 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${charColors.bg} ${charColors.text}`}>
+                {functionality.department}
+              </span>
+              <span>•</span>
+              <span>{functionality.name}</span>
+            </p>
+          </div>
+          
+          <button
+            onClick={onClose}
+            className={`group relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 overflow-hidden border-2 bg-gradient-to-br ${colors.cardBg} ${cardCharacters.urgent.border} hover:${cardCharacters.urgent.border}`}
+          >
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{ boxShadow: `inset 0 0 20px ${colors.glowWarning}` }}
+            ></div>
+            <X className={`w-5 h-5 relative z-10 transition-transform duration-300 group-hover:rotate-90 ${cardCharacters.urgent.iconColor}`} />
+          </button>
+        </div>
+
+        {/* Error Message */}
+        {errorMessage && (
+          <div className={`mx-6 mt-4 relative overflow-hidden p-4 rounded-xl border-2 flex items-start gap-3 animate-in slide-in-from-top duration-300 bg-gradient-to-br ${cardCharacters.urgent.bg} ${cardCharacters.urgent.border}`}>
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+            <AlertCircle className={`w-5 h-5 ${cardCharacters.urgent.iconColor} flex-shrink-0 mt-0.5 relative z-10`} />
+            <div className="flex-1 relative z-10">
+              <p className={`text-sm font-bold ${cardCharacters.urgent.text}`}>{errorMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
+            {functionality.formSchema.fields.map((field) => {
+              // Conditional rendering: only show urgency-reason if urgency is "High"
+              if (field.id === 'default-urgency-reason') {
+                const urgencyValue = formData['default-urgency'];
+                if (urgencyValue !== 'High') {
+                  return null;
+                }
+              }
+
+              return (
+                <DynamicFormField
+                  key={field.id}
+                  field={field}
+                  value={formData[field.id]}
+                  onChange={(value) => handleFieldChange(field.id, value)}
+                  error={errors[field.id]}
+                />
+              );
+            })}
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div 
+          className={`relative overflow-hidden p-6 border-t-2 flex items-center justify-end gap-3 bg-gradient-to-br ${colors.cardBg} backdrop-blur-sm`}
+          style={{ borderColor: charColors.border.replace('border-', '') }}
+        >
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+          
+          <button
+            type="button"
+            onClick={onClose}
+            className={`group relative px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105 overflow-hidden border-2 ${colors.inputBg} ${colors.inputBorder} ${colors.textPrimary}`}
+          >
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{ boxShadow: `inset 0 0 20px ${colors.glowSecondary}` }}
+            ></div>
+            <span className="relative z-10">Cancel</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className={`group relative px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden border-2 bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}
+          >
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{ boxShadow: `inset 0 0 30px ${colors.glowPrimary}` }}
+            ></div>
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin relative z-10" />
+                <span className="relative z-10">Creating...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
+                <span className="relative z-10">Submit Ticket</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

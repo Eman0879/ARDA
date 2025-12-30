@@ -1,0 +1,337 @@
+// ===== app/api/tickets/route.ts (UPDATED) =====
+import { NextRequest, NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongoose';
+import Ticket from '@/models/Ticket';
+import Functionality from '@/models/Functionality';
+import FormData from '@/models/FormData';
+
+// GET - Get tickets created by user
+export async function GET(request: NextRequest) {
+  try {
+    await dbConnect();
+    
+    const { searchParams } = new URL(request.url);
+    const createdBy = searchParams.get('createdBy');
+    const status = searchParams.get('status');
+
+    if (!createdBy) {
+      return NextResponse.json(
+        { error: 'createdBy parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    console.log('🔍 Fetching tickets created by userId:', createdBy);
+
+    // Validate ObjectId format
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(createdBy);
+    
+    let userObjectId = createdBy;
+    if (!isObjectId) {
+      console.log('📝 Input is username, looking up ObjectId from FormData...');
+      const formData = await FormData.findOne({ username: createdBy }).select('_id').lean();
+      
+      if (!formData) {
+        console.error('❌ FormData not found for username:', createdBy);
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
+      }
+      
+      userObjectId = formData._id.toString();
+      console.log('✅ Found ObjectId in FormData:', userObjectId);
+    }
+
+    // Build query
+    const query: any = {
+      'raisedBy.userId': userObjectId
+    };
+
+    // Apply status filter if provided
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    console.log('📋 Query:', JSON.stringify(query, null, 2));
+
+    const tickets = await Ticket.find(query)
+      .populate('functionality', 'name workflow department')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log(`✅ Found ${tickets.length} tickets created by user (ObjectId: ${userObjectId})`);
+
+    // Format tickets for frontend
+    const formattedTickets = tickets.map(ticket => ({
+      ...ticket,
+      _id: ticket._id.toString(),
+      functionality: ticket.functionality ? {
+        ...ticket.functionality,
+        _id: ticket.functionality._id.toString()
+      } : null
+    }));
+
+    return NextResponse.json({
+      success: true,
+      tickets: formattedTickets,
+      count: formattedTickets.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching tickets:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      });
+    }
+    return NextResponse.json(
+      { error: 'Failed to fetch tickets', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Create new ticket
+export async function POST(request: NextRequest) {
+  try {
+    await dbConnect();
+    
+    const body = await request.json();
+    const { functionalityId, formData, raisedBy } = body;
+
+    console.log('🎫 Creating ticket with data:', {
+      functionalityId,
+      raisedBy,
+      formDataKeys: Object.keys(formData || {})
+    });
+
+    // Validation
+    if (!functionalityId) {
+      return NextResponse.json(
+        { error: 'Functionality ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!raisedBy || !raisedBy.userId || !raisedBy.name) {
+      return NextResponse.json(
+        { error: 'raisedBy information is required (userId, name)' },
+        { status: 400 }
+      );
+    }
+
+    const functionality = await Functionality.findById(functionalityId);
+    
+    if (!functionality) {
+      return NextResponse.json(
+        { error: 'Functionality not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ Found functionality:', functionality.name);
+
+    // Get workflow
+    const workflow = functionality.workflow;
+    
+    if (!workflow || !workflow.nodes || !workflow.edges) {
+      return NextResponse.json(
+        { error: 'Functionality does not have a valid workflow' },
+        { status: 400 }
+      );
+    }
+
+    // Find start node
+    const startNode = workflow.nodes.find((n: any) => n.type === 'start');
+    if (!startNode) {
+      return NextResponse.json(
+        { error: 'Workflow does not have a start node' },
+        { status: 400 }
+      );
+    }
+
+    // Find first employee node
+    const firstEdge = workflow.edges.find((e: any) => e.source === startNode.id);
+    if (!firstEdge) {
+      return NextResponse.json(
+        { error: 'No workflow path from start node' },
+        { status: 400 }
+      );
+    }
+
+    const firstEmployeeNode = workflow.nodes.find((n: any) => n.id === firstEdge.target);
+    if (!firstEmployeeNode || firstEmployeeNode.type !== 'employee') {
+      return NextResponse.json(
+        { error: 'First node after start must be an employee node' },
+        { status: 400 }
+      );
+    }
+
+    console.log('✅ Found first employee node:', {
+      nodeId: firstEmployeeNode.id,
+      nodeType: firstEmployeeNode.data?.nodeType,
+      employeeId: firstEmployeeNode.data?.employeeId
+    });
+
+    // Determine assignees and initialize credits
+    let currentAssignee: string;
+    let currentAssignees: string[];
+    let groupLead: string | null = null;
+    let primaryCredit: { userId: string; name: string } | null = null;
+    let secondaryCredits: Array<{ userId: string; name: string }> = [];
+
+    if (firstEmployeeNode.data.nodeType === 'parallel' && firstEmployeeNode.data.groupMembers) {
+      // First node is a GROUP
+      groupLead = firstEmployeeNode.data.groupLead || firstEmployeeNode.data.employeeId;
+      const members = [...firstEmployeeNode.data.groupMembers];
+      if (!members.includes(groupLead)) {
+        members.push(groupLead);
+      }
+      currentAssignees = members;
+      currentAssignee = groupLead;
+      
+      console.log('👥 Assigning to group (FIRST NODE):', {
+        groupLead,
+        members: currentAssignees
+      });
+
+      // Get member details
+      const memberDocs = await FormData.find({ _id: { $in: currentAssignees } })
+        .select('_id basicDetails.name username')
+        .lean();
+
+      // Group lead gets PRIMARY credit
+      const leadDoc = memberDocs.find(m => m._id.toString() === groupLead);
+      if (leadDoc) {
+        primaryCredit = {
+          userId: groupLead,
+          name: (leadDoc as any).basicDetails?.name || (leadDoc as any).username || 'Unknown'
+        };
+        console.log(`✅ PRIMARY credit: ${primaryCredit.name} (group lead)`);
+      }
+
+      // Group members get SECONDARY credit
+      memberDocs.forEach((doc: any) => {
+        const memberId = doc._id.toString();
+        if (memberId !== groupLead) {
+          secondaryCredits.push({
+            userId: memberId,
+            name: doc.basicDetails?.name || doc.username || 'Unknown'
+          });
+        }
+      });
+      console.log(`✅ SECONDARY credit: ${secondaryCredits.length} group members`);
+      
+    } else {
+      // First node is SINGLE ASSIGNEE
+      currentAssignee = firstEmployeeNode.data.employeeId;
+      currentAssignees = [firstEmployeeNode.data.employeeId];
+      
+      console.log('👤 Assigning to single employee (FIRST NODE):', currentAssignee);
+
+      // Get employee details
+      const employeeDoc = await FormData.findById(currentAssignee)
+        .select('basicDetails.name username')
+        .lean();
+
+      if (employeeDoc) {
+        const employeeName = (employeeDoc as any).basicDetails?.name || (employeeDoc as any).username || 'Unknown';
+        
+        // Single assignee at first node gets PRIMARY credit
+        primaryCredit = {
+          userId: currentAssignee,
+          name: employeeName
+        };
+
+        console.log(`✅ PRIMARY credit: ${employeeName}`);
+      }
+    }
+
+    // Generate ticket number
+    const year = new Date().getFullYear();
+    const count = await Ticket.countDocuments({
+      ticketNumber: new RegExp(`^TKT-${year}-`)
+    });
+    const ticketNumber = `TKT-${year}-${String(count + 1).padStart(6, '0')}`;
+
+    // Determine priority
+    let priority = 'medium';
+    if (formData['default-urgency']) {
+      const urgency = formData['default-urgency'].toLowerCase();
+      if (urgency === 'low') priority = 'low';
+      else if (urgency === 'high') priority = 'high';
+      else if (urgency === 'critical') priority = 'critical';
+      else priority = 'medium';
+    }
+
+    // Create ticket
+    const ticket = new Ticket({
+      ticketNumber,
+      functionalityName: functionality.name,
+      functionality: functionalityId,
+      department: functionality.department,
+      raisedBy: {
+        userId: String(raisedBy.userId),
+        name: raisedBy.name,
+        email: raisedBy.email
+      },
+      formData,
+      priority,
+      status: 'pending',
+      workflowStage: firstEmployeeNode.id,
+      currentAssignee,
+      currentAssignees,
+      groupLead,
+      primaryCredit, // NEW: Initialize credit
+      secondaryCredits, // NEW: Initialize credit
+      contributors: [], // Keep for audit
+      blockers: [],
+      workflowHistory: [
+        {
+          actionType: 'forwarded',
+          performedBy: {
+            userId: String(raisedBy.userId),
+            name: raisedBy.name
+          },
+          performedAt: new Date(),
+          fromNode: startNode.id,
+          toNode: firstEmployeeNode.id,
+          explanation: groupLead 
+            ? `Ticket created and assigned to group (Lead: PRIMARY, ${secondaryCredits.length} members: SECONDARY)`
+            : 'Ticket created and assigned to first employee (PRIMARY)'
+        }
+      ]
+    });
+
+    await ticket.save();
+
+    console.log('✅ Ticket created successfully:', ticketNumber);
+    console.log('   Primary credit:', primaryCredit?.name || 'None');
+    console.log('   Secondary credits:', secondaryCredits.length);
+
+    return NextResponse.json({
+      success: true,
+      ticket: {
+        _id: ticket._id.toString(),
+        ticketNumber: ticket.ticketNumber,
+        status: ticket.status,
+        createdAt: ticket.createdAt
+      }
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('❌ Error creating ticket:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message
+      });
+    }
+    return NextResponse.json(
+      { error: 'Failed to create ticket', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}

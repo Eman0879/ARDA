@@ -1,0 +1,58 @@
+/* app/globals.css */
+@import "tailwindcss";
+
+/* Light Theme (Default when no .dark class) */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  
+  /* Custom theme colors for light mode */
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --text-primary: #171717;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+}
+
+/* Dark Theme (When .dark class is present) */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  
+  /* Custom theme colors for dark mode */
+  --card-bg: rgba(0, 0, 0, 0.6);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(0, 0, 0, 0.4);
+  --text-primary: #ededed;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Prevent flash of unstyled content */
+html {
+  color-scheme: light dark;
+}
+
+/* Additional theme-aware styles */
+.theme-bg {
+  background: var(--background);
+}
+
+.theme-text {
+  color: var(--foreground);
+}
