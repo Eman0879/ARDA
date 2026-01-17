@@ -74,7 +74,7 @@ export default function HRHeadDashboard() {
       setUser(parsedUser);
     } else {
       console.log('No user data - redirecting to login');
-      router.push('/auth/login');
+      router.push('/login');
     }
   }, [router]);
 

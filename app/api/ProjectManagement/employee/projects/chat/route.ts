@@ -25,12 +25,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user is a member
+    // Verify user is a member - check by username field (userId param is actually username)
     const isMember = project.members.some((m: any) => 
-      (m.userId === userId || m.name === userId) && !m.leftAt
+      m.username === userId && !m.leftAt
     );
 
     if (!isMember) {
+      console.log(`User ${userId} (${userName}) is not a member of project ${projectId}`);
+      console.log('Project members:', project.members.map((m: any) => ({ username: m.username, name: m.name, leftAt: m.leftAt })));
       return NextResponse.json(
         { error: 'You are not a member of this project' },
         { status: 403 }

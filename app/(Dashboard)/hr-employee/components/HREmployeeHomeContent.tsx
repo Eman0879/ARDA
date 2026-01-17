@@ -43,6 +43,65 @@ export default function EmployeeHomeContent({ department, onSectionChange }: Emp
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [orgAnnouncements, setOrgAnnouncements] = useState<OrgAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Fetch user ID from localStorage and API
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+          console.error('❌ EmployeeHomeContent: No user data in localStorage');
+          return;
+        }
+
+        const user = JSON.parse(userData);
+        
+        // If _id already exists, use it
+        if (user._id) {
+          console.log('✅ EmployeeHomeContent: User ID found in localStorage:', user._id);
+          setUserId(user._id);
+          return;
+        }
+
+        // Otherwise, fetch it from API using username
+        const identifier = user.username || user.id || user.userId;
+        
+        if (!identifier) {
+          console.error('❌ EmployeeHomeContent: No user identifier found');
+          return;
+        }
+        
+        console.log('🔄 EmployeeHomeContent: Fetching user ID from API for:', identifier);
+        
+        const response = await fetch(`/api/users/get-user-id?identifier=${encodeURIComponent(identifier)}`);
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('❌ EmployeeHomeContent: Invalid response from API');
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log('✅ EmployeeHomeContent: User ID fetched from API:', data.userId);
+          
+          // Update localStorage with the _id
+          user._id = data.userId;
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          setUserId(data.userId);
+        } else {
+          console.error('❌ EmployeeHomeContent: Failed to fetch user ID from API');
+        }
+      } catch (error) {
+        console.error('❌ EmployeeHomeContent: Error fetching user ID:', error);
+      }
+    };
+
+    fetchUserId();
+  }, []);
 
   useEffect(() => {
     console.log('EmployeeHomeContent mounted, onSectionChange:', onSectionChange ? 'defined' : 'undefined');
@@ -182,7 +241,7 @@ export default function EmployeeHomeContent({ department, onSectionChange }: Emp
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <MiniCalendarWidget />
+                  <MiniCalendarWidget userId={userId} />
                 </div>
               </div>
 
@@ -192,7 +251,7 @@ export default function EmployeeHomeContent({ department, onSectionChange }: Emp
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <DayCanvasWidget onViewAll={handleNavigateToCalendar} />
+                  <DayCanvasWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
             </div>
@@ -215,7 +274,7 @@ export default function EmployeeHomeContent({ department, onSectionChange }: Emp
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <TodaysEventsWidget onViewAll={handleNavigateToCalendar} />
+                  <TodaysEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
 
@@ -225,7 +284,7 @@ export default function EmployeeHomeContent({ department, onSectionChange }: Emp
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <UpcomingEventsWidget onViewAll={handleNavigateToCalendar} />
+                  <UpcomingEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
             </div>

@@ -9,12 +9,14 @@ import { useTheme } from '@/app/context/ThemeContext';
 
 interface Employee {
   _id: string;
-  basicDetails: {
-    name: string;
+  basicDetails?: {
+    name?: string;
     profileImage?: string;
   };
-  title: string;
-  department: string;
+  name?: string;
+  username?: string;
+  title?: string;
+  department?: string;
 }
 
 interface AccessControl {
@@ -47,8 +49,27 @@ export default function SuperWorkflowForm({
   const { colors, cardCharacters } = useTheme();
   const charColors = cardCharacters.informative;
 
-  // Get unique departments
-  const departments = Array.from(new Set(employees.map(e => e.department))).sort();
+  // Helper functions for safe employee data access
+  const getEmployeeName = (emp: Employee): string => {
+    return emp.name || emp.basicDetails?.name || emp.username || 'Unknown';
+  };
+
+  const getEmployeeTitle = (emp: Employee): string => {
+    return emp.title || 'No Title';
+  };
+
+  const getEmployeeDepartment = (emp: Employee): string => {
+    return emp.department || 'No Department';
+  };
+
+  // Get unique departments - filter out undefined/null values
+  const departments = Array.from(
+    new Set(
+      employees
+        .map(e => getEmployeeDepartment(e))
+        .filter(dept => dept && dept !== 'No Department')
+    )
+  ).sort();
 
   // Department selection state
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
@@ -57,11 +78,18 @@ export default function SuperWorkflowForm({
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
 
-  const filteredUsers = employees.filter(emp =>
-    emp.basicDetails.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-    emp.title.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-    emp.department.toLowerCase().includes(userSearchQuery.toLowerCase())
-  );
+  // Fixed: Safe filtering with null checks using helper functions
+  const filteredUsers = employees.filter(emp => {
+    // Ensure employee has required fields
+    if (!emp || !emp._id) return false;
+    
+    const name = getEmployeeName(emp).toLowerCase();
+    const title = getEmployeeTitle(emp).toLowerCase();
+    const department = getEmployeeDepartment(emp).toLowerCase();
+    const query = userSearchQuery.toLowerCase();
+    
+    return name.includes(query) || title.includes(query) || department.includes(query);
+  });
 
   const toggleDepartment = (dept: string) => {
     const current = accessControl.departments || [];
@@ -96,7 +124,7 @@ export default function SuperWorkflowForm({
   };
 
   const getSelectedUsers = () => {
-    return employees.filter(e => accessControl.users?.includes(e._id));
+    return employees.filter(e => e && e._id && accessControl.users?.includes(e._id));
   };
 
   return (
@@ -205,20 +233,26 @@ export default function SuperWorkflowForm({
 
               {showDeptDropdown && (
                 <div className={`absolute z-10 w-full mt-1 rounded-lg border-2 ${colors.inputBorder} ${colors.inputBg} max-h-48 overflow-y-auto ${colors.shadowCard}`}>
-                  {departments.map(dept => (
-                    <label
-                      key={dept}
-                      className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:${colors.cardBgHover} transition-colors ${colors.textPrimary}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={accessControl.departments?.includes(dept)}
-                        onChange={() => toggleDepartment(dept)}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm">{dept}</span>
-                    </label>
-                  ))}
+                  {departments.length > 0 ? (
+                    departments.map(dept => (
+                      <label
+                        key={dept}
+                        className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:${colors.cardBgHover} transition-colors ${colors.textPrimary}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={accessControl.departments?.includes(dept)}
+                          onChange={() => toggleDepartment(dept)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">{dept}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <div className={`px-4 py-3 text-center ${colors.textMuted} text-sm`}>
+                      No departments found
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -292,27 +326,33 @@ export default function SuperWorkflowForm({
                     />
                   </div>
                   <div className="max-h-48 overflow-y-auto">
-                    {filteredUsers.map(emp => (
-                      <label
-                        key={emp._id}
-                        className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:${colors.cardBgHover} transition-colors`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={accessControl.users?.includes(emp._id)}
-                          onChange={() => toggleUser(emp._id)}
-                          className="w-4 h-4"
-                        />
-                        <div className="flex-1">
-                          <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                            {emp.basicDetails.name}
-                          </p>
-                          <p className={`text-xs ${colors.textSecondary}`}>
-                            {emp.title} • {emp.department}
-                          </p>
-                        </div>
-                      </label>
-                    ))}
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map(emp => (
+                        <label
+                          key={emp._id}
+                          className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:${colors.cardBgHover} transition-colors`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={accessControl.users?.includes(emp._id)}
+                            onChange={() => toggleUser(emp._id)}
+                            className="w-4 h-4"
+                          />
+                          <div className="flex-1">
+                            <p className={`text-sm font-bold ${colors.textPrimary}`}>
+                              {getEmployeeName(emp)}
+                            </p>
+                            <p className={`text-xs ${colors.textSecondary}`}>
+                              {getEmployeeTitle(emp)} • {getEmployeeDepartment(emp)}
+                            </p>
+                          </div>
+                        </label>
+                      ))
+                    ) : (
+                      <div className={`px-4 py-3 text-center ${colors.textMuted} text-sm`}>
+                        {userSearchQuery ? 'No users found matching search' : 'No users available'}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -321,33 +361,36 @@ export default function SuperWorkflowForm({
             {/* Selected Users */}
             {accessControl.users && accessControl.users.length > 0 && (
               <div className="space-y-1 mt-2">
-                {getSelectedUsers().map(emp => (
-                  <div
-                    key={emp._id}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}
-                  >
+                {getSelectedUsers().map(emp => {
+                  const empName = getEmployeeName(emp);
+                  return (
                     <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${charColors.iconColor.replace('text-', '')}, ${charColors.accent.replace('text-', '')})` }}
+                      key={emp._id}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}
                     >
-                      {emp.basicDetails.name.charAt(0)}
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${charColors.iconColor.replace('text-', '')}, ${charColors.accent.replace('text-', '')})` }}
+                      >
+                        {empName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-bold ${colors.textPrimary} truncate`}>
+                          {empName}
+                        </p>
+                        <p className={`text-[10px] ${colors.textSecondary} truncate`}>
+                          {getEmployeeDepartment(emp)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => removeUser(emp._id)}
+                        className={`${colors.textMuted} hover:text-red-500 transition-colors`}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold ${colors.textPrimary} truncate`}>
-                        {emp.basicDetails.name}
-                      </p>
-                      <p className={`text-[10px] ${colors.textSecondary} truncate`}>
-                        {emp.department}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => removeUser(emp._id)}
-                      className={`${colors.textMuted} hover:text-red-500 transition-colors`}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

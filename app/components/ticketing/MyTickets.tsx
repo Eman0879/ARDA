@@ -1,7 +1,7 @@
 // ============================================
 // app/components/ticketing/MyTickets.tsx
 // Card-style layout for tickets created by user
-// UPDATED TO MATCH CREATE NEW TICKET LAYOUT
+// UPDATED TO SHOW ASSIGNEE NAMES INSTEAD OF USERNAMES
 // ============================================
 
 'use client';
@@ -20,7 +20,8 @@ import {
   Search,
   X,
   RefreshCw,
-  ArrowLeft
+  ArrowLeft,
+  UserCheck
 } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import CreatorTicketDetailModal from './CreatorTicketDetailModal';
@@ -37,12 +38,14 @@ interface Ticket {
   blockers: any[];
   currentAssignee: string;
   currentAssignees: string[];
+  groupLead: string | null;
   raisedBy: {
     userId: string;
     name: string;
   };
   functionality: any;
   workflowHistory: any[];
+  assignedToName?: string;
 }
 
 interface Props {
@@ -100,6 +103,10 @@ export default function MyTickets({ userId, onBack }: Props) {
 
       const data = await response.json();
       const fetchedTickets = data.tickets || [];
+      
+      // Fetch assignee names for all tickets
+      await enrichTicketsWithAssigneeNames(fetchedTickets);
+      
       setTickets(fetchedTickets);
       
       // Extract unique functionalities
@@ -114,6 +121,54 @@ export default function MyTickets({ userId, onBack }: Props) {
       showToast(err instanceof Error ? err.message : 'Failed to load tickets', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const enrichTicketsWithAssigneeNames = async (ticketsList: Ticket[]) => {
+    try {
+      // Get unique assigned user IDs from currentAssignee and currentAssignees
+      const assignedUserIds = [...new Set([
+        ...ticketsList.map((ticket: Ticket) => ticket.currentAssignee).filter(Boolean),
+        ...ticketsList.flatMap((ticket: Ticket) => ticket.currentAssignees || []).filter(Boolean)
+      ])];
+
+      if (assignedUserIds.length === 0) return;
+
+      // Fetch assignee names from FormData collection using _id
+      const response = await fetch('/api/users/batch-names', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: assignedUserIds })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to fetch assignee names');
+        return;
+      }
+
+      const { userMap } = await response.json();
+
+      // Add assignee names to tickets
+      ticketsList.forEach((ticket: Ticket) => {
+        let assignedToName = 'Unassigned';
+        
+        if (ticket.currentAssignee) {
+          assignedToName = userMap[ticket.currentAssignee] || 'Unknown';
+        } else if (ticket.currentAssignees && ticket.currentAssignees.length > 0) {
+          // If it's a group, show the group lead or first assignee
+          const leadOrFirst = ticket.groupLead || ticket.currentAssignees[0];
+          assignedToName = userMap[leadOrFirst] || 'Unknown';
+          
+          // Add group indicator if multiple assignees
+          if (ticket.currentAssignees.length > 1) {
+            assignedToName = `${assignedToName} (+${ticket.currentAssignees.length - 1} others)`;
+          }
+        }
+
+        ticket.assignedToName = assignedToName;
+      });
+    } catch (error) {
+      console.error('Error enriching tickets with assignee names:', error);
     }
   };
 
@@ -135,7 +190,8 @@ export default function MyTickets({ userId, onBack }: Props) {
       filtered = filtered.filter(t =>
         t.ticketNumber.toLowerCase().includes(query) ||
         t.functionalityName.toLowerCase().includes(query) ||
-        t.workflowStage.toLowerCase().includes(query)
+        t.workflowStage.toLowerCase().includes(query) ||
+        (t.assignedToName && t.assignedToName.toLowerCase().includes(query))
       );
     }
 
@@ -465,7 +521,7 @@ export default function MyTickets({ userId, onBack }: Props) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by ticket number, functionality..."
+                placeholder="Search by ticket number, functionality, assignee..."
                 className={`w-full pl-12 pr-12 py-3 rounded-xl text-sm transition-all ${colors.inputBg} border-2 ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder}`}
               />
               {searchQuery && (
@@ -629,6 +685,19 @@ export default function MyTickets({ userId, onBack }: Props) {
                         <span className={`font-bold capitalize ${statusChar.text}`}>{ticket.priority}</span>
                       </div>
                     </div>
+                    
+                    {/* Assigned To - NEW */}
+                    {ticket.assignedToName && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`font-medium ${colors.textMuted} flex items-center gap-1.5`}>
+                          <UserCheck className="w-3 h-3" />
+                          Assigned to:
+                        </span>
+                        <span className={`font-bold ${statusChar.text} truncate max-w-[150px]`} title={ticket.assignedToName}>
+                          {ticket.assignedToName}
+                        </span>
+                      </div>
+                    )}
                     
                     <div className="flex items-center justify-between text-xs">
                       <span className={`font-medium ${colors.textMuted}`}>Created:</span>

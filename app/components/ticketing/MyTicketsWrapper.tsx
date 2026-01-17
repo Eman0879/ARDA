@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, RefreshCw, TicketIcon } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, Ticket as TicketIcon } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import MyTickets from './MyTickets';
 
@@ -106,11 +106,8 @@ export default function MyTicketsWrapper({ onBack }: MyTicketsWrapperProps) {
         
         <div className="flex items-center justify-center py-20">
           <div className="text-center space-y-4">
-            <div className="relative inline-block">
-              <div className={`absolute inset-0 rounded-full blur-2xl opacity-30 animate-pulse`} style={{ backgroundColor: charColors.iconColor.replace('text-', '') }} />
-              <Loader2 className={`relative w-12 h-12 animate-spin ${charColors.iconColor}`} />
-            </div>
-            <p className={`${colors.textSecondary} text-sm font-semibold`}>
+            <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+            <p className={`${colors.textPrimary} text-base font-bold`}>
               Loading your tickets...
             </p>
           </div>

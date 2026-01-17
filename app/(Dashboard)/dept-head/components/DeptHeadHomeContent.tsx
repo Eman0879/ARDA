@@ -14,9 +14,9 @@ import UpcomingEventsWidget from './HomeContent/UpcomingEventsWidget';
 import MiniCalendarWidget from './HomeContent/MiniCalendarWidget';
 import DayCanvasWidget from './HomeContent/DayCanvasWidget';
 import AssignedTicketsWidget from './HomeContent/AssignedTicketsWidget';
-import LoadingState from './HomeContent/LoadingState';
 import Styles from './HomeContent/Styles';
 import { useTheme } from '@/app/context/ThemeContext';
+import { Loader2 } from 'lucide-react';
 
 
 interface DeptHeadHomeContentProps {
@@ -45,6 +45,65 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [orgAnnouncements, setOrgAnnouncements] = useState<OrgAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Fetch user ID from localStorage and API
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+          console.error('❌ DeptHeadHomeContent: No user data in localStorage');
+          return;
+        }
+
+        const user = JSON.parse(userData);
+        
+        // If _id already exists, use it
+        if (user._id) {
+          console.log('✅ DeptHeadHomeContent: User ID found in localStorage:', user._id);
+          setUserId(user._id);
+          return;
+        }
+
+        // Otherwise, fetch it from API using username
+        const identifier = user.username || user.id || user.userId;
+        
+        if (!identifier) {
+          console.error('❌ DeptHeadHomeContent: No user identifier found');
+          return;
+        }
+        
+        console.log('🔄 DeptHeadHomeContent: Fetching user ID from API for:', identifier);
+        
+        const response = await fetch(`/api/users/get-user-id?identifier=${encodeURIComponent(identifier)}`);
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('❌ DeptHeadHomeContent: Invalid response from API');
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log('✅ DeptHeadHomeContent: User ID fetched from API:', data.userId);
+          
+          // Update localStorage with the _id
+          user._id = data.userId;
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          setUserId(data.userId);
+        } else {
+          console.error('❌ DeptHeadHomeContent: Failed to fetch user ID from API');
+        }
+      } catch (error) {
+        console.error('❌ DeptHeadHomeContent: Error fetching user ID:', error);
+      }
+    };
+
+    fetchUserId();
+  }, []);
 
   useEffect(() => {
     console.log('DeptHeadHomeContent mounted, onSectionChange:', onSectionChange ? 'defined' : 'undefined');
@@ -136,7 +195,14 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
   };
 
   if (loading) {
-    return <LoadingState />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+          <p className={`${colors.textPrimary} text-base font-bold`}>Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -197,7 +263,7 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <MiniCalendarWidget />
+                  <MiniCalendarWidget userId={userId} />
                 </div>
               </div>
 
@@ -207,7 +273,7 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <DayCanvasWidget onViewAll={handleNavigateToCalendar} />
+                  <DayCanvasWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
             </div>
@@ -230,7 +296,7 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <TodaysEventsWidget onViewAll={handleNavigateToCalendar} />
+                  <TodaysEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
 
@@ -240,7 +306,7 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <UpcomingEventsWidget onViewAll={handleNavigateToCalendar} />
+                  <UpcomingEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
             </div>

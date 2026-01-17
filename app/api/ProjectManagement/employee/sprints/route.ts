@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get('userId'); // This is actually username (email)
 
     if (!userId) {
       return NextResponse.json(
@@ -17,34 +17,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Search by both userId (ObjectId) and name (email) in members array
+    // Query by username field in members array
     const sprints = await Sprint.find({
-      $or: [
-        { 'members.userId': userId },
-        { 'members.name': userId }
-      ]
+      'members.username': userId,
+      'members.leftAt': { $exists: false }
     }).sort({ createdAt: -1 });
 
-    // Filter to only include sprints where user is currently active
-    const activeSprints = sprints.filter(sprint => 
-      sprint.members.some(m => 
-        (m.userId === userId || m.name === userId) && !m.leftAt
-      )
-    );
-
     // Calculate user's role and permissions for each sprint
-    const sprintsWithRole = activeSprints.map(sprint => {
+    const sprintsWithRole = sprints.map(sprint => {
       const member = sprint.members.find(m => 
-        (m.userId === userId || m.name === userId) && !m.leftAt
+        m.username === userId && !m.leftAt
       );
       const isLead = member?.role === 'lead';
+      const isDeptHead = member?.role === 'dept-head';
       
-      // Get actions assigned to this user (check both userId and name)
-      const myActions = sprint.actions?.filter(a => 
-        a.assignedTo.some((assignedId: string) => 
-          assignedId === userId || assignedId === member?.userId
-        )
-      ) || [];
+      // For regular employees: show ALL actions (can view all, but only perform actions on assigned ones)
+      // For dept heads: show ALL actions (same viewing permissions)
+      const allActions = sprint.actions || [];
+      
+      // Get actions assigned to this user (check by userId from member object)
+      const myActions = allActions.filter(a => 
+        a.assignedTo.some((assignedId: string) => assignedId === member?.userId)
+      );
 
       const pendingActions = myActions.filter(a => a.status !== 'done');
 
@@ -57,10 +51,14 @@ export async function GET(request: NextRequest) {
         ...sprint.toObject(),
         myRole: member?.role || 'member',
         isLead,
+        isDeptHead,
         myActions: myActions.length,
         myPendingActions: pendingActions.length,
         daysRemaining,
-        myUserId: member?.userId // Pass the actual ObjectId for future use
+        myUserId: member?.userId, // Pass the ObjectId for action checking
+        myUsername: userId, // Pass username for reference
+        // Include ALL actions so employees can see the full sprint scope
+        actions: allActions
       };
     });
 

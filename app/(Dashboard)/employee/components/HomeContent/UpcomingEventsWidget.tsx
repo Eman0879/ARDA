@@ -1,4 +1,4 @@
-// app/(Dashboard)/dept-head/components/HomeContent/UpcomingEventsWidget.tsx
+// app/(Dashboard)/employee/components/HomeContent/UpcomingEventsWidget.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -33,37 +33,32 @@ interface TimeIntent {
 }
 
 interface UpcomingEventsWidgetProps {
+  userId?: string | null;
   onViewAll: () => void;
 }
 
-export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidgetProps) {
+export default function UpcomingEventsWidget({ userId, onViewAll }: UpcomingEventsWidgetProps) {
   const { colors, theme } = useTheme();
   const informativeChar = useCardCharacter('informative');
   const [events, setEvents] = useState<TimeIntent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUpcomingEvents();
-  }, []);
+    if (userId) {
+      fetchUpcomingEvents();
+    } else {
+      setLoading(false);
+    }
+  }, [userId]);
 
   const fetchUpcomingEvents = async () => {
+    if (!userId) {
+      console.log('❌ UpcomingEvents: No user ID provided');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        console.log('❌ UpcomingEvents: No user data in localStorage');
-        setLoading(false);
-        return;
-      }
-      
-      const user = JSON.parse(userData);
-      const userId = user._id;
-      
-      if (!userId) {
-        console.error('❌ UpcomingEvents: No user ID found');
-        setLoading(false);
-        return;
-      }
-      
       console.log('📅 UpcomingEvents: Fetching events for userId:', userId);
 
       const response = await fetch(`/api/calendar/events?userId=${userId}`);
@@ -72,7 +67,6 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
         const data = await response.json();
         console.log('✅ UpcomingEvents: Fetched events:', data.events?.length || 0);
         
-        // Filter to upcoming events (next 7 days, excluding today) using same logic as CalendarSidebar
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const nextWeek = new Date(today);
@@ -91,7 +85,7 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
             if (!a.startTime || !b.startTime) return 0;
             return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
           })
-          .slice(0, 3); // Show only first 3 events
+          .slice(0, 3);
         
         console.log('📊 UpcomingEvents: Upcoming events to display:', upcomingEvents.length);
         setEvents(upcomingEvents);
@@ -109,7 +103,6 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
     const date = new Date(dateString);
     const now = new Date();
     
-    // Create date objects at midnight for comparison
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -118,7 +111,6 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
       return 'Tomorrow';
     }
     
-    // Calculate days until event
     const diffTime = eventDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
@@ -223,6 +215,14 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
     );
   }
 
+  if (!userId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className={`${colors.textMuted} text-sm`}>No user data available</p>
+      </div>
+    );
+  }
+
   const accentColor = theme === 'dark' ? '#90CAF9' : '#42A5F5';
 
   return (
@@ -237,15 +237,11 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
           onClick={onViewAll}
           className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-br ${colors.cardBg} border ${informativeChar.border} ${colors.borderHover} backdrop-blur-sm ${colors.shadowCard} hover:${colors.shadowHover}`}
         >
-          {/* Paper Texture */}
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-          
-          {/* Internal glow */}
           <div 
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}, inset 0 0 28px ${colors.glowPrimary}` }}
           ></div>
-          
           <span className={`text-xs font-bold relative z-10 ${informativeChar.accent}`}>View All</span>
           <ArrowRight className={`h-3.5 w-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 icon-rotate ${informativeChar.iconColor}`} />
         </button>
@@ -265,10 +261,7 @@ export default function UpcomingEventsWidget({ onViewAll }: UpcomingEventsWidget
               key={event._id}
               className={`relative overflow-hidden p-3 rounded-lg bg-gradient-to-br ${colors.cardBg} border-2 ${colors.border} ${colors.borderHover} transition-all duration-200 cursor-pointer group ${colors.shadowCard}`}
             >
-              {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-
-              {/* Hover Glow */}
               <div 
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}, inset 0 0 28px ${colors.glowPrimary}` }}

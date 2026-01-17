@@ -1,4 +1,4 @@
-// app/(Dashboard)/dept-head/components/HomeContent/MiniCalendarWidget.tsx
+// app/(Dashboard)/employee/components/HomeContent/MiniCalendarWidget.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +17,11 @@ interface TimeIntent {
   color?: string;
 }
 
-export default function MiniCalendarWidget() {
+interface MiniCalendarWidgetProps {
+  userId?: string | null;
+}
+
+export default function MiniCalendarWidget({ userId }: MiniCalendarWidgetProps) {
   const { colors } = useTheme();
   const informativeChar = useCardCharacter('informative');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -25,27 +29,21 @@ export default function MiniCalendarWidget() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (userId) {
+      fetchEvents();
+    } else {
+      setLoading(false);
+    }
+  }, [userId]);
 
   const fetchEvents = async () => {
+    if (!userId) {
+      console.log('❌ MiniCalendar: No user ID provided');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        console.log('❌ MiniCalendar: No user data in localStorage');
-        setLoading(false);
-        return;
-      }
-      
-      const user = JSON.parse(userData);
-      const userId = user._id;
-      
-      if (!userId) {
-        console.error('❌ MiniCalendar: No user ID found');
-        setLoading(false);
-        return;
-      }
-      
       console.log('📅 MiniCalendar: Fetching events for userId:', userId);
 
       const response = await fetch(`/api/calendar/events?userId=${userId}`);
@@ -112,6 +110,14 @@ export default function MiniCalendarWidget() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className={`w-6 h-6 border-2 ${colors.textAccent} border-t-transparent rounded-full animate-spin`}></div>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className={`${colors.textMuted} text-sm`}>No user data available</p>
       </div>
     );
   }

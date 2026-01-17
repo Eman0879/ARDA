@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get('userId'); // This is actually username (email)
 
     if (!userId) {
       return NextResponse.json(
@@ -17,34 +17,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Search by both userId (ObjectId) and name (email) in members array
+    // Query by username field in members array
     const projects = await Project.find({
-      $or: [
-        { 'members.userId': userId },
-        { 'members.name': userId }
-      ]
+      'members.username': userId,
+      'members.leftAt': { $exists: false }
     }).sort({ createdAt: -1 });
 
-    // Filter to only include projects where user is currently active
-    const activeProjects = projects.filter(project => 
-      project.members.some(m => 
-        (m.userId === userId || m.name === userId) && !m.leftAt
-      )
-    );
-
     // Calculate user's role and permissions for each project
-    const projectsWithRole = activeProjects.map(project => {
+    const projectsWithRole = projects.map(project => {
       const member = project.members.find(m => 
-        (m.userId === userId || m.name === userId) && !m.leftAt
+        m.username === userId && !m.leftAt
       );
       const isLead = member?.role === 'lead';
+      const isDeptHead = member?.role === 'dept-head';
       
-      // Get deliverables assigned to this user (check both userId and name)
-      const myDeliverables = project.deliverables?.filter(d => 
-        d.assignedTo.some((assignedId: string) => 
-          assignedId === userId || assignedId === member?.userId
-        )
-      ) || [];
+      // For regular employees: show ALL deliverables (can view all, but only perform actions on assigned ones)
+      // For dept heads: show ALL deliverables (same viewing permissions)
+      const allDeliverables = project.deliverables || [];
+      
+      // Get deliverables assigned to this user (check by userId from member object)
+      const myDeliverables = allDeliverables.filter(d => 
+        d.assignedTo.some((assignedId: string) => assignedId === member?.userId)
+      );
 
       const pendingDeliverables = myDeliverables.filter(d => d.status !== 'done');
 
@@ -52,9 +46,13 @@ export async function GET(request: NextRequest) {
         ...project.toObject(),
         myRole: member?.role || 'member',
         isLead,
+        isDeptHead,
         myDeliverables: myDeliverables.length,
         myPendingDeliverables: pendingDeliverables.length,
-        myUserId: member?.userId // Pass the actual ObjectId for future use
+        myUserId: member?.userId, // Pass the ObjectId for action checking
+        myUsername: userId, // Pass username for reference
+        // Include ALL deliverables so employees can see the full project scope
+        deliverables: allDeliverables
       };
     });
 

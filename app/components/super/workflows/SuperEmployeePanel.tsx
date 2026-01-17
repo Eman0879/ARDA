@@ -6,17 +6,19 @@
 import React, { useState } from 'react';
 import { Users, Search, X, UserPlus } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
-import EmployeeDragItem from '../../universal/WorkflowComponents/EmployeeDragItem';
-import GroupDragItem from '../../universal/WorkflowComponents/GroupDragItem';
+import SuperEmployeeDragItem from './EmployeeDragItem';
+import SuperGroupDragItem from './GroupDragItem';
 
 interface Employee {
   _id: string;
-  basicDetails: {
-    name: string;
+  basicDetails?: {
+    name?: string;
     profileImage?: string;
   };
-  title: string;
-  department: string;
+  name?: string;
+  username?: string;
+  title?: string;
+  department?: string;
 }
 
 interface GroupData {
@@ -43,24 +45,53 @@ export default function SuperEmployeePanel({ employees, sidebarBg, modalBorder }
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState<string>('all');
 
-  // Get unique departments
-  const departments = Array.from(new Set(employees.map(e => e.department))).sort();
+  // Helper function to safely get employee name
+  const getEmployeeName = (emp: Employee): string => {
+    return emp.name || emp.basicDetails?.name || emp.username || 'Unknown';
+  };
+
+  // Helper function to safely get employee title
+  const getEmployeeTitle = (emp: Employee): string => {
+    return emp.title || 'No Title';
+  };
+
+  // Helper function to safely get employee department
+  const getEmployeeDepartment = (emp: Employee): string => {
+    return emp.department || 'No Department';
+  };
+
+  // Get unique departments - filter out undefined/null values
+  const departments = Array.from(
+    new Set(
+      employees
+        .map(e => getEmployeeDepartment(e))
+        .filter(dept => dept && dept !== 'No Department')
+    )
+  ).sort();
 
   const filteredEmployees = employees.filter(emp => {
-    const matchesDept = deptFilter === 'all' || emp.department === deptFilter;
-    const matchesSearch =
-      emp.basicDetails.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.department.toLowerCase().includes(searchQuery.toLowerCase());
+    const empDept = getEmployeeDepartment(emp);
+    const matchesDept = deptFilter === 'all' || empDept === deptFilter;
+    
+    const empName = getEmployeeName(emp).toLowerCase();
+    const empTitle = getEmployeeTitle(emp).toLowerCase();
+    const empDepartment = empDept.toLowerCase();
+    const query = searchQuery.toLowerCase();
+    
+    const matchesSearch = empName.includes(query) || empTitle.includes(query) || empDepartment.includes(query);
     return matchesDept && matchesSearch;
   });
 
-  const groupModalEmployees = employees.filter(emp =>
-    emp._id !== groupLead &&
-    (emp.basicDetails.name.toLowerCase().includes(groupSearchQuery.toLowerCase()) ||
-      emp.title.toLowerCase().includes(groupSearchQuery.toLowerCase()) ||
-      emp.department.toLowerCase().includes(groupSearchQuery.toLowerCase()))
-  );
+  const groupModalEmployees = employees.filter(emp => {
+    if (emp._id === groupLead) return false;
+    
+    const empName = getEmployeeName(emp).toLowerCase();
+    const empTitle = getEmployeeTitle(emp).toLowerCase();
+    const empDepartment = getEmployeeDepartment(emp).toLowerCase();
+    const query = groupSearchQuery.toLowerCase();
+    
+    return empName.includes(query) || empTitle.includes(query) || empDepartment.includes(query);
+  });
 
   const handleCreateGroup = () => {
     if (selectedMembers.length === 0 || !groupLead) {
@@ -132,7 +163,7 @@ export default function SuperEmployeePanel({ employees, sidebarBg, modalBorder }
               </p>
               <div className="space-y-2">
                 {createdGroups.map(group => (
-                  <GroupDragItem
+                  <SuperGroupDragItem
                     key={group.id}
                     groupLead={group.lead}
                     members={group.members}
@@ -189,7 +220,7 @@ export default function SuperEmployeePanel({ employees, sidebarBg, modalBorder }
               ) : (
                 filteredEmployees.map(emp => (
                   <div key={emp._id}>
-                    <EmployeeDragItem employee={emp} />
+                    <SuperEmployeeDragItem employee={emp} />
                   </div>
                 ))
               )}
@@ -228,7 +259,7 @@ export default function SuperEmployeePanel({ employees, sidebarBg, modalBorder }
                     <option value="">Select a group lead...</option>
                     {employees.map(emp => (
                       <option key={emp._id} value={emp._id}>
-                        {emp.basicDetails.name} - {emp.title} ({emp.department})
+                        {getEmployeeName(emp)} - {getEmployeeTitle(emp)} ({getEmployeeDepartment(emp)})
                       </option>
                     ))}
                   </select>
@@ -261,37 +292,40 @@ export default function SuperEmployeePanel({ employees, sidebarBg, modalBorder }
                         {groupSearchQuery ? 'No employees found' : 'Select a group lead first'}
                       </p>
                     ) : (
-                      groupModalEmployees.map(emp => (
-                        <label
-                          key={emp._id}
-                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
-                            selectedMembers.includes(emp._id)
-                              ? `bg-gradient-to-r ${cardCharacters.creative.bg} border-2 ${cardCharacters.creative.border}`
-                              : `${colors.inputBg} border-2 ${colors.inputBorder} hover:${colors.borderHover}`
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedMembers.includes(emp._id)}
-                            onChange={() => toggleMemberSelection(emp._id)}
-                            className="w-4 h-4"
-                          />
-                          <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                            style={{ background: `linear-gradient(135deg, ${cardCharacters.creative.iconColor.replace('text-', '')}, ${cardCharacters.creative.accent.replace('text-', '')})` }}
+                      groupModalEmployees.map(emp => {
+                        const empName = getEmployeeName(emp);
+                        return (
+                          <label
+                            key={emp._id}
+                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                              selectedMembers.includes(emp._id)
+                                ? `bg-gradient-to-r ${cardCharacters.creative.bg} border-2 ${cardCharacters.creative.border}`
+                                : `${colors.inputBg} border-2 ${colors.inputBorder} hover:${colors.borderHover}`
+                            }`}
                           >
-                            {emp.basicDetails.name.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                              {emp.basicDetails.name}
-                            </p>
-                            <p className={`text-xs ${colors.textSecondary}`}>
-                              {emp.title} • {emp.department}
-                            </p>
-                          </div>
-                        </label>
-                      ))
+                            <input
+                              type="checkbox"
+                              checked={selectedMembers.includes(emp._id)}
+                              onChange={() => toggleMemberSelection(emp._id)}
+                              className="w-4 h-4"
+                            />
+                            <div
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                              style={{ background: `linear-gradient(135deg, ${cardCharacters.creative.iconColor.replace('text-', '')}, ${cardCharacters.creative.accent.replace('text-', '')})` }}
+                            >
+                              {empName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <p className={`text-sm font-bold ${colors.textPrimary}`}>
+                                {empName}
+                              </p>
+                              <p className={`text-xs ${colors.textSecondary}`}>
+                                {getEmployeeTitle(emp)} • {getEmployeeDepartment(emp)}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })
                     )}
                   </div>
 

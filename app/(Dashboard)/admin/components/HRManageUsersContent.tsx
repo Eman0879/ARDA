@@ -1,12 +1,13 @@
-// app/(Dashboard)/hr-employee/components/HRManageUsersContent.tsx
+// app/(Dashboard)/admin/components/HRManageUsersContent.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Upload, ArrowLeft, RefreshCw, Filter, Search, X } from 'lucide-react';
+import { Users, Upload, ArrowLeft, RefreshCw, Filter, Search, X, UserPlus } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import UserTableRow from '@/app/components/ManageUsersContent/UserTableRow';
 import BulkUserUpload from '@/app/components/ManageUsersContent/BulkUserUpload';
 import UserDetailModal from '@/app/components/ManageUsersContent/UserDetailModal';
+import AddUserModal from '@/app/components/ManageUsersContent/AddUserModal';
 import { User, EditUserForm, UserFilters as FilterTypes } from '@/app/components/ManageUsersContent/types';
 
 interface ManageUsersContentProps {
@@ -15,13 +16,14 @@ interface ManageUsersContentProps {
 }
 
 export default function ManageUsersContent({ initialFilter, onBack }: ManageUsersContentProps) {
-  const { colors, cardCharacters } = useTheme();
+  const { colors, cardCharacters, showToast } = useTheme();
   const charColors = cardCharacters.informative;
   
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [departments, setDepartments] = useState<string[]>([]);
@@ -137,13 +139,13 @@ export default function ManageUsersContent({ initialFilter, onBack }: ManageUser
       if (response.ok) {
         setEditingUser(null);
         fetchUsers();
-        alert('User updated successfully');
+        showToast('User updated successfully', 'success');
       } else {
-        alert('Failed to update user');
+        showToast('Failed to update user', 'error');
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user');
+      showToast('Failed to update user', 'error');
     }
   };
 
@@ -159,13 +161,13 @@ export default function ManageUsersContent({ initialFilter, onBack }: ManageUser
 
       if (response.ok) {
         fetchUsers();
-        alert('User deleted successfully');
+        showToast('User deleted successfully', 'success');
       } else {
-        alert('Failed to delete user');
+        showToast('Failed to delete user', 'error');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      showToast('Failed to delete user', 'error');
     }
   };
 
@@ -179,12 +181,13 @@ export default function ManageUsersContent({ initialFilter, onBack }: ManageUser
 
       if (response.ok) {
         fetchUsers();
+        showToast(`User ${!currentStatus ? 'approved' : 'unapproved'} successfully`, 'success');
       } else {
-        alert('Failed to update approval status');
+        showToast('Failed to update approval status', 'error');
       }
     } catch (error) {
       console.error('Error toggling approval:', error);
-      alert('Failed to update approval status');
+      showToast('Failed to update approval status', 'error');
     }
   };
 
@@ -295,20 +298,37 @@ export default function ManageUsersContent({ initialFilter, onBack }: ManageUser
               </div>
             </div>
             
-            {/* Refresh Button */}
-            <button
-              onClick={fetchUsers}
-              disabled={loading}
-              className={`group relative flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} border border-transparent ${colors.shadowCard} hover:${colors.shadowHover} disabled:opacity-50`}
-            >
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-              <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}, inset 0 0 28px ${colors.glowPrimary}` }}
-              ></div>
-              <RefreshCw className={`h-4 w-4 relative z-10 transition-transform duration-300 ${loading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
-              <span className="text-sm font-bold relative z-10">Refresh</span>
-            </button>
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Add User Button */}
+              <button
+                onClick={() => setShowAddUser(true)}
+                className={`group relative flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-r ${cardCharacters.creative.bg} ${cardCharacters.creative.text} border ${cardCharacters.creative.border} ${colors.shadowCard} hover:${colors.shadowHover}`}
+              >
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ boxShadow: `inset 0 0 14px ${colors.glowSecondary}, inset 0 0 28px ${colors.glowSecondary}` }}
+                ></div>
+                <UserPlus className={`h-4 w-4 relative z-10 transition-transform duration-300 group-hover:rotate-12 ${cardCharacters.creative.iconColor}`} />
+                <span className="text-sm font-bold relative z-10">Add User</span>
+              </button>
+
+              {/* Refresh Button */}
+              <button
+                onClick={fetchUsers}
+                disabled={loading}
+                className={`group relative flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} border border-transparent ${colors.shadowCard} hover:${colors.shadowHover} disabled:opacity-50`}
+              >
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}, inset 0 0 28px ${colors.glowPrimary}` }}
+                ></div>
+                <RefreshCw className={`h-4 w-4 relative z-10 transition-transform duration-300 ${loading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+                <span className="text-sm font-bold relative z-10">Refresh</span>
+              </button>
+            </div>
           </div>
 
           {/* Filters Section */}
@@ -402,6 +422,17 @@ export default function ManageUsersContent({ initialFilter, onBack }: ManageUser
         </div>
       </div>
 
+      {/* Add User Modal */}
+      {showAddUser && (
+        <AddUserModal
+          onClose={() => setShowAddUser(false)}
+          onSuccess={() => {
+            fetchUsers();
+          }}
+          departments={departments}
+        />
+      )}
+
       {/* Bulk Upload Modal */}
       {showBulkUpload && (
         <BulkUserUpload
@@ -483,7 +514,7 @@ export default function ManageUsersContent({ initialFilter, onBack }: ManageUser
             <p className={`${colors.textPrimary} text-base font-semibold mb-2`}>No users found</p>
             <p className={`${colors.textMuted} text-sm`}>
               {users.length === 0 
-                ? 'Upload a CSV or Excel file to add users' 
+                ? 'Click "Add User" to create your first user' 
                 : 'Try adjusting your filters'}
             </p>
           </div>

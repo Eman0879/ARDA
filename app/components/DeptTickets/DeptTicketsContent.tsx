@@ -14,7 +14,8 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Users
+  Users,
+  UserCheck
 } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 
@@ -29,20 +30,32 @@ interface Ticket {
   raisedBy: {
     name: string;
     userId: string;
+    email?: string;
   };
   createdAt: string;
-  blockers: any[];
+  updatedAt?: string;
+  blockers?: any[];
   currentAssignee: string;
   currentAssignees: string[];
   groupLead: string | null;
-  functionality: any;
-  workflowHistory: any[];
-  contributors: Array<{
+  functionality?: any;
+  workflowHistory?: any[];
+  contributors?: Array<{
     userId: string;
     name: string;
     role: string;
     joinedAt: Date;
     leftAt?: Date;
+  }>;
+  assignedToName?: string;
+  formData?: Record<string, any>;
+  primaryCredit?: {
+    userId: string;
+    name: string;
+  } | null;
+  secondaryCredits?: Array<{
+    userId: string;
+    name: string;
   }>;
 }
 
@@ -81,7 +94,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/tickets/by-department?department=${encodeURIComponent(department)}`);
+      const response = await fetch(`/api/dept-tickets?department=${encodeURIComponent(department)}`);
       
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -99,7 +112,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
       
       // Extract unique functionalities
       const uniqueFunctionalities = Array.from(
-        new Set(fetchedTickets.map((t: Ticket) => t.functionalityName))
+        new Set(fetchedTickets.map((t: Ticket) => t.functionalityName).filter(Boolean))
       ).sort();
       setFunctionalities(uniqueFunctionalities as string[]);
       
@@ -122,8 +135,9 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(t =>
         t.ticketNumber.toLowerCase().includes(query) ||
-        t.functionalityName.toLowerCase().includes(query) ||
-        t.raisedBy.name.toLowerCase().includes(query)
+        (t.functionalityName && t.functionalityName.toLowerCase().includes(query)) ||
+        (t.raisedBy?.name && t.raisedBy.name.toLowerCase().includes(query)) ||
+        (t.assignedToName && t.assignedToName.toLowerCase().includes(query))
       );
     }
 
@@ -271,7 +285,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by ticket number, functionality, or raised by..."
+                placeholder="Search by ticket number, functionality, assignee, or raised by..."
                 className={`w-full pl-12 pr-12 py-3 rounded-xl text-sm transition-all ${colors.inputBg} border-2 ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder}`}
               />
               {searchQuery && (
@@ -375,6 +389,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
             const isInGroup = ticket.currentAssignees && ticket.currentAssignees.length > 1;
             const hasUnresolvedBlockers = ticket.blockers?.some((b: any) => !b.isResolved);
             const isSuper = ticket.department === 'Super Workflow';
+            const displayTitle = ticket.functionalityName || 'Untitled Ticket';
             
             return (
               <div
@@ -405,7 +420,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
                       {ticket.ticketNumber}
                     </h3>
                     <p className={`text-sm font-semibold ${colors.textSecondary} line-clamp-2`}>
-                      {ticket.functionalityName}
+                      {displayTitle}
                     </p>
                   </div>
 
@@ -446,9 +461,24 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
                       </div>
                     </div>
                     
+                    {/* Assigned To - NEW */}
+                    {ticket.assignedToName && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`font-medium ${colors.textMuted} flex items-center gap-1.5`}>
+                          <UserCheck className="w-3 h-3" />
+                          Assigned to:
+                        </span>
+                        <span className={`font-bold ${statusChar.text} truncate max-w-[150px]`} title={ticket.assignedToName}>
+                          {ticket.assignedToName}
+                        </span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between text-xs">
                       <span className={`font-medium ${colors.textMuted}`}>Raised by:</span>
-                      <span className={`font-bold ${statusChar.text}`}>{ticket.raisedBy.name}</span>
+                      <span className={`font-bold ${statusChar.text} truncate max-w-[150px]`} title={ticket.raisedBy?.name}>
+                        {ticket.raisedBy?.name || 'Unknown'}
+                      </span>
                     </div>
                     
                     <div className="flex items-center justify-between text-xs">

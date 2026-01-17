@@ -5,11 +5,12 @@
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader, AlertCircle, Zap } from 'lucide-react';
+import { Plus, AlertCircle, Zap } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import SuperWorkflowModal from './SuperWorkflowModal';
 import SuperDeleteConfirmModal from './SuperDeleteConfirmModal';
 import SuperFunctionalityCard from './SuperFunctionalityCard';
+import WorkflowLoadingState from './WorkflowLoadingState';
 
 interface SuperFunctionality {
   _id: string;
@@ -38,12 +39,14 @@ interface SuperFunctionality {
 
 interface Employee {
   _id: string;
-  basicDetails: {
-    name: string;
+  basicDetails?: {
+    name?: string;
     profileImage?: string;
   };
-  title: string;
-  department: string;
+  name?: string;
+  username?: string;
+  title?: string;
+  department?: string;
 }
 
 export default function SuperWorkflowsContent() {
@@ -162,14 +165,7 @@ export default function SuperWorkflowsContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center space-y-4">
-          <Loader className="w-12 h-12 animate-spin mx-auto" style={{ color: colors.brandBlue }} />
-          <p className={`${colors.textPrimary} text-lg font-black`}>Loading Super Workflows...</p>
-        </div>
-      </div>
-    );
+    return <WorkflowLoadingState message="Loading Super Workflows..." type="page" />;
   }
 
   return (
@@ -180,8 +176,8 @@ export default function SuperWorkflowsContent() {
           <div 
             className="p-3 rounded-xl"
             style={{
-              background: `linear-gradient(135deg, ${colors.brandBlue}, ${colors.brandLightBlue})`,
-              boxShadow: `0 0 30px ${colors.brandBlue}40`
+              background: `linear-gradient(135deg, #2196F3, #64B5F6)`,
+              boxShadow: `0 0 30px rgba(33, 150, 243, 0.4)`
             }}
           >
             <Zap className="w-8 h-8 text-white" />
@@ -231,18 +227,18 @@ export default function SuperWorkflowsContent() {
         <button
           onClick={handleCreate}
           className={`relative group bg-gradient-to-br ${colors.cardBg} backdrop-blur-xl border-2 ${colors.border} rounded-2xl p-8 transition-all duration-300 hover:scale-105 ${colors.cardBgHover} ${colors.borderHover} hover:shadow-2xl`}
-          style={{ boxShadow: `0 0 30px ${colors.brandBlue}20` }}
+          style={{ boxShadow: `0 0 30px rgba(33, 150, 243, 0.2)` }}
         >
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
           <div className="relative flex flex-col items-center justify-center space-y-4 h-full min-h-[280px]">
             <div 
               className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110"
               style={{
-                background: `linear-gradient(135deg, ${colors.brandBlue}20, ${colors.brandLightBlue}20)`,
-                boxShadow: `0 0 30px ${colors.brandBlue}40`,
+                background: `linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(100, 181, 246, 0.2))`,
+                boxShadow: `0 0 30px rgba(33, 150, 243, 0.4)`,
               }}
             >
-              <Plus className="w-10 h-10" style={{ color: colors.brandSkyBlue }} />
+              <Plus className="w-10 h-10 text-[#64B5F6]" />
             </div>
             <div>
               <h3 className={`text-xl font-black ${colors.textPrimary} text-center`}>
@@ -272,10 +268,10 @@ export default function SuperWorkflowsContent() {
           <div 
             className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
             style={{
-              background: `linear-gradient(135deg, ${colors.brandBlue}10, ${colors.brandLightBlue}10)`,
+              background: `linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(100, 181, 246, 0.1))`,
             }}
           >
-            <Zap className="w-12 h-12" style={{ color: colors.brandSkyBlue }} />
+            <Zap className="w-12 h-12 text-[#64B5F6]" />
           </div>
           <h3 className={`text-2xl font-black ${colors.textPrimary} mb-2`}>
             No Super Workflows Yet

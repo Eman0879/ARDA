@@ -87,7 +87,7 @@ export default function OrgAnnouncementsWidget({
           <div className="flex items-center gap-2">
             <Globe className={`h-5 w-5 ${iconColor}`} />
             <h3 className={`text-lg font-black ${colors.textPrimary}`}>
-              Organization
+              Org Announcements
             </h3>
           </div>
         </div>

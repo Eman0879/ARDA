@@ -1,7 +1,7 @@
 // ============================================
 // app/components/ticketing/TicketFormModal.tsx
 // Modal for creating tickets with dynamic form
-// UPDATED WITH THEME CONTEXT MODAL STYLES + SUPER WORKFLOW SUPPORT
+// UPDATED: Consistent UI for both Super and Normal workflows
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +27,7 @@ interface Props {
 }
 
 export default function TicketFormModal({ functionality, onClose, onSuccess }: Props) {
-  const { colors, cardCharacters, getModalStyles } = useTheme();
+  const { colors, cardCharacters, getModalStyles, showToast } = useTheme();
   const charColors = cardCharacters.informative;
   
   // 🌟 DETECT IF THIS IS A SUPER FUNCTIONALITY
@@ -49,7 +49,6 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ticketNumber, setTicketNumber] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
 
   const handleFieldChange = (fieldId: string, value: any) => {
     console.log(`🔄 Field "${fieldId}" changed:`, {
@@ -103,13 +102,11 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
     e.preventDefault();
     
     if (!validateForm()) {
-      setErrorMessage('Please fill in all required fields');
-      setTimeout(() => setErrorMessage(''), 3000);
+      showToast('Please fill in all required fields', 'warning');
       return;
     }
 
     setSubmitting(true);
-    setErrorMessage('');
 
     try {
       const userData = localStorage.getItem('user');
@@ -205,7 +202,7 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
       }, 2500);
     } catch (error) {
       console.error('❌ Submission error:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to create ticket. Please try again.');
+      showToast(error instanceof Error ? error.message : 'Failed to create ticket. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -296,11 +293,9 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
                 Create New Ticket
               </h2>
               <p className={`text-sm ${colors.textSecondary} flex items-center gap-2 flex-wrap`}>
-                <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                  isSuper 
-                    ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30'
-                    : `bg-gradient-to-r ${charColors.bg} ${charColors.text}`
-                }`}>
+                {/* CONSISTENT BADGE - Only visual indicator for Super */}
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${charColors.bg} ${charColors.text} border ${charColors.border}`}>
+                  {isSuper && '⚡ '}
                   {functionality.department}
                 </span>
                 <span>•</span>
@@ -316,19 +311,6 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
             </button>
           </div>
         </div>
-
-        {/* Error Message */}
-        {errorMessage && (
-          <div className="mx-6 mt-4">
-            <div className={`relative overflow-hidden p-4 rounded-xl border-2 flex items-start gap-3 bg-gradient-to-br ${cardCharacters.urgent.bg} ${cardCharacters.urgent.border}`}>
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-              <AlertCircle className={`w-5 h-5 ${cardCharacters.urgent.iconColor} flex-shrink-0 mt-0.5 relative z-10`} />
-              <div className="flex-1 relative z-10">
-                <p className={`text-sm font-bold ${cardCharacters.urgent.text}`}>{errorMessage}</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Form Content */}
         <div className={`relative p-6 ${colors.modalContentBg} max-h-[calc(90vh-240px)] overflow-y-auto`}>
@@ -355,7 +337,7 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
           </form>
         </div>
 
-        {/* Footer */}
+        {/* Footer - CONSISTENT SUBMIT BUTTON */}
         <div className={`
           relative px-6 py-4 border-t ${colors.modalFooterBorder}
           ${colors.modalFooterBg} flex justify-end gap-3
@@ -368,24 +350,17 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
             Cancel
           </button>
           
+          {/* CONSISTENT SUBMIT BUTTON - Same styling for both Super and Normal */}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className={`group relative px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden border-2 ${
-              isSuper 
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-500'
-                : `bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText}`
-            }`}
+            className={`group relative px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden border-2 bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}
           >
             <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
             <div 
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              style={{ 
-                boxShadow: isSuper 
-                  ? 'inset 0 0 30px rgba(147, 51, 234, 0.3)'
-                  : `inset 0 0 30px ${colors.glowPrimary}` 
-              }}
+              style={{ boxShadow: `inset 0 0 30px ${colors.glowPrimary}` }}
             ></div>
             {submitting ? (
               <>

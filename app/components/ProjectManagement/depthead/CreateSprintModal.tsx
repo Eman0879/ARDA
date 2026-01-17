@@ -3,13 +3,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
-import { X, Zap, Loader2, CheckCircle } from 'lucide-react';
+import { X, Zap, Loader2, CheckCircle, Users } from 'lucide-react';
 
 interface Employee {
   _id: string;
   username: string;
   'basicDetails.name': string;
   title: string;
+  department: string;
+}
+
+interface DepartmentHead {
+  userId: string;
+  username: string;
+  name: string;
+  department: string;
 }
 
 interface Project {
@@ -36,7 +44,6 @@ export default function CreateSprintModal({
   const { colors, cardCharacters, showToast, getModalStyles } = useTheme();
   const charColors = cardCharacters.interactive;
 
-  // Debug log to check props
   useEffect(() => {
     console.log('CreateSprintModal props:', { department, userId, userName });
     
@@ -58,6 +65,7 @@ export default function CreateSprintModal({
   const [employeeSearch, setEmployeeSearch] = useState('');
   
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departmentHeads, setDepartmentHeads] = useState<Map<string, DepartmentHead>>(new Map());
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
@@ -73,15 +81,17 @@ export default function CreateSprintModal({
     const searchLower = employeeSearch.toLowerCase();
     const name = (emp['basicDetails.name'] || emp.username || '').toLowerCase();
     const title = (emp.title || '').toLowerCase();
-    return name.includes(searchLower) || title.includes(searchLower);
+    const dept = (emp.department || '').toLowerCase();
+    return name.includes(searchLower) || title.includes(searchLower) || dept.includes(searchLower);
   });
 
   const fetchData = async () => {
     try {
       setFetchingData(true);
-      const [employeesRes, projectsRes] = await Promise.all([
-        fetch(`/api/dept-employees?department=${encodeURIComponent(department)}`),
-        fetch(`/api/ProjectManagement/depthead/projects?department=${encodeURIComponent(department)}&status=active`)
+      const [employeesRes, projectsRes, deptHeadsRes] = await Promise.all([
+        fetch('/api/org-employees'),
+        fetch(`/api/ProjectManagement/depthead/projects?department=${encodeURIComponent(department)}&status=active`),
+        fetch('/api/dept-heads')
       ]);
 
       if (!employeesRes.ok) {
@@ -91,9 +101,10 @@ export default function CreateSprintModal({
 
       const employeesData = await employeesRes.json();
       const projectsData = await projectsRes.json();
+      const deptHeadsData = await deptHeadsRes.json();
 
-      console.log('Fetched employees:', employeesData); // Debug log
-      console.log('Fetched projects:', projectsData); // Debug log
+      console.log('Fetched employees:', employeesData);
+      console.log('Fetched projects:', projectsData);
 
       if (employeesData.success && Array.isArray(employeesData.employees)) {
         setEmployees(employeesData.employees);
@@ -103,6 +114,14 @@ export default function CreateSprintModal({
       }
       
       setProjects(projectsData.projects || []);
+
+      if (deptHeadsData.success && Array.isArray(deptHeadsData.departmentHeads)) {
+        const headsMap = new Map<string, DepartmentHead>();
+        deptHeadsData.departmentHeads.forEach((head: DepartmentHead) => {
+          headsMap.set(head.department, head);
+        });
+        setDepartmentHeads(headsMap);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       showToast('Failed to fetch data', 'error');
@@ -114,6 +133,9 @@ export default function CreateSprintModal({
   };
 
   const handleMemberToggle = (employeeId: string) => {
+    const employee = employees.find(e => e._id === employeeId);
+    if (!employee) return;
+
     setSelectedMembers(prev => {
       if (prev.includes(employeeId)) {
         const newMembers = prev.filter(id => id !== employeeId);
@@ -123,12 +145,37 @@ export default function CreateSprintModal({
         return newMembers;
       } else {
         const newMembers = [...prev, employeeId];
+        
+        // Auto-add department head if employee is from different department
+        if (employee.department !== department) {
+          const deptHead = departmentHeads.get(employee.department);
+          if (deptHead && !newMembers.includes(deptHead.userId)) {
+            console.log(`Auto-adding dept head for ${employee.department}:`, deptHead);
+            newMembers.push(deptHead.userId);
+          }
+        }
+        
         if (!groupLead) {
           setGroupLead(employeeId);
         }
         return newMembers;
       }
     });
+  };
+
+  const getEmployeeDepartmentBadge = (emp: Employee) => {
+    if (emp.department === department) {
+      return null;
+    }
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded ${colors.badge} ${colors.badgeText}`}>
+        {emp.department}
+      </span>
+    );
+  };
+
+  const isDeptHead = (employeeId: string) => {
+    return Array.from(departmentHeads.values()).some(head => head.userId === employeeId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,10 +196,12 @@ export default function CreateSprintModal({
 
       const members = selectedMembers.map(id => {
         const employee = employees.find(e => e._id === id);
+        const isHead = isDeptHead(id);
         return {
           userId: id,
           name: employee?.['basicDetails.name'] || employee?.username || 'Unknown',
-          role: id === groupLead ? 'lead' : 'member'
+          role: id === groupLead ? 'lead' : (isHead ? 'dept-head' : 'member'),
+          department: employee?.department || department
         };
       });
 
@@ -230,7 +279,7 @@ export default function CreateSprintModal({
                   Create New Sprint
                 </h2>
                 <p className={`text-xs ${colors.textMuted}`}>
-                  Set up a sprint with team and timeline
+                  Set up a sprint with team members from across the organization
                 </p>
               </div>
             </div>
@@ -347,8 +396,14 @@ export default function CreateSprintModal({
             {/* Team Members */}
             <div>
               <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
-                Team Members * (Select at least one)
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>Team Members * (Organization-wide)</span>
+                </div>
               </label>
+              <p className={`text-xs ${colors.textMuted} mb-3`}>
+                💡 Adding employees from other departments will automatically include their department heads
+              </p>
               
               {fetchingData ? (
                 <div className="flex items-center justify-center py-8">
@@ -356,7 +411,7 @@ export default function CreateSprintModal({
                 </div>
               ) : employees.length === 0 ? (
                 <div className={`p-4 rounded-lg border ${colors.border} ${colors.cardBg} text-center`}>
-                  <p className={`text-sm ${colors.textMuted}`}>No employees found in this department</p>
+                  <p className={`text-sm ${colors.textMuted}`}>No employees found in the organization</p>
                 </div>
               ) : (
                 <div className={`rounded-lg border ${colors.border} overflow-hidden`}>
@@ -366,7 +421,7 @@ export default function CreateSprintModal({
                       type="text"
                       value={employeeSearch}
                       onChange={(e) => setEmployeeSearch(e.target.value)}
-                      placeholder="Search employees by name or title..."
+                      placeholder="Search by name, title, or department..."
                       className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder}`}
                     />
                   </div>
@@ -387,9 +442,9 @@ export default function CreateSprintModal({
                           } transition-all cursor-pointer`}
                           onClick={() => handleMemberToggle(employee._id)}
                         >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
                             <div
-                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                                 selectedMembers.includes(employee._id)
                                   ? `${cardCharacters.informative.border} ${cardCharacters.informative.bg}`
                                   : colors.border
@@ -399,15 +454,23 @@ export default function CreateSprintModal({
                                 <CheckCircle className={`w-3.5 h-3.5 ${cardCharacters.informative.iconColor}`} />
                               )}
                             </div>
-                            <div>
-                              <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                                {employee['basicDetails.name'] || employee.username}
-                              </p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`text-sm font-bold ${colors.textPrimary}`}>
+                                  {employee['basicDetails.name'] || employee.username}
+                                </p>
+                                {getEmployeeDepartmentBadge(employee)}
+                                {isDeptHead(employee._id) && (
+                                  <span className={`text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400`}>
+                                    Dept Head
+                                  </span>
+                                )}
+                              </div>
                               <p className={`text-xs ${colors.textMuted}`}>{employee.title || 'Employee'}</p>
                             </div>
                           </div>
                           
-                          {selectedMembers.includes(employee._id) && (
+                          {selectedMembers.includes(employee._id) && !isDeptHead(employee._id) && (
                             <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="radio"

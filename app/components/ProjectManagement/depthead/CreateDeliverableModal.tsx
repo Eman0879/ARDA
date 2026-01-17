@@ -1,15 +1,31 @@
 // app/components/ProjectManagement/depthead/CreateDeliverableModal.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
-import { X, Package, Loader2, CheckCircle, Paperclip, Trash2 } from 'lucide-react';
+import { X, Package, Loader2, CheckCircle, Paperclip, Trash2, Users } from 'lucide-react';
 
 interface Member {
   userId: string;
   name: string;
   role: string;
+  department?: string;
   leftAt?: Date;
+}
+
+interface Employee {
+  _id: string;
+  username: string;
+  'basicDetails.name': string;
+  title: string;
+  department: string;
+}
+
+interface DepartmentHead {
+  userId: string;
+  username: string;
+  name: string;
+  department: string;
 }
 
 interface CreateDeliverableModalProps {
@@ -36,15 +52,101 @@ export default function CreateDeliverableModal({
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<Array<{ name: string; data: string; type: string }>>([]);
   const [loading, setLoading] = useState(false);
+  
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+  const [departmentHeads, setDepartmentHeads] = useState<Map<string, DepartmentHead>>(new Map());
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [fetchingEmployees, setFetchingEmployees] = useState(true);
 
   const activeMembers = project.members?.filter((m: Member) => !m.leftAt) || [];
+  const activeMemberIds = activeMembers.map((m: Member) => m.userId);
+
+  useEffect(() => {
+    fetchEmployeesAndHeads();
+  }, []);
+
+  const fetchEmployeesAndHeads = async () => {
+    try {
+      setFetchingEmployees(true);
+      const [employeesRes, deptHeadsRes] = await Promise.all([
+        fetch('/api/org-employees'),
+        fetch('/api/dept-heads')
+      ]);
+
+      if (employeesRes.ok) {
+        const employeesData = await employeesRes.json();
+        if (employeesData.success && Array.isArray(employeesData.employees)) {
+          setAllEmployees(employeesData.employees);
+        }
+      }
+
+      if (deptHeadsRes.ok) {
+        const deptHeadsData = await deptHeadsRes.json();
+        if (deptHeadsData.success && Array.isArray(deptHeadsData.departmentHeads)) {
+          const headsMap = new Map<string, DepartmentHead>();
+          deptHeadsData.departmentHeads.forEach((head: DepartmentHead) => {
+            headsMap.set(head.department, head);
+          });
+          setDepartmentHeads(headsMap);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching employees and dept heads:', error);
+    } finally {
+      setFetchingEmployees(false);
+    }
+  };
+
+  const filteredEmployees = allEmployees.filter(emp => {
+    if (!employeeSearch) return activeMemberIds.includes(emp._id);
+    
+    const searchLower = employeeSearch.toLowerCase();
+    const name = (emp['basicDetails.name'] || emp.username || '').toLowerCase();
+    const title = (emp.title || '').toLowerCase();
+    const dept = (emp.department || '').toLowerCase();
+    const matchesSearch = name.includes(searchLower) || title.includes(searchLower) || dept.includes(searchLower);
+    
+    return matchesSearch && activeMemberIds.includes(emp._id);
+  });
 
   const handleMemberToggle = (memberId: string) => {
-    setSelectedMembers(prev => 
-      prev.includes(memberId) 
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
+    const employee = allEmployees.find(e => e._id === memberId);
+    if (!employee) return;
+
+    setSelectedMembers(prev => {
+      if (prev.includes(memberId)) {
+        return prev.filter(id => id !== memberId);
+      } else {
+        const newMembers = [...prev, memberId];
+        
+        // Auto-add department head if employee is from different department
+        const projectDept = project.department;
+        if (employee.department !== projectDept) {
+          const deptHead = departmentHeads.get(employee.department);
+          if (deptHead && !newMembers.includes(deptHead.userId) && activeMemberIds.includes(deptHead.userId)) {
+            console.log(`Auto-adding dept head for ${employee.department}:`, deptHead);
+            newMembers.push(deptHead.userId);
+          }
+        }
+        
+        return newMembers;
+      }
+    });
+  };
+
+  const getEmployeeDepartmentBadge = (emp: Employee) => {
+    if (emp.department === project.department) {
+      return null;
+    }
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded ${colors.badge} ${colors.badgeText}`}>
+        {emp.department}
+      </span>
     );
+  };
+
+  const isDeptHead = (employeeId: string) => {
+    return Array.from(departmentHeads.values()).some(head => head.userId === employeeId);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,46 +312,77 @@ export default function CreateDeliverableModal({
             {/* Assign to Members */}
             <div>
               <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
-                Assign to Members * (Select at least one)
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>Assign to Project Members * (Select at least one)</span>
+                </div>
               </label>
+              <p className={`text-xs ${colors.textMuted} mb-3`}>
+                💡 Adding cross-department members will automatically include their department heads
+              </p>
               
-              <div className={`rounded-lg border ${colors.border} overflow-hidden`}>
-                <div className="max-h-48 overflow-y-auto">
-                  {activeMembers.map((member: Member) => (
-                    <div
-                      key={member.userId}
-                      className={`flex items-center justify-between p-3 border-b last:border-b-0 ${colors.borderSubtle} ${
-                        selectedMembers.includes(member.userId)
-                          ? `bg-gradient-to-r ${cardCharacters.informative.bg}`
-                          : `${colors.cardBg} hover:${colors.cardBgHover}`
-                      } transition-all cursor-pointer`}
-                      onClick={() => handleMemberToggle(member.userId)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            selectedMembers.includes(member.userId)
-                              ? `${cardCharacters.informative.border} ${cardCharacters.informative.bg}`
-                              : colors.border
-                          }`}
-                        >
-                          {selectedMembers.includes(member.userId) && (
-                            <CheckCircle className={`w-3.5 h-3.5 ${cardCharacters.informative.iconColor}`} />
-                          )}
-                        </div>
-                        <div>
-                          <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                            {member.name}
-                          </p>
-                          <p className={`text-xs ${colors.textMuted}`}>
-                            {member.role === 'lead' ? '👑 Group Lead' : 'Member'}
-                          </p>
+              {fetchingEmployees ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className={`w-6 h-6 animate-spin ${colors.textMuted}`} />
+                </div>
+              ) : (
+                <div className={`rounded-lg border ${colors.border} overflow-hidden`}>
+                  {/* Search Input */}
+                  <div className={`p-3 border-b ${colors.border}`}>
+                    <input
+                      type="text"
+                      value={employeeSearch}
+                      onChange={(e) => setEmployeeSearch(e.target.value)}
+                      placeholder="Search project members..."
+                      className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder}`}
+                    />
+                  </div>
+                  
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredEmployees.map((employee) => (
+                      <div
+                        key={employee._id}
+                        className={`flex items-center justify-between p-3 border-b last:border-b-0 ${colors.borderSubtle} ${
+                          selectedMembers.includes(employee._id)
+                            ? `bg-gradient-to-r ${cardCharacters.informative.bg}`
+                            : `${colors.cardBg} hover:${colors.cardBgHover}`
+                        } transition-all cursor-pointer`}
+                        onClick={() => handleMemberToggle(employee._id)}
+                      >
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <div
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                              selectedMembers.includes(employee._id)
+                                ? `${cardCharacters.informative.border} ${cardCharacters.informative.bg}`
+                                : colors.border
+                            }`}
+                          >
+                            {selectedMembers.includes(employee._id) && (
+                              <CheckCircle className={`w-3.5 h-3.5 ${cardCharacters.informative.iconColor}`} />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`text-sm font-bold ${colors.textPrimary}`}>
+                                {employee['basicDetails.name'] || employee.username}
+                              </p>
+                              {getEmployeeDepartmentBadge(employee)}
+                              {isDeptHead(employee._id) && (
+                                <span className={`text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400`}>
+                                  Dept Head
+                                </span>
+                              )}
+                            </div>
+                            <p className={`text-xs ${colors.textMuted}`}>
+                              {activeMembers.find((m: Member) => m.userId === employee._id)?.role === 'lead' ? '👑 Group Lead' : employee.title || 'Member'}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               
               {selectedMembers.length > 0 && (
                 <p className={`mt-2 text-xs ${colors.textMuted}`}>

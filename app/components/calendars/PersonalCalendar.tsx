@@ -235,11 +235,8 @@ export default function PersonalCalendar() {
         </div>
         <div className="flex items-center justify-center py-20">
           <div className="text-center space-y-4">
-            <div className="relative inline-block">
-              <div className={`absolute inset-0 rounded-full blur-2xl opacity-30 animate-pulse`} style={{ backgroundColor: cardCharacters.informative.iconColor.replace('text-', '') }} />
-              <Loader2 className={`relative w-12 h-12 animate-spin ${cardCharacters.informative.iconColor}`} />
-            </div>
-            <p className={`${colors.textSecondary} text-sm font-semibold`}>Preparing your time canvas...</p>
+            <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+            <p className={`${colors.textPrimary} text-base font-bold`}>Preparing your time canvas...</p>
           </div>
         </div>
       </div>

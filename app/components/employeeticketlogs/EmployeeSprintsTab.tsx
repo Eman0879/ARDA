@@ -13,6 +13,7 @@ interface Sprint {
   _id: string;
   sprintNumber: string;
   name: string;
+  title: string;
   status: string;
   health: 'healthy' | 'at-risk' | 'critical';
   myRole: string;
@@ -21,6 +22,8 @@ interface Sprint {
   myPendingActions: number;
   daysRemaining: number;
   endDate: string;
+  myUserId: string;
+  myUsername: string;
   actions: Action[];
 }
 
@@ -39,7 +42,7 @@ interface SprintsData {
 }
 
 interface EmployeeSprintsTabProps {
-  employeeId: string;
+  employeeId: string; // This is MongoDB _id
   employeeName: string;
 }
 
@@ -48,18 +51,47 @@ export default function EmployeeSprintsTab({ employeeId, employeeName }: Employe
   const [data, setData] = useState<SprintsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchData();
+    fetchUsername();
   }, [employeeId]);
 
+  useEffect(() => {
+    if (username) {
+      fetchData();
+    }
+  }, [username]);
+
+  const fetchUsername = async () => {
+    try {
+      // Get username by MongoDB _id
+      const response = await fetch(`/api/employee/by-id/${encodeURIComponent(employeeId)}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch employee data');
+      }
+      
+      const result = await response.json();
+      setUsername(result.username);
+      setUserId(result.userId);
+    } catch (err) {
+      console.error('Error fetching username:', err);
+      setError('Failed to load employee data');
+      setLoading(false);
+    }
+  };
+
   const fetchData = async () => {
+    if (!username) return;
+    
     setLoading(true);
     setError(null);
 
     try {
       const response = await fetch(
-        `/api/ProjectManagement/employee/sprints?userId=${encodeURIComponent(employeeId)}`
+        `/api/ProjectManagement/employee/sprints?userId=${encodeURIComponent(username)}`
       );
 
       if (!response.ok) {
@@ -97,10 +129,11 @@ export default function EmployeeSprintsTab({ employeeId, employeeName }: Employe
     );
   }
 
-  // Calculate statistics
-  const allActions = data.sprints.flatMap(s => 
-    s.actions?.filter(a => a.assignedTo.includes(employeeId)) || []
-  );
+  // Calculate statistics - use myUserId from API response (or fallback to our userId)
+  const allActions = data.sprints.flatMap(s => {
+    const userIdToCheck = s.myUserId || userId;
+    return s.actions?.filter(a => a.assignedTo.includes(userIdToCheck)) || [];
+  });
   
   const actionStats = {
     pending: allActions.filter(a => a.status === 'pending').length,
@@ -257,7 +290,7 @@ export default function EmployeeSprintsTab({ employeeId, employeeName }: Employe
                               )}
                             </div>
                             <p className={`font-bold ${colors.textPrimary} text-sm`}>
-                              {sprint.name}
+                              {sprint.name || sprint.title}
                             </p>
                           </div>
                         </div>

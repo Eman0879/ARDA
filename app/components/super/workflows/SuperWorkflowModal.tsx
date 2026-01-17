@@ -9,7 +9,7 @@ import { useTheme } from '@/app/context/ThemeContext';
 import { WorkflowNode, WorkflowEdge, FormSchema } from '../../universal/WorkflowComponents/types';
 import SuperWorkflowForm from './SuperWorkflowForm';
 import SuperEmployeePanel from './SuperEmployeePanel';
-import WorkflowCanvas from '../../universal/WorkflowComponents/WorkflowCanvas';
+import SuperWorkflowCanvas from './WorkflowCanvas';
 import FormBuilderModal from '../../universal/WorkflowComponents/FormBuilderModal';
 
 interface SuperFunctionality {
@@ -32,12 +32,14 @@ interface SuperFunctionality {
 
 interface Employee {
   _id: string;
-  basicDetails: {
-    name: string;
+  basicDetails?: {
+    name?: string;
     profileImage?: string;
   };
-  title: string;
-  department: string;
+  name?: string;
+  username?: string;
+  title?: string;
+  department?: string;
 }
 
 interface Props {
@@ -266,7 +268,7 @@ export default function SuperWorkflowModal({ functionality, employees, onClose, 
 
         {/* CENTER - Canvas */}
         <div className="flex-1 relative">
-          <WorkflowCanvas
+          <SuperWorkflowCanvas
             nodes={nodes}
             edges={edges}
             employees={employees}

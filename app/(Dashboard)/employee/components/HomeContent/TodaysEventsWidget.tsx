@@ -1,4 +1,4 @@
-// app/(Dashboard)/dept-head/components/HomeContent/TodaysEventsWidget.tsx
+// app/(Dashboard)/employee/components/HomeContent/TodaysEventsWidget.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -33,42 +33,36 @@ interface TimeIntent {
 }
 
 interface TodaysEventsWidgetProps {
+  userId?: string | null;
   onViewAll: () => void;
-  dayHealth?: 'good' | 'warning' | 'bad'; // Optional day health prop
+  dayHealth?: 'good' | 'warning' | 'bad';
 }
 
-export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: TodaysEventsWidgetProps) {
+export default function TodaysEventsWidget({ userId, onViewAll, dayHealth = 'good' }: TodaysEventsWidgetProps) {
   const { colors, theme } = useTheme();
   const informativeChar = useCardCharacter('informative');
   const urgentChar = useCardCharacter('urgent');
   const [events, setEvents] = useState<TimeIntent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Determine widget character based on day health
   const widgetChar = dayHealth === 'bad' ? urgentChar : informativeChar;
 
   useEffect(() => {
-    fetchTodaysEvents();
-  }, []);
+    if (userId) {
+      fetchTodaysEvents();
+    } else {
+      setLoading(false);
+    }
+  }, [userId]);
 
   const fetchTodaysEvents = async () => {
+    if (!userId) {
+      console.log('❌ TodaysEvents: No user ID provided');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        console.log('❌ TodaysEvents: No user data in localStorage');
-        setLoading(false);
-        return;
-      }
-      
-      const user = JSON.parse(userData);
-      const userId = user._id;
-      
-      if (!userId) {
-        console.error('❌ TodaysEvents: No user ID found');
-        setLoading(false);
-        return;
-      }
-      
       console.log('📅 TodaysEvents: Fetching events for userId:', userId);
 
       const response = await fetch(`/api/calendar/events?userId=${userId}`);
@@ -77,7 +71,6 @@ export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: To
         const data = await response.json();
         console.log('✅ TodaysEvents: Fetched events:', data.events?.length || 0);
         
-        // Filter to today's events using the same logic as CalendarSidebar
         const today = new Date().toDateString();
         const todayEvents = (data.events || [])
           .filter((event: TimeIntent) => {
@@ -89,7 +82,7 @@ export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: To
             if (!a.startTime || !b.startTime) return 0;
             return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
           })
-          .slice(0, 3); // Show only first 3 events
+          .slice(0, 3);
         
         console.log('📊 TodaysEvents: Today\'s events to display:', todayEvents.length);
         setEvents(todayEvents);
@@ -193,6 +186,14 @@ export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: To
     );
   }
 
+  if (!userId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className={`${colors.textMuted} text-sm`}>No user data available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -210,15 +211,11 @@ export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: To
           onClick={onViewAll}
           className={`group relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-br ${colors.cardBg} border ${widgetChar.border} ${colors.borderHover} backdrop-blur-sm ${colors.shadowCard} hover:${colors.shadowHover}`}
         >
-          {/* Paper Texture */}
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-          
-          {/* Internal glow */}
           <div 
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}, inset 0 0 28px ${colors.glowPrimary}` }}
           ></div>
-          
           <span className={`text-xs font-bold relative z-10 ${widgetChar.accent}`}>View All</span>
           <ArrowRight className={`h-3.5 w-3.5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 icon-rotate ${widgetChar.iconColor}`} />
         </button>
@@ -238,10 +235,7 @@ export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: To
               key={event._id}
               className={`relative overflow-hidden p-3 rounded-lg bg-gradient-to-br ${colors.cardBg} border-2 ${colors.border} ${colors.borderHover} transition-all duration-200 cursor-pointer group ${colors.shadowCard}`}
             >
-              {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-
-              {/* Hover Glow */}
               <div 
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}, inset 0 0 28px ${colors.glowPrimary}` }}

@@ -145,6 +145,7 @@ interface ThemeColors {
   glowSecondary: string;
   glowSuccess: string;
   glowWarning: string;
+  glowAccent: string;
 }
 
 interface ThemeContextType {
@@ -438,7 +439,8 @@ const lightColors: ThemeColors = {
   glowPrimary: 'rgba(33, 150, 243, 0.15)',
   glowSecondary: 'rgba(141, 110, 99, 0.15)',
   glowSuccess: 'rgba(76, 175, 80, 0.15)',
-  glowWarning: 'rgba(255, 152, 0, 0.15)'
+  glowWarning: 'rgba(255, 152, 0, 0.15)',
+  glowAccent: 'rgba(100, 181, 246, 0.15)'
 };
 
 const darkColors: ThemeColors = {
@@ -552,7 +554,8 @@ const darkColors: ThemeColors = {
   glowPrimary: 'rgba(100, 181, 246, 0.2)',
   glowSecondary: 'rgba(167, 139, 111, 0.2)',
   glowSuccess: 'rgba(129, 199, 132, 0.2)',
-  glowWarning: 'rgba(255, 183, 77, 0.2)'
+  glowWarning: 'rgba(255, 183, 77, 0.2)',
+  glowAccent: 'rgba(144, 202, 249, 0.2)'
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -561,12 +564,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
     
-    const fetchTheme = async () => {
+    const initializeApp = async () => {
       try {
+        // Simulate initial loading phase
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
         const userData = localStorage.getItem('user');
         if (userData) {
           const user = JSON.parse(userData);
@@ -583,13 +590,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         } else {
           applyTheme('dark');
         }
+        
+        // Simulate additional loading for better UX
+        await new Promise(resolve => setTimeout(resolve, 800));
       } catch (error) {
-        console.error('Error fetching theme:', error);
+        console.error('Error initializing app:', error);
         applyTheme('dark');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchTheme();
+    initializeApp();
   }, []);
 
   const applyTheme = (newTheme: Theme) => {
@@ -702,15 +714,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const colors = theme === 'dark' ? darkColors : lightColors;
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1A1A2E] via-[#16213E] to-[#1A1A2E] flex items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="w-20 h-20 border-4 border-[#64B5F6] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-white text-2xl font-black">Loading...</p>
-        </div>
-      </div>
-    );
+  if (!mounted || isLoading) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -1106,3 +1111,163 @@ export function useButtonStyles(variant: 'primary' | 'secondary' | 'ghost') {
   return getButtonStyles(variant);
 }
 
+// Sophisticated, Reusable Loading Screen Component
+function LoadingScreen() {
+  const [currentTheme, setCurrentTheme] = useState<Theme>('dark');
+  
+  useEffect(() => {
+    // Detect theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('theme') as Theme;
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const detectedTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    setCurrentTheme(detectedTheme);
+  }, []);
+
+  const colors = currentTheme === 'dark' ? darkColors : lightColors;
+  const isDark = currentTheme === 'dark';
+  
+  return (
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br ${colors.background} transition-all duration-500`}>
+      {/* Paper Texture Background */}
+      <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+      
+      {/* Animated Background Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
+          style={{ 
+            background: `radial-gradient(circle, ${isDark ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.2)'} 0%, transparent 70%)`,
+            animationDuration: '4s'
+          }}
+        />
+        <div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
+          style={{ 
+            background: `radial-gradient(circle, ${isDark ? 'rgba(100, 181, 246, 0.3)' : 'rgba(100, 181, 246, 0.2)'} 0%, transparent 70%)`,
+            animationDuration: '6s',
+            animationDelay: '1s'
+          }}
+        />
+      </div>
+
+      {/* Loading Content */}
+      <div className="relative z-10 text-center space-y-8">
+        {/* Main Spinner with Glow */}
+        <div className="relative mx-auto w-20 h-20">
+          {/* Outer Ring */}
+          <div 
+            className="absolute inset-0 rounded-full animate-spin"
+            style={{ 
+              border: `3px solid transparent`,
+              borderTopColor: isDark ? '#2196F3' : '#1976D2',
+              borderRightColor: isDark ? '#64B5F6' : '#42A5F5',
+              animationDuration: '1s'
+            }}
+          />
+          
+          {/* Inner Ring */}
+          <div 
+            className="absolute inset-2 rounded-full animate-spin"
+            style={{ 
+              border: `3px solid transparent`,
+              borderBottomColor: isDark ? '#64B5F6' : '#2196F3',
+              borderLeftColor: isDark ? '#90CAF9' : '#64B5F6',
+              animationDuration: '1.5s',
+              animationDirection: 'reverse'
+            }}
+          />
+          
+          {/* Center Dot */}
+          <div 
+            className="absolute inset-0 m-auto w-2 h-2 rounded-full animate-pulse"
+            style={{ 
+              backgroundColor: isDark ? '#64B5F6' : '#2196F3',
+              boxShadow: `0 0 20px ${isDark ? 'rgba(100, 181, 246, 0.5)' : 'rgba(33, 150, 243, 0.5)'}`
+            }}
+          />
+        </div>
+
+        {/* Loading Text */}
+        <div className="space-y-3">
+          <h2 className={`text-2xl font-bold ${colors.textPrimary} animate-pulse`}>
+            Loading
+          </h2>
+          
+          {/* Animated Dots */}
+          <div className="flex items-center justify-center gap-2">
+            <div 
+              className="w-2 h-2 rounded-full animate-bounce"
+              style={{ 
+                backgroundColor: isDark ? '#2196F3' : '#1976D2',
+                animationDelay: '0s',
+                animationDuration: '1s'
+              }}
+            />
+            <div 
+              className="w-2 h-2 rounded-full animate-bounce"
+              style={{ 
+                backgroundColor: isDark ? '#64B5F6' : '#42A5F5',
+                animationDelay: '0.2s',
+                animationDuration: '1s'
+              }}
+            />
+            <div 
+              className="w-2 h-2 rounded-full animate-bounce"
+              style={{ 
+                backgroundColor: isDark ? '#90CAF9' : '#64B5F6',
+                animationDelay: '0.4s',
+                animationDuration: '1s'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="w-64 mx-auto">
+          <div 
+            className="h-1 rounded-full overflow-hidden"
+            style={{ 
+              backgroundColor: isDark ? 'rgba(100, 181, 246, 0.1)' : 'rgba(33, 150, 243, 0.1)'
+            }}
+          >
+            <div 
+              className="h-full rounded-full animate-progress"
+              style={{ 
+                background: isDark 
+                  ? 'linear-gradient(90deg, #2196F3, #64B5F6, #90CAF9)' 
+                  : 'linear-gradient(90deg, #1976D2, #2196F3, #42A5F5)',
+                boxShadow: `0 0 10px ${isDark ? 'rgba(100, 181, 246, 0.5)' : 'rgba(33, 150, 243, 0.5)'}`
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Subtitle */}
+        <p className={`text-sm ${colors.textSecondary} font-medium`}>
+          Preparing your workspace...
+        </p>
+      </div>
+
+      <style jsx>{`
+        @keyframes progress {
+          0% {
+            width: 0%;
+            opacity: 0.5;
+          }
+          50% {
+            width: 70%;
+            opacity: 1;
+          }
+          100% {
+            width: 100%;
+            opacity: 0.5;
+          }
+        }
+
+        .animate-progress {
+          animation: progress 2s ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  );
+}

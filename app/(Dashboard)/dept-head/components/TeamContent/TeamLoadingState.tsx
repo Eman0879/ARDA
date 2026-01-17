@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Users } from 'lucide-react';
+import { Users, Loader2 } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 
 interface TeamLoadingStateProps {
@@ -31,12 +31,7 @@ export function TeamLoadingState({ department }: TeamLoadingStateProps) {
       </div>
 
       <div className="text-center py-12">
-        <div 
-          className="w-14 h-14 border-4 border-t-transparent rounded-full animate-spin mx-auto"
-          style={{ 
-            borderColor: `${colors.glowPrimary} transparent transparent transparent` 
-          }}
-        />
+        <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
         <p className={`${colors.textPrimary} text-base font-bold mt-4`}>
           Loading team members...
         </p>

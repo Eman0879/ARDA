@@ -26,6 +26,14 @@ interface Employee {
   username: string;
   'basicDetails.name': string;
   title: string;
+  department: string;
+}
+
+interface DepartmentHead {
+  userId: string;
+  username: string;
+  name: string;
+  department: string;
 }
 
 interface SprintDetailsModalProps {
@@ -52,8 +60,9 @@ export default function SprintDetailsModal({
   const [showCreateAction, setShowCreateAction] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departmentHeads, setDepartmentHeads] = useState<Map<string, DepartmentHead>>(new Map());
   const [employeeSearch, setEmployeeSearch] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState<string>('');
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetchingEmployees, setFetchingEmployees] = useState(false);
@@ -67,35 +76,47 @@ export default function SprintDetailsModal({
 
   useEffect(() => {
     if (showAddMember && employees.length === 0) {
-      fetchEmployees();
+      fetchEmployeesAndHeads();
     }
   }, [showAddMember]);
 
-  const fetchEmployees = async () => {
+  const fetchEmployeesAndHeads = async () => {
     try {
       setFetchingEmployees(true);
-      const response = await fetch(`/api/dept-employees?department=${encodeURIComponent(department)}`);
+      const [employeesRes, deptHeadsRes] = await Promise.all([
+        fetch('/api/org-employees'),
+        fetch('/api/dept-heads')
+      ]);
       
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!employeesRes.ok) {
+        const errorData = await employeesRes.json();
         throw new Error(errorData.error || 'Failed to fetch employees');
       }
 
-      const data = await response.json();
+      const employeesData = await employeesRes.json();
+      const deptHeadsData = await deptHeadsRes.json();
       
-      if (data.success && Array.isArray(data.employees)) {
+      if (employeesData.success && Array.isArray(employeesData.employees)) {
         // Filter out employees who are already members
         const activeMemberIds = sprint.members
           ?.filter((m: any) => !m.leftAt)
           .map((m: any) => m.userId) || [];
         
-        const availableEmployees = data.employees.filter(
+        const availableEmployees = employeesData.employees.filter(
           (emp: Employee) => !activeMemberIds.includes(emp._id)
         );
         
         setEmployees(availableEmployees);
       } else {
         setEmployees([]);
+      }
+
+      if (deptHeadsData.success && Array.isArray(deptHeadsData.departmentHeads)) {
+        const headsMap = new Map<string, DepartmentHead>();
+        deptHeadsData.departmentHeads.forEach((head: DepartmentHead) => {
+          headsMap.set(head.department, head);
+        });
+        setDepartmentHeads(headsMap);
       }
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -111,8 +132,48 @@ export default function SprintDetailsModal({
     const searchLower = employeeSearch.toLowerCase();
     const name = (emp['basicDetails.name'] || emp.username || '').toLowerCase();
     const title = (emp.title || '').toLowerCase();
-    return name.includes(searchLower) || title.includes(searchLower);
+    const dept = (emp.department || '').toLowerCase();
+    return name.includes(searchLower) || title.includes(searchLower) || dept.includes(searchLower);
   });
+
+  const handleEmployeeToggle = (employeeId: string) => {
+    const employee = employees.find(e => e._id === employeeId);
+    if (!employee) return;
+
+    setSelectedEmployees(prev => {
+      if (prev.includes(employeeId)) {
+        return prev.filter(id => id !== employeeId);
+      } else {
+        const newSelection = [...prev, employeeId];
+        
+        // Auto-add department head if employee is from different department
+        if (employee.department !== department) {
+          const deptHead = departmentHeads.get(employee.department);
+          if (deptHead && !newSelection.includes(deptHead.userId) && !sprint.members?.some((m: any) => m.userId === deptHead.userId && !m.leftAt)) {
+            console.log(`Auto-adding dept head for ${employee.department}:`, deptHead);
+            newSelection.push(deptHead.userId);
+          }
+        }
+        
+        return newSelection;
+      }
+    });
+  };
+
+  const getEmployeeDepartmentBadge = (emp: Employee) => {
+    if (emp.department === department) {
+      return null;
+    }
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded ${colors.badge} ${colors.badgeText}`}>
+        {emp.department}
+      </span>
+    );
+  };
+
+  const isDeptHead = (employeeId: string) => {
+    return Array.from(departmentHeads.values()).some(head => head.userId === employeeId);
+  };
 
   const handleStatusAction = async (action: string) => {
     try {
@@ -134,47 +195,51 @@ export default function SprintDetailsModal({
     }
   };
 
-  const handleAddMember = async (e: React.FormEvent) => {
+  const handleAddMembers = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEmployee) return;
-
-    const employee = employees.find(e => e._id === selectedEmployee);
-    if (!employee) return;
+    if (selectedEmployees.length === 0) return;
 
     try {
       setLoading(true);
+      
+      const membersToAdd = selectedEmployees.map(empId => {
+        const employee = employees.find(e => e._id === empId);
+        const isHead = isDeptHead(empId);
+        return {
+          userId: empId,
+          name: employee?.['basicDetails.name'] || employee?.username || 'Unknown',
+          role: isHead ? 'dept-head' : 'member',
+          department: employee?.department || department
+        };
+      });
+
       const response = await fetch(`/api/SprintManagement/depthead/sprints/${sprint._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'add-member',
+          action: 'add-members',
           userId,
           userName,
-          member: {
-            userId: employee._id,
-            name: employee['basicDetails.name'] || employee.username,
-            role: 'member'
-          }
+          members: membersToAdd
         })
       });
 
-      if (!response.ok) throw new Error('Failed to add member');
+      if (!response.ok) throw new Error('Failed to add members');
       
-      showToast('Member added successfully', 'success');
-      setSelectedEmployee('');
+      showToast(`${membersToAdd.length} member${membersToAdd.length > 1 ? 's' : ''} added successfully`, 'success');
+      setSelectedEmployees([]);
       setEmployeeSearch('');
       setShowAddMember(false);
-      setEmployees([]); // Reset to refetch on next open
+      setEmployees([]);
       onUpdate();
     } catch (error) {
-      showToast('Failed to add member', 'error');
+      showToast('Failed to add members', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleRemoveMember = async (memberId: string) => {
-
     try {
       setLoading(true);
       const response = await fetch(`/api/SprintManagement/depthead/sprints/${sprint._id}`, {
@@ -400,6 +465,7 @@ export default function SprintDetailsModal({
                           sprintId={sprint._id}
                           userId={userId}
                           userName={userName}
+                          department={department}
                           onUpdate={onUpdate}
                         />
                       ))}
@@ -419,20 +485,25 @@ export default function SprintDetailsModal({
                       onClick={() => {
                         setShowAddMember(!showAddMember);
                         if (!showAddMember && employees.length === 0) {
-                          fetchEmployees();
+                          fetchEmployeesAndHeads();
                         }
                       }}
                       className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors duration-300 flex items-center gap-2 bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}
                     >
                       <UserPlus className="w-4 h-4" />
-                      Add Member
+                      Add Members
                     </button>
                   </div>
 
                   {/* Add Member Section */}
                   {showAddMember && (
                     <div className={`p-4 rounded-lg ${colors.cardBg} border ${colors.border} space-y-3`}>
-                      <h4 className={`text-sm font-bold ${colors.textPrimary}`}>Select Employee to Add</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className={`text-sm font-bold ${colors.textPrimary}`}>Select Employees to Add</h4>
+                        <p className={`text-xs ${colors.textMuted}`}>
+                          💡 Cross-dept employees auto-include their dept heads
+                        </p>
+                      </div>
                       
                       {fetchingEmployees ? (
                         <div className="flex items-center justify-center py-8">
@@ -449,7 +520,7 @@ export default function SprintDetailsModal({
                             type="text"
                             value={employeeSearch}
                             onChange={(e) => setEmployeeSearch(e.target.value)}
-                            placeholder="Search employees by name or title..."
+                            placeholder="Search by name, title, or department..."
                             className={`w-full px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder}`}
                           />
                           
@@ -464,28 +535,36 @@ export default function SprintDetailsModal({
                                 <div
                                   key={employee._id}
                                   className={`flex items-center justify-between p-3 border-b last:border-b-0 ${colors.borderSubtle} ${
-                                    selectedEmployee === employee._id
+                                    selectedEmployees.includes(employee._id)
                                       ? `bg-gradient-to-r ${cardCharacters.informative.bg}`
                                       : `${colors.cardBg} hover:${colors.cardBgHover}`
                                   } transition-all cursor-pointer`}
-                                  onClick={() => setSelectedEmployee(employee._id)}
+                                  onClick={() => handleEmployeeToggle(employee._id)}
                                 >
-                                  <div className="flex items-center space-x-3">
+                                  <div className="flex items-center space-x-3 flex-1 min-w-0">
                                     <div
-                                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                        selectedEmployee === employee._id
+                                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                                        selectedEmployees.includes(employee._id)
                                           ? `${cardCharacters.informative.border} ${cardCharacters.informative.bg}`
                                           : colors.border
                                       }`}
                                     >
-                                      {selectedEmployee === employee._id && (
+                                      {selectedEmployees.includes(employee._id) && (
                                         <CheckCircle className={`w-3.5 h-3.5 ${cardCharacters.informative.iconColor}`} />
                                       )}
                                     </div>
-                                    <div>
-                                      <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                                        {employee['basicDetails.name'] || employee.username}
-                                      </p>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <p className={`text-sm font-bold ${colors.textPrimary}`}>
+                                          {employee['basicDetails.name'] || employee.username}
+                                        </p>
+                                        {getEmployeeDepartmentBadge(employee)}
+                                        {isDeptHead(employee._id) && (
+                                          <span className={`text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400`}>
+                                            Dept Head
+                                          </span>
+                                        )}
+                                      </div>
                                       <p className={`text-xs ${colors.textMuted}`}>{employee.title || 'Employee'}</p>
                                     </div>
                                   </div>
@@ -494,20 +573,26 @@ export default function SprintDetailsModal({
                             )}
                           </div>
                           
+                          {selectedEmployees.length > 0 && (
+                            <p className={`text-xs ${colors.textMuted}`}>
+                              Selected: {selectedEmployees.length} employee{selectedEmployees.length > 1 ? 's' : ''}
+                            </p>
+                          )}
+                          
                           {/* Action Buttons */}
                           <div className="flex gap-2">
                             <button
-                              onClick={handleAddMember}
-                              disabled={!selectedEmployee || loading}
+                              onClick={handleAddMembers}
+                              disabled={selectedEmployees.length === 0 || loading}
                               className={`flex-1 px-4 py-2 rounded-lg font-bold text-sm transition-colors bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50`}
                             >
-                              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Add Member'}
+                              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Add ${selectedEmployees.length} Member${selectedEmployees.length > 1 ? 's' : ''}`}
                             </button>
                             <button
                               type="button"
                               onClick={() => {
                                 setShowAddMember(false);
-                                setSelectedEmployee('');
+                                setSelectedEmployees([]);
                                 setEmployeeSearch('');
                               }}
                               className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${colors.buttonGhost} ${colors.buttonGhostText}`}
@@ -528,14 +613,24 @@ export default function SprintDetailsModal({
                         className={`flex items-center justify-between p-4 rounded-lg ${colors.cardBg} border ${colors.border}`}
                       >
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className={`font-bold ${colors.textPrimary}`}>{member.name}</p>
                             {member.role === 'lead' && (
                               <Crown className={`w-4 h-4 ${cardCharacters.completed.iconColor}`} />
                             )}
+                            {member.role === 'dept-head' && (
+                              <span className={`text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400`}>
+                                Dept Head
+                              </span>
+                            )}
+                            {member.department && member.department !== department && (
+                              <span className={`text-xs px-2 py-0.5 rounded ${colors.badge} ${colors.badgeText}`}>
+                                {member.department}
+                              </span>
+                            )}
                           </div>
                           <p className={`text-sm ${colors.textMuted}`}>
-                            {member.role === 'lead' ? 'Group Lead' : 'Member'}
+                            {member.role === 'lead' ? 'Group Lead' : member.role === 'dept-head' ? 'Department Head' : 'Member'}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">

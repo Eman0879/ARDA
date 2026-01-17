@@ -74,7 +74,7 @@ export default function EmployeeSidebar({ activeItem, onItemClick, department, i
   // Broadcast
   {
     id: 'announcements',
-    label: 'Announcements',
+    label: 'Dept Announcements',
     icon: <Megaphone className="h-3.5 w-3.5" />,
     color: theme === 'dark' ? '#64B5F6' : '#2196F3',
     visible: true

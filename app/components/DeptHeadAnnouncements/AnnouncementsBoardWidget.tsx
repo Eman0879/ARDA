@@ -44,7 +44,7 @@ export default function AnnouncementsBoardWidget({
         <div className="flex items-center gap-2">
           <Pin className={`h-5 w-5 ${cardCharacters.informative.iconColor}`} />
           <h3 className={`text-lg font-black ${colors.textPrimary}`}>
-            Announcements
+            Dept Announcements
           </h3>
         </div>
         {announcements.length > 0 && (

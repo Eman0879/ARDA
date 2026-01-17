@@ -20,7 +20,7 @@ interface UserDetailModalProps {
 }
 
 export default function UserDetailModal({ user, departments, onClose, onUpdate }: UserDetailModalProps) {
-  const { colors, theme, cardCharacters } = useTheme();
+  const { colors, theme, cardCharacters, showToast } = useTheme();
   const charColors = cardCharacters.authoritative;
   
   const [activeTab, setActiveTab] = useState<'basic' | 'identification' | 'contact' | 'education' | 'parents'>('basic');
@@ -37,16 +37,16 @@ export default function UserDetailModal({ user, departments, onClose, onUpdate }
       });
 
       if (response.ok) {
-        alert('User updated successfully');
+        showToast('User updated successfully', 'success');
         onUpdate();
         onClose();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update user');
+        showToast(error.error || 'Failed to update user', 'error');
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user');
+      showToast('Failed to update user', 'error');
     } finally {
       setIsSaving(false);
     }

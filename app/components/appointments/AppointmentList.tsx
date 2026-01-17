@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
-import { Calendar, Plus, ArrowLeft, RefreshCw, Filter } from 'lucide-react';
+import { Calendar, Plus, ArrowLeft, RefreshCw, Filter, Loader2 } from 'lucide-react';
 import AppointmentCard from './AppointmentCard';
 import AppointmentRequest from './AppointmentRequest';
 import AppointmentDetails from './AppointmentDetails';
@@ -237,10 +237,9 @@ export default function AppointmentList({ onBack }: AppointmentListProps) {
         <div className={`relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} p-12 ${colors.shadowCard}`}>
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
           <div className="relative flex items-center justify-center">
-            <div className="text-center space-y-3">
-              <div className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto`} 
-                   style={{ borderColor: charColors.iconColor.replace('text-', '') }}></div>
-              <p className={`${colors.textMuted} text-sm`}>Loading appointments...</p>
+            <div className="text-center space-y-4">
+              <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+              <p className={`${colors.textPrimary} text-base font-bold`}>Loading appointments...</p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-// app/(Dashboard)/dept-head/components/HomeContent/DayCanvasWidget.tsx
+// app/(Dashboard)/employee/components/HomeContent/DayCanvasWidget.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -29,10 +29,11 @@ interface DayCanvas {
 }
 
 interface DayCanvasWidgetProps {
+  userId?: string | null;
   onViewAll?: () => void;
 }
 
-export default function DayCanvasWidget({ onViewAll }: DayCanvasWidgetProps) {
+export default function DayCanvasWidget({ userId, onViewAll }: DayCanvasWidgetProps) {
   const { colors, theme, showToast } = useTheme();
   const informativeChar = useCardCharacter('informative');
   const [dayCanvas, setDayCanvas] = useState<DayCanvas | null>(null);
@@ -45,33 +46,28 @@ export default function DayCanvasWidget({ onViewAll }: DayCanvasWidgetProps) {
   const [savingNotes, setSavingNotes] = useState(false);
 
   useEffect(() => {
-    fetchDayCanvas();
-  }, []);
+    if (userId) {
+      fetchDayCanvas();
+    } else {
+      setLoading(false);
+    }
+  }, [userId]);
 
   const fetchDayCanvas = async () => {
+    if (!userId) {
+      console.log('❌ DayCanvas: No user ID provided');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        console.log('❌ DayCanvas: No user data in localStorage');
-        setLoading(false);
-        return;
-      }
-      
-      const user = JSON.parse(userData);
-      const userId = user._id;
-      
-      if (!userId) {
-        console.error('❌ DayCanvas: No user ID found');
-        setLoading(false);
-        return;
-      }
-      
       console.log('📝 DayCanvas: Fetching day canvas for userId:', userId);
 
-      // Get today's date
-      const today = new Date().toISOString();
+      // FIX: Get today's date in YYYY-MM-DD format instead of full ISO string
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0]; // e.g., "2026-01-14"
 
-      const response = await fetch(`/api/calendar/day-canvas?userId=${userId}&date=${today}`);
+      const response = await fetch(`/api/calendar/day-canvas?userId=${userId}&date=${dateStr}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -79,24 +75,25 @@ export default function DayCanvasWidget({ onViewAll }: DayCanvasWidgetProps) {
         setDayCanvas(data.canvas);
         setNotesText(data.canvas?.content || '');
       } else {
-        console.error('❌ DayCanvas: Failed to fetch:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ DayCanvas: Failed to fetch:', response.status, errorData);
+        showToast?.('Failed to load day canvas', 'error');
       }
     } catch (error) {
       console.error('💥 DayCanvas: Error fetching day canvas:', error);
+      showToast?.('Error loading day canvas', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const updateDayCanvas = async (updates: Partial<DayCanvas>) => {
+    if (!userId) return false;
+
     try {
-      const userData = localStorage.getItem('user');
-      if (!userData) return;
-      
-      const user = JSON.parse(userData);
-      const userId = user._id;
-      
-      const today = new Date().toISOString();
+      // FIX: Use YYYY-MM-DD format for consistency
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
 
       const response = await fetch('/api/calendar/day-canvas', {
         method: 'POST',
@@ -105,7 +102,7 @@ export default function DayCanvasWidget({ onViewAll }: DayCanvasWidgetProps) {
         },
         body: JSON.stringify({
           userId,
-          date: today,
+          date: dateStr,
           ...updates
         }),
       });
@@ -271,6 +268,14 @@ export default function DayCanvasWidget({ onViewAll }: DayCanvasWidgetProps) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className={`w-8 h-8 border-2 ${colors.textAccent} border-t-transparent rounded-full animate-spin`}></div>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className={`${colors.textMuted} text-sm`}>No user data available</p>
       </div>
     );
   }

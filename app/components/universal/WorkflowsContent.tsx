@@ -1,11 +1,12 @@
 // ============================================
 // UPDATED: app/components/universal/WorkflowsContent.tsx
 // Added error handling for deletion with active tickets
+// Updated with consistent loading screen
 // ============================================
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import FunctionalityCard from './WorkflowComponents/FunctionalityCard';
 import WorkflowModal from './WorkflowComponents/WorkflowModal';
@@ -131,8 +132,23 @@ export default function WorkflowsContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="w-12 h-12 animate-spin" style={{ color: colors.brandBlue }} />
+      <div className={`min-h-screen bg-gradient-to-br ${colors.background} p-8`}>
+        <div className="mb-8">
+          <h1 className={`text-4xl font-black ${colors.textPrimary} mb-2`}>
+            Workflow Management
+          </h1>
+          <p className={colors.textSecondary}>
+            Loading functionalities and workflows...
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center space-y-4">
+            <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+            <p className={`${colors.textPrimary} text-base font-bold`}>
+              Loading workflows...
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

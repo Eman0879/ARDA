@@ -62,7 +62,7 @@ async function createCalendarEvent(eventData: any) {
   }
 }
 
-// GET - Fetch all projects for department
+// GET - Fetch all projects for department head
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const department = searchParams.get('department');
     const status = searchParams.get('status');
+    const username = searchParams.get('username'); // Dept head's username
     
     if (!department) {
       return NextResponse.json(
@@ -78,7 +79,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const query: any = { department };
+    // Build query to include:
+    // 1. Projects in this department
+    // 2. Projects where dept head is a member (cross-department projects)
+    const query: any = {
+      $or: [
+        { department }, // Own department projects
+        { 'members.username': username, 'members.role': 'dept-head' } // Cross-dept projects where added as dept-head
+      ]
+    };
+
     if (status && status !== 'all') {
       query.status = status;
     }
@@ -123,9 +133,9 @@ export async function POST(request: NextRequest) {
       targetEndDate 
     } = body;
 
-    if (!title || !description || !department || !createdBy || !members || !groupLead) {
+    if (!title || !description || !department || !createdBy || !members || !groupLead || !targetEndDate) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields. Target end date is required.' },
         { status: 400 }
       );
     }
@@ -142,6 +152,27 @@ export async function POST(request: NextRequest) {
       projectNumber = 'PRJ-0001';
     }
 
+    // Fetch usernames for all members by their userId
+    const memberUserIds = members.map((m: any) => m.userId);
+    const employeeRecords = await FormData.find({ _id: { $in: memberUserIds } })
+      .select('_id username');
+    
+    // Create a map of userId -> username
+    const userIdToUsername = new Map();
+    employeeRecords.forEach((emp: any) => {
+      userIdToUsername.set(emp._id.toString(), emp.username);
+    });
+
+    // Enrich members with username
+    const enrichedMembers = members.map((m: any) => ({
+      userId: m.userId,
+      username: userIdToUsername.get(m.userId) || m.userId, // Fallback to userId if username not found
+      name: m.name,
+      role: m.role,
+      department: m.department,
+      joinedAt: new Date()
+    }));
+
     const project = new Project({
       projectNumber,
       title,
@@ -149,13 +180,10 @@ export async function POST(request: NextRequest) {
       department,
       createdBy,
       createdByName,
-      members: members.map((m: any) => ({
-        ...m,
-        joinedAt: new Date()
-      })),
+      members: enrichedMembers,
       groupLead,
       startDate: new Date(startDate),
-      targetEndDate: targetEndDate ? new Date(targetEndDate) : undefined,
+      targetEndDate: new Date(targetEndDate),
       status: 'active',
       deliverables: [],
       chat: [],
@@ -164,20 +192,20 @@ export async function POST(request: NextRequest) {
 
     await project.save();
 
-    // Get all unique user IDs from members
-    const memberUserIds = members.map((m: any) => m.userId);
+    // Get all unique user IDs from members for calendar sync
+    const allUserIds = memberUserIds;
     
     // Get dept head's userId from FormData using createdBy (username)
     const deptHeadUser = await FormData.findOne({ username: createdBy }).select('_id');
     const deptHeadUserId = deptHeadUser ? deptHeadUser._id.toString() : null;
     
     // Combine member userIds and dept head userId
-    const allUserIds = deptHeadUserId 
-      ? [...new Set([...memberUserIds, deptHeadUserId])]
-      : [...new Set(memberUserIds)];
+    const allUserIdsWithHead = deptHeadUserId 
+      ? [...new Set([...allUserIds, deptHeadUserId])]
+      : [...new Set(allUserIds)];
 
     // Create calendar events for all involved users
-    const calendarSyncPromises = allUserIds.map(async (userId: string) => {
+    const calendarSyncPromises = allUserIdsWithHead.map(async (userId: string) => {
       try {
         // Create project start event
         await createCalendarEvent({
@@ -192,20 +220,18 @@ export async function POST(request: NextRequest) {
           color: '#4CAF50'
         });
 
-        // Create project end/deadline event if targetEndDate exists
-        if (targetEndDate) {
-          await createCalendarEvent({
-            userId: userId,
-            type: 'deadline',
-            title: `Project Deadline: ${title}`,
-            description: `${projectNumber} - ${description}`,
-            startTime: new Date(targetEndDate),
-            endTime: new Date(targetEndDate),
-            priority: 'high',
-            linkedProjectId: project._id.toString(),
-            color: '#F44336'
-          });
-        }
+        // Create project end/deadline event
+        await createCalendarEvent({
+          userId: userId,
+          type: 'deadline',
+          title: `Project Deadline: ${title}`,
+          description: `${projectNumber} - ${description}`,
+          startTime: new Date(targetEndDate),
+          endTime: new Date(targetEndDate),
+          priority: 'high',
+          linkedProjectId: project._id.toString(),
+          color: '#F44336'
+        });
       } catch (err) {
         console.error(`Calendar sync error for user ${userId}:`, err);
       }

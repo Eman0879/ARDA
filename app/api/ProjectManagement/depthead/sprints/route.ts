@@ -62,7 +62,7 @@ async function createCalendarEvent(eventData: any) {
   }
 }
 
-// GET - Fetch all sprints for department
+// GET - Fetch all sprints for department head
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
     const department = searchParams.get('department');
     const projectId = searchParams.get('projectId');
     const status = searchParams.get('status');
+    const username = searchParams.get('username'); // Dept head's username
     
     if (!department) {
       return NextResponse.json(
@@ -79,7 +80,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const query: any = { department };
+    // Build query to include:
+    // 1. Sprints in this department
+    // 2. Sprints where dept head is a member (cross-department sprints)
+    const query: any = {
+      $or: [
+        { department }, // Own department sprints
+        { 'members.username': username, 'members.role': 'dept-head' } // Cross-dept sprints where added as dept-head
+      ]
+    };
+
     if (projectId) {
       query.projectId = projectId;
     }
@@ -149,6 +159,27 @@ export async function POST(request: NextRequest) {
       sprintNumber = 'SPR-0001';
     }
 
+    // Fetch usernames for all members by their userId
+    const memberUserIds = members.map((m: any) => m.userId);
+    const employeeRecords = await FormData.find({ _id: { $in: memberUserIds } })
+      .select('_id username');
+    
+    // Create a map of userId -> username
+    const userIdToUsername = new Map();
+    employeeRecords.forEach((emp: any) => {
+      userIdToUsername.set(emp._id.toString(), emp.username);
+    });
+
+    // Enrich members with username
+    const enrichedMembers = members.map((m: any) => ({
+      userId: m.userId,
+      username: userIdToUsername.get(m.userId) || m.userId, // Fallback to userId if username not found
+      name: m.name,
+      role: m.role,
+      department: m.department,
+      joinedAt: new Date()
+    }));
+
     // Create default action
     const action = {
       title: defaultAction?.title || 'Sprint Kickoff',
@@ -181,10 +212,7 @@ export async function POST(request: NextRequest) {
       projectNumber,
       createdBy,
       createdByName,
-      members: members.map((m: any) => ({
-        ...m,
-        joinedAt: new Date()
-      })),
+      members: enrichedMembers,
       groupLead,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
@@ -196,20 +224,20 @@ export async function POST(request: NextRequest) {
 
     await sprint.save();
 
-    // Get all unique user IDs from members
-    const memberUserIds = members.map((m: any) => m.userId);
+    // Get all unique user IDs from members for calendar sync
+    const allUserIds = memberUserIds;
     
     // Get dept head's userId from FormData using createdBy (username)
     const deptHeadUser = await FormData.findOne({ username: createdBy }).select('_id');
     const deptHeadUserId = deptHeadUser ? deptHeadUser._id.toString() : null;
     
     // Combine member userIds and dept head userId
-    const allUserIds = deptHeadUserId 
-      ? [...new Set([...memberUserIds, deptHeadUserId])]
-      : [...new Set(memberUserIds)];
+    const allUserIdsWithHead = deptHeadUserId 
+      ? [...new Set([...allUserIds, deptHeadUserId])]
+      : [...new Set(allUserIds)];
     
     // Create calendar events for all involved users
-    const calendarSyncPromises = allUserIds.map(async (userId: string) => {
+    const calendarSyncPromises = allUserIdsWithHead.map(async (userId: string) => {
       try {
         // Create sprint start event
         await createCalendarEvent({

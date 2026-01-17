@@ -15,11 +15,12 @@ import ManageUsersContent from '../components/HRManageUsersContent';
 import OrgInfoContent from '@/app/components/universal/OrgInfoContent';
 import WorkflowsContent from '@/app/components/universal/WorkflowsContent';
 import SettingsContent from '@/app/components/universal/SettingsContent';
-import EmployeeProjectView from '@/app/components/employee-project/EmployeeProjectView';
+import EmployeeProjectsDashboard from '@/app/components/ProjectManagement/employee/EmployeeProjectsDashboard';
 import TicketingContent from '@/app/components/ticketing/TicketingContent';
 import AssignedTicketsContent from '@/app/components/ticketing/AssignedTicketsContent';
 import AnnouncementsPage from '@/app/components/DeptHeadAnnouncements/AnnouncementsPage';
 import OrgAnnouncementsPage from '@/app/components/universal/OrgAnnouncementsPage';
+import { Loader2 } from 'lucide-react';
 
 interface UserData {
   username: string;
@@ -48,7 +49,7 @@ export default function EmployeeDashboard() {
     if (userData) {
       setUser(JSON.parse(userData));
     } else {
-      router.push('/auth/login');
+      router.push('/login');
     }
   }, [router]);
 
@@ -56,12 +57,27 @@ export default function EmployeeDashboard() {
     return (
       <div className={`min-h-screen bg-gradient-to-br ${colors.background} flex items-center justify-center relative overflow-hidden`}>
         <div className="relative text-center space-y-4">
-          <div className="w-12 h-12 border-2 border-[#0000FF] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className={`${colors.textPrimary} text-lg font-black`}>Loading Dashboard...</p>
+          <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+          <p className={`${colors.textPrimary} text-lg font-bold`}>Loading Dashboard...</p>
           <div className="flex items-center justify-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-[#0000FF] rounded-full animate-bounce"></div>
-            <div className="w-1.5 h-1.5 bg-[#6495ED] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-1.5 h-1.5 bg-[#FF0000] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div 
+              className="w-1.5 h-1.5 rounded-full animate-bounce"
+              style={{ backgroundColor: colors.glowPrimary }}
+            />
+            <div 
+              className="w-1.5 h-1.5 rounded-full animate-bounce" 
+              style={{ 
+                backgroundColor: colors.glowSecondary,
+                animationDelay: '0.1s' 
+              }}
+            />
+            <div 
+              className="w-1.5 h-1.5 rounded-full animate-bounce" 
+              style={{ 
+                backgroundColor: colors.glowAccent,
+                animationDelay: '0.2s' 
+              }}
+            />
           </div>
         </div>
       </div>
@@ -79,9 +95,14 @@ export default function EmployeeDashboard() {
       
       case 'assigned-tickets':
         return <AssignedTicketsContent />;
-      
+
       case 'projects':
-        return <EmployeeProjectView />;
+        return (
+          <EmployeeProjectsDashboard 
+            userId={user.username}
+            userName={user.displayName}
+          />
+        );
       
       case 'calendar':
         return <CalendarView />;

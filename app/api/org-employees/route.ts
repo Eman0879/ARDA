@@ -31,10 +31,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch employees
-    const employees = await FormData.find(query)
+    const employeesRaw = await FormData.find(query)
       .select('_id basicDetails.name username title department basicDetails.profileImage')
       .sort({ 'basicDetails.name': 1 })
       .lean();
+
+    // Transform to include 'name' field at top level
+    const employees = employeesRaw.map(emp => ({
+      _id: emp._id,
+      name: emp.basicDetails?.name || emp.username, // Extract name from basicDetails
+      username: emp.username,
+      title: emp.title,
+      department: emp.department,
+      profileImage: emp.basicDetails?.profileImage,
+      'basicDetails.name': emp.basicDetails?.name || emp.username // Keep for backwards compatibility
+    }));
 
     console.log(`📋 Fetched ${employees.length} employees from organization`);
 

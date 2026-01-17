@@ -17,7 +17,8 @@ import {
   Download,
   Calendar,
   TicketIcon,
-  Megaphone
+  Megaphone,
+  FolderKanban
 } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -59,7 +60,7 @@ export default function HRHeadSidebar({ activeItem, onItemClick, isOpen, onClose
   // Broadcast
   {
     id: 'announcements',
-    label: 'Announcements',
+    label: 'Dept Announcements',
     icon: <Megaphone className="h-3.5 w-3.5" />,
     color: theme === 'dark' ? '#64B5F6' : '#2196F3',
     visible: true
@@ -68,6 +69,13 @@ export default function HRHeadSidebar({ activeItem, onItemClick, isOpen, onClose
     id: 'org-announcements',
     label: 'Org Announcements',
     icon: <Megaphone className="h-3.5 w-3.5" />,
+    color: theme === 'dark' ? '#64B5F6' : '#2196F3',
+    visible: true
+  },
+  {
+    id: 'projects',
+    label: 'Project Management',
+    icon: <FolderKanban className="h-3.5 w-3.5" />,
     color: theme === 'dark' ? '#64B5F6' : '#2196F3',
     visible: true
   },
