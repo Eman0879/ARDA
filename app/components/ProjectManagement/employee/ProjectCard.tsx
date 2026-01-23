@@ -1,4 +1,4 @@
-// app/components/ProjectManagement/depthead/ProjectCard.tsx
+// app/components/ProjectViewment/depthead/ProjectCard.tsx
 'use client';
 
 import React from 'react';
@@ -10,7 +10,7 @@ interface ProjectCardProps {
   onClick: () => void;
 }
 
-export default function ProjectCard({ project, onClick }: ProjectCardProps) {
+export default function EmployeeProjectCard({ project, onClick }: ProjectCardProps) {
   const { colors, cardCharacters } = useTheme();
 
   // Get health-based character - FIXED: at-risk should use urgent/warning colors, not informative (blue)
@@ -64,7 +64,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
           
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 group-hover:translate-x-1 bg-gradient-to-r ${charColors.bg}`}>
             <span className={`text-xs font-bold ${charColors.accent}`}>
-              Manage
+              View
             </span>
             <ChevronRight 
               className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${charColors.iconColor}`}

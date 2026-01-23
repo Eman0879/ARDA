@@ -4,44 +4,58 @@
 import React, { useState } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
 import {
-  ChevronDown,
-  ChevronUp,
-  Users,
+  Zap,
+  ChevronRight,
   Calendar,
   MessageSquare,
   AlertTriangle,
-  Clock,
-  Send,
-  PlayCircle,
-  CheckCircle
+  Play,
+  Send as SendIcon,
+  Loader2,
+  Paperclip,
+  X,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  File,
+  Flag,
+  Clock
 } from 'lucide-react';
 
 interface EmployeeActionCardProps {
   action: any;
   sprintId: string;
+  sprintNumber: string;
   userId: string;
   userName: string;
   isLead: boolean;
+  myUserId: string;
   onUpdate: () => void;
+  viewOnly?: boolean;
 }
 
 export default function EmployeeActionCard({
   action,
   sprintId,
+  sprintNumber,
   userId,
   userName,
   isLead,
-  onUpdate
+  myUserId,
+  onUpdate,
+  viewOnly = false
 }: EmployeeActionCardProps) {
   const { colors, cardCharacters, showToast } = useTheme();
   
   const [expanded, setExpanded] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [blockerText, setBlockerText] = useState('');
-  const [showBlockerForm, setShowBlockerForm] = useState(false);
-  const [newDueDate, setNewDueDate] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [submissionNote, setSubmissionNote] = useState('');
+  const [blockerDescription, setBlockerDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showBlockerModal, setShowBlockerModal] = useState(false);
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const getStatusColors = (status: string) => {
     switch (status) {
@@ -53,9 +67,14 @@ export default function EmployeeActionCard({
     }
   };
 
-  const statusColors = getStatusColors(action.status);
+  const charColors = getStatusColors(action.status);
+  const unresolvedBlockers = action.blockers?.filter((b: any) => !b.isResolved) || [];
+  const isOverdue = action.dueDate && new Date(action.dueDate) < new Date() && action.status !== 'done';
+  const totalComments = action.comments?.length || 0;
+  const totalAttachments = action.attachments?.length || 0;
+  const isAssignedToMe = action.assignedTo.some((assignedId: string) => assignedId === myUserId);
 
-  const handleAction = async (actionType: string, data?: any) => {
+  const handleAction = async (actionType: string, additionalData?: any) => {
     try {
       setLoading(true);
       const response = await fetch('/api/ProjectManagement/employee/actions', {
@@ -67,285 +86,498 @@ export default function EmployeeActionCard({
           action: actionType,
           userId,
           userName,
-          ...data
+          ...additionalData
         })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update action');
       }
       
-      showToast(`Action updated successfully`, 'success');
+      const actionLabels: Record<string, string> = {
+        'start-work': 'Started working on action',
+        'submit-for-review': 'Submitted action for review',
+        'add-comment': 'Comment added',
+        'report-blocker': 'Blocker reported'
+      };
+      
+      showToast(actionLabels[actionType] || 'Action completed', 'success');
       onUpdate();
     } catch (error: any) {
-      showToast(error.message || 'Failed to update action', 'error');
+      showToast(error.message || 'Failed to perform action', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStartWork = () => handleAction('start-work');
-  const handleSubmitForReview = () => handleAction('submit-for-review');
-  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files).map((file) => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file
+    }));
+
+    setAttachments((prev) => [...prev, ...newFiles]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitForReview = async () => {
+    if (!submissionNote.trim()) {
+      showToast('Please provide a submission note', 'warning');
+      return;
+    }
+
+    const filesData = await Promise.all(
+      attachments.map(async (att) => {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(att.file);
+        });
+
+        return {
+          name: att.name,
+          data: base64.split(',')[1],
+          type: att.type,
+          size: att.size
+        };
+      })
+    );
+
+    await handleAction('submit-for-review', {
+      submissionNote,
+      files: filesData
+    });
+
+    setShowSubmitModal(false);
+    setSubmissionNote('');
+    setAttachments([]);
+  };
+
+  const handleReportBlocker = async () => {
+    if (!blockerDescription.trim()) {
+      showToast('Please describe the blocker', 'warning');
+      return;
+    }
+
+    const filesData = await Promise.all(
+      attachments.map(async (att) => {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(att.file);
+        });
+
+        return {
+          name: att.name,
+          data: base64.split(',')[1],
+          type: att.type,
+          size: att.size
+        };
+      })
+    );
+
+    await handleAction('report-blocker', {
+      description: blockerDescription,
+      files: filesData
+    });
+
+    setShowBlockerModal(false);
+    setBlockerDescription('');
+    setAttachments([]);
+  };
+
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
+
     await handleAction('add-comment', { message: commentText });
     setCommentText('');
   };
 
-  const handleReportBlocker = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!blockerText.trim()) return;
-    await handleAction('report-blocker', { description: blockerText });
-    setBlockerText('');
-    setShowBlockerForm(false);
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) return <ImageIcon className="w-4 h-4" />;
+    if (['pdf'].includes(ext || '')) return <FileText className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
   };
 
-  const handleUpdateDeadline = async () => {
-    if (!newDueDate) return;
-    await handleAction('update-deadline', { newDueDate });
-    setShowDatePicker(false);
-    setNewDueDate('');
+  const getAttachmentUrl = (attachmentPath: string): string => {
+    return `/api/download?path=${encodeURIComponent(attachmentPath)}`;
   };
 
-  const unresolvedBlockers = action.blockers?.filter((b: any) => !b.isResolved) || [];
-  const canStartWork = action.status === 'pending';
-  const canSubmit = action.status === 'in-progress';
-
-  return (
-    <div className={`group relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${cardCharacters.neutral.bg} ${cardCharacters.neutral.border} ${colors.shadowCard}`}>
-      <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-
-      {/* Header */}
+  if (!expanded) {
+    // COLLAPSED STATE
+    return (
       <div
-        className="relative p-4 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setExpanded(true)}
+        className={`group relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} ${colors.shadowCard} hover:${colors.shadowHover} transition-all duration-300 hover:scale-[1.02] cursor-pointer ${viewOnly ? 'opacity-70' : ''}`}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className={`text-base font-black ${colors.textPrimary}`}>
-                {action.title}
-              </h4>
-              <div className={`px-3 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${statusColors.bg} ${statusColors.text}`}>
-                {action.status.toUpperCase().replace('-', ' ')}
-              </div>
-              {unresolvedBlockers.length > 0 && (
-                <div className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.urgent.bg} ${cardCharacters.urgent.text}`}>
-                  <AlertTriangle className="w-3 h-3" />
-                  {unresolvedBlockers.length} Blocker{unresolvedBlockers.length !== 1 ? 's' : ''}
-                </div>
-              )}
+        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+        <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{ boxShadow: `inset 0 0 20px ${colors.glowPrimary}` }}
+        ></div>
+
+        <div className="relative p-6 space-y-4">
+          <div className="flex items-start justify-between">
+            <div 
+              className={`p-3 rounded-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 bg-gradient-to-r ${charColors.bg}`}
+            >
+              <Zap className={`w-7 h-7 transition-transform duration-500 group-hover:rotate-12 ${charColors.iconColor}`} />
             </div>
             
-            <p className={`text-sm ${colors.textSecondary} ${!expanded && 'line-clamp-2'}`}>
-              {action.description}
-            </p>
-            
-            <div className={`flex items-center gap-3 text-xs ${colors.textMuted}`}>
-              <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                <span>{action.assignedTo?.length || 0} assigned</span>
-              </div>
-              {action.dueDate && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Due {new Date(action.dueDate).toLocaleDateString()}</span>
-                  </div>
-                </>
-              )}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 group-hover:translate-x-1 bg-gradient-to-r ${charColors.bg}`}>
+              <span className={`text-xs font-bold ${charColors.accent}`}>
+                {viewOnly ? 'View' : 'Manage'}
+              </span>
+              <ChevronRight 
+                className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${charColors.iconColor}`}
+              />
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className={`text-xl font-black ${charColors.text} line-clamp-1 group-hover:${charColors.accent} transition-colors duration-300`}>
+              {action.title}
+            </h3>
           </div>
           
-          <button className={`p-2 rounded-lg transition-all ${colors.cardBg}`}>
-            {expanded ? (
-              <ChevronUp className={`w-5 h-5 ${colors.textMuted}`} />
-            ) : (
-              <ChevronDown className={`w-5 h-5 ${colors.textMuted}`} />
+          <p className={`text-sm ${colors.textSecondary} line-clamp-2 min-h-[2.5rem] leading-relaxed`}>
+            {action.description || 'No description provided'}
+          </p>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {!viewOnly && !isAssignedToMe && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.badge} ${colors.badgeText}`}>
+                <span className={`text-xs font-semibold`}>
+                  Not Assigned
+                </span>
+              </div>
             )}
-          </button>
+            
+            {totalComments > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <MessageSquare className={`w-3.5 h-3.5 ${colors.textMuted}`} />
+                <span className={`text-xs font-semibold ${colors.textSecondary}`}>
+                  {totalComments}
+                </span>
+              </div>
+            )}
+            
+            {totalAttachments > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <Paperclip className={`w-3.5 h-3.5 ${colors.textMuted}`} />
+                <span className={`text-xs font-semibold ${colors.textSecondary}`}>
+                  {totalAttachments}
+                </span>
+              </div>
+            )}
+
+            {unresolvedBlockers.length > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg}`}>
+                <AlertTriangle className={`w-3.5 h-3.5 ${cardCharacters.urgent.iconColor}`} />
+                <span className={`text-xs font-bold ${cardCharacters.urgent.text}`}>
+                  {unresolvedBlockers.length} blocker{unresolvedBlockers.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className={`flex items-center justify-between pt-4 border-t ${charColors.border} transition-colors duration-300`}>
+            <div className="flex items-center gap-2">
+              <div 
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-300 bg-gradient-to-r ${charColors.bg} ${charColors.text}`}
+              >
+                {action.status.toUpperCase().replace('-', ' ')}
+              </div>
+            </div>
+            
+            {action.dueDate && (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isOverdue ? `bg-gradient-to-r ${cardCharacters.urgent.bg} border ${cardCharacters.urgent.border}` : `${colors.inputBg} border ${colors.inputBorder}`}`}>
+                <Calendar className={`w-3.5 h-3.5 ${isOverdue ? cardCharacters.urgent.iconColor : colors.textMuted}`} />
+                <span className={`text-xs font-semibold ${isOverdue ? cardCharacters.urgent.text + ' font-bold' : colors.textSecondary}`}>
+                  {new Date(action.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Expanded Content */}
-      {expanded && (
-        <div className="relative border-t ${colors.border} p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-          {/* Action Buttons */}
-          <div>
-            <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>ACTIONS</h5>
-            <div className="flex flex-wrap gap-2">
-              {canStartWork && (
-                <button
-                  onClick={handleStartWork}
-                  disabled={loading}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.interactive.bg} ${cardCharacters.interactive.text} disabled:opacity-50`}
-                >
-                  <PlayCircle className="w-3 h-3" />
-                  START WORK
-                </button>
+  // EXPANDED STATE - Same structure as EmployeeDeliverableCard, just adjusted for actions
+  return (
+    <>
+      <div 
+        className={`relative overflow-hidden rounded-xl border-2 backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} hover:shadow-lg transition-all duration-300 ${viewOnly ? 'opacity-70' : ''}`}
+      >
+        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03] pointer-events-none`}></div>
+        <div 
+          className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          style={{ boxShadow: `inset 0 0 20px ${colors.glowPrimary}` }}
+        ></div>
+
+        {/* Header */}
+        <div 
+          className="relative p-4 cursor-pointer"
+          onClick={() => setExpanded(false)}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className={`p-2 rounded-lg bg-gradient-to-r ${charColors.bg}`}>
+                <Zap className={`w-5 h-5 ${charColors.iconColor}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className={`text-base font-bold ${charColors.text} truncate`}>
+                  {action.title}
+                </h3>
+                <p className={`text-sm ${charColors.text} opacity-70 truncate mt-0.5`}>
+                  Click to collapse
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {!isAssignedToMe && (
+                <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${colors.badge} ${colors.badgeText}`}>
+                  View Only
+                </div>
               )}
-              
-              {canSubmit && (
-                <button
-                  onClick={handleSubmitForReview}
-                  disabled={loading}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.informative.bg} ${cardCharacters.informative.text} disabled:opacity-50`}
-                >
-                  <CheckCircle className="w-3 h-3" />
-                  SUBMIT FOR REVIEW
-                </button>
-              )}
-              
-              {!showBlockerForm && (
-                <button
-                  onClick={() => setShowBlockerForm(true)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 border-2 ${cardCharacters.urgent.border} ${cardCharacters.urgent.text}`}
-                >
-                  <AlertTriangle className="w-3 h-3" />
-                  REPORT BLOCKER
-                </button>
+              {unresolvedBlockers.length > 0 && (
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg} ${cardCharacters.urgent.border} border`}>
+                  <AlertTriangle className={`w-4 h-4 ${cardCharacters.urgent.iconColor}`} />
+                  <span className={`text-sm font-bold ${cardCharacters.urgent.text}`}>{unresolvedBlockers.length}</span>
+                </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Deadline Management (Lead Only) */}
-          {isLead && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h5 className={`text-xs font-bold ${colors.textMuted}`}>DEADLINE (LEAD ONLY)</h5>
-                <button
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className={`text-xs font-bold ${cardCharacters.interactive.text}`}
-                >
-                  {action.dueDate ? 'Update' : 'Set Deadline'}
-                </button>
-              </div>
-              
-              {showDatePicker && (
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={newDueDate}
-                    onChange={(e) => setNewDueDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText}`}
-                  />
-                  <button
-                    onClick={handleUpdateDeadline}
-                    disabled={!newDueDate || loading}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50`}
-                  >
-                    Save
-                  </button>
-                </div>
-              )}
+        {/* Content - Same as EmployeeDeliverableCard but for actions */}
+        <div 
+          className={`relative border-t-2 ${charColors.border} p-4 space-y-4`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div>
+            <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>DESCRIPTION</h5>
+            <p className={`text-sm ${charColors.text} leading-relaxed`}>{action.description}</p>
+          </div>
+
+          {action.submissionNote && (
+            <div className={`p-3 rounded-lg bg-gradient-to-r ${cardCharacters.informative.bg} border-2 ${cardCharacters.informative.border}`}>
+              <h5 className={`text-xs font-bold ${colors.textMuted} mb-1.5`}>SUBMISSION NOTE</h5>
+              <p className={`text-sm ${colors.textPrimary} mb-2`}>{action.submissionNote}</p>
+              <p className={`text-xs ${colors.textMuted}`}>Submitted {new Date(action.submittedAt).toLocaleDateString()}</p>
             </div>
           )}
 
-          {/* Blockers */}
-          {(unresolvedBlockers.length > 0 || showBlockerForm) && (
+          {!viewOnly && isAssignedToMe && (
             <div>
-              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>BLOCKERS</h5>
-              
-              <div className="space-y-2">
-                {action.blockers?.map((blocker: any, index: number) => (
-                  <div
-                    key={index}
-                    className={`p-3 rounded-lg ${
-                      blocker.isResolved
-                        ? `${colors.cardBg} opacity-60`
-                        : `bg-gradient-to-r ${cardCharacters.urgent.bg}`
-                    }`}
+              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>QUICK ACTIONS</h5>
+              <div className="flex flex-wrap gap-2">
+                {action.status === 'pending' && (
+                  <button 
+                    onClick={() => handleAction('start-work')} 
+                    disabled={loading}
+                    className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.interactive.bg} ${cardCharacters.interactive.text} border-2 ${cardCharacters.interactive.border} disabled:opacity-50 transition-all`}
                   >
-                    <p className={`text-sm ${colors.textPrimary} mb-2`}>
-                      {blocker.description}
-                    </p>
-                    <span className={`text-xs ${colors.textMuted}`}>
-                      {blocker.reportedBy} • {new Date(blocker.reportedAt).toLocaleDateString()}
-                      {blocker.isResolved && ` • Resolved by ${blocker.resolvedBy}`}
-                    </span>
-                  </div>
-                ))}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                    <span>Start Work</span>
+                  </button>
+                )}
                 
-                {showBlockerForm && (
-                  <form onSubmit={handleReportBlocker} className="flex gap-2">
-                    <input
-                      value={blockerText}
-                      onChange={(e) => setBlockerText(e.target.value)}
-                      placeholder="Describe the blocker..."
-                      className={`flex-1 px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText}`}
-                      autoFocus
-                    />
-                    <button
-                      type="submit"
-                      disabled={!blockerText.trim() || loading}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r ${cardCharacters.urgent.bg} ${cardCharacters.urgent.text} disabled:opacity-50`}
-                    >
-                      Report
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowBlockerForm(false);
-                        setBlockerText('');
-                      }}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold ${colors.buttonSecondary} ${colors.buttonSecondaryText}`}
-                    >
-                      Cancel
-                    </button>
-                  </form>
+                {action.status === 'in-progress' && (
+                  <button 
+                    onClick={() => setShowSubmitModal(true)} 
+                    disabled={loading}
+                    className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.text} border-2 ${cardCharacters.completed.border} disabled:opacity-50 transition-all`}
+                  >
+                    <SendIcon className="w-4 h-4" />
+                    <span>Submit for Review</span>
+                  </button>
+                )}
+                
+                {action.status !== 'done' && (
+                  <button 
+                    onClick={() => setShowBlockerModal(true)} 
+                    disabled={loading}
+                    className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.urgent.bg} ${cardCharacters.urgent.text} border-2 ${cardCharacters.urgent.border} disabled:opacity-50 transition-all`}
+                  >
+                    <Flag className="w-4 h-4" />
+                    <span>Report Blocker</span>
+                  </button>
                 )}
               </div>
             </div>
           )}
 
-          {/* Comments */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <MessageSquare className={`w-4 h-4 ${colors.textMuted}`} />
-              <h5 className={`text-xs font-bold ${colors.textMuted}`}>
-                COMMENTS ({action.comments?.length || 0})
-              </h5>
+          {unresolvedBlockers.length > 0 && (
+            <div>
+              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>BLOCKERS ({unresolvedBlockers.length})</h5>
+              <div className="space-y-2">
+                {action.blockers?.map((blocker: any, index: number) => {
+                  if (blocker.isResolved) return null;
+                  return (
+                    <div key={index} className={`p-3 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg} border-2 ${cardCharacters.urgent.border}`}>
+                      <p className={`text-sm ${colors.textPrimary}`}>{blocker.description}</p>
+                      <p className={`text-xs ${colors.textMuted} mt-2`}>{blocker.reportedBy} • {new Date(blocker.reportedAt).toLocaleDateString()}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            
-            <div className="space-y-3 mb-3">
-              {action.comments?.map((comment: any, index: number) => (
-                <div key={index} className={`p-3 rounded-lg ${colors.cardBg}`}>
-                  <div className="flex justify-between mb-1">
-                    <span className={`text-sm font-bold ${colors.textPrimary}`}>
-                      {comment.userName}
-                    </span>
-                    <span className={`text-xs ${colors.textMuted}`}>
-                      {new Date(comment.createdAt).toLocaleString()}
-                    </span>
+          )}
+
+          {action.attachments && action.attachments.length > 0 && (
+            <div>
+              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2 flex items-center gap-1.5`}>
+                <Paperclip className="w-4 h-4" /> ATTACHMENTS ({action.attachments.length})
+              </h5>
+              <div className="grid grid-cols-2 gap-2">
+                {action.attachments.map((attachment: string, index: number) => {
+                  const fileName = attachment.split('/').pop()?.split('_').slice(1).join('_') || 'File';
+                  const fileUrl = getAttachmentUrl(attachment);
+                  
+                  return (
+                    <a key={index} href={fileUrl} download target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-2.5 rounded-lg border-2 ${charColors.border} ${colors.cardBg} hover:${colors.cardBgHover} transition-all group/file`}>
+                      <div className={`p-1.5 rounded bg-gradient-to-r ${charColors.bg} ${charColors.iconColor}`}>{getFileIcon(fileName)}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-bold ${colors.textPrimary} truncate`}>{fileName}</p>
+                      </div>
+                      <Download className={`w-4 h-4 ${colors.textMuted} group-hover/file:${charColors.iconColor}`} />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h5 className={`text-xs font-bold ${colors.textMuted} mb-2 flex items-center gap-1.5`}>
+              <MessageSquare className="w-4 h-4" /> COMMENTS ({action.comments?.length || 0})
+            </h5>
+            <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
+              {action.comments?.slice(-3).map((comment: any, index: number) => (
+                <div key={index} className={`p-2.5 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                  <div className="flex justify-between items-start mb-1">
+                    <span className={`text-sm font-bold ${colors.textPrimary}`}>{comment.userName}</span>
+                    <span className={`text-xs ${colors.textMuted}`}>{new Date(comment.createdAt).toLocaleString()}</span>
                   </div>
                   <p className={`text-sm ${colors.textSecondary}`}>{comment.message}</p>
                 </div>
               ))}
             </div>
-            
             <form onSubmit={handleAddComment} className="flex gap-2">
-              <input
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Add a comment..."
-                className={`flex-1 px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText}`}
+              <input 
+                value={commentText} 
+                onChange={(e) => setCommentText(e.target.value)} 
+                placeholder="Add comment..." 
+                disabled={loading}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} disabled:opacity-50`} 
               />
-              <button
-                type="submit"
+              <button 
+                type="submit" 
                 disabled={!commentText.trim() || loading}
-                className={`p-2 rounded-lg ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50`}
+                className={`px-3 py-2 rounded-lg ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50 hover:scale-105 transition-transform`}
               >
-                <Send className="w-4 h-4" />
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <SendIcon className="w-4 h-4" />}
               </button>
             </form>
           </div>
         </div>
+      </div>
+
+      {/* Submit Modal - Same as EmployeeDeliverableCard */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowSubmitModal(false)}>
+          <div className={`relative overflow-hidden rounded-xl border-2 backdrop-blur-sm bg-gradient-to-br ${colors.cardBg} ${colors.border} max-w-2xl w-full p-6 space-y-4`} onClick={(e) => e.stopPropagation()}>
+            <h3 className={`text-xl font-black ${colors.textPrimary}`}>Submit for Review</h3>
+            <textarea
+              value={submissionNote}
+              onChange={(e) => setSubmissionNote(e.target.value)}
+              placeholder="Describe what you've completed..."
+              rows={4}
+              className={`w-full px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText}`}
+            />
+            
+            <div>
+              <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" />
+              <button onClick={() => fileInputRef.current?.click()} className={`px-4 py-2 rounded-lg ${colors.buttonSecondary} ${colors.buttonSecondaryText} flex items-center gap-2`}>
+                <Paperclip className="w-4 h-4" />
+                Attach Files
+              </button>
+              {attachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.map((att, i) => (
+                    <div key={i} className={`flex items-center justify-between p-2 rounded ${colors.inputBg}`}>
+                      <span className={`text-sm ${colors.textPrimary}`}>{att.name}</span>
+                      <button onClick={() => removeAttachment(i)}><X className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <button onClick={handleSubmitForReview} disabled={loading} className={`flex-1 px-4 py-2 rounded-lg ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Submit'}
+              </button>
+              <button onClick={() => setShowSubmitModal(false)} className={`px-4 py-2 rounded-lg ${colors.buttonGhost} ${colors.buttonGhostText}`}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+
+      {/* Blocker Modal - Same as EmployeeDeliverableCard */}
+      {showBlockerModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowBlockerModal(false)}>
+          <div className={`relative overflow-hidden rounded-xl border-2 backdrop-blur-sm bg-gradient-to-br ${colors.cardBg} ${colors.border} max-w-2xl w-full p-6 space-y-4`} onClick={(e) => e.stopPropagation()}>
+            <h3 className={`text-xl font-black ${colors.textPrimary}`}>Report Blocker</h3>
+            <textarea
+              value={blockerDescription}
+              onChange={(e) => setBlockerDescription(e.target.value)}
+              placeholder="Describe what's blocking progress..."
+              rows={4}
+              className={`w-full px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText}`}
+            />
+            
+            <div>
+              <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" />
+              <button onClick={() => fileInputRef.current?.click()} className={`px-4 py-2 rounded-lg ${colors.buttonSecondary} ${colors.buttonSecondaryText} flex items-center gap-2`}>
+                <Paperclip className="w-4 h-4" />
+                Attach Files
+              </button>
+              {attachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.map((att, i) => (
+                    <div key={i} className={`flex items-center justify-between p-2 rounded ${colors.inputBg}`}>
+                      <span className={`text-sm ${colors.textPrimary}`}>{att.name}</span>
+                      <button onClick={() => removeAttachment(i)}><X className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <button onClick={handleReportBlocker} disabled={loading} className={`flex-1 px-4 py-2 rounded-lg ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Report'}
+              </button>
+              <button onClick={() => setShowBlockerModal(false)} className={`px-4 py-2 rounded-lg ${colors.buttonGhost} ${colors.buttonGhostText}`}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

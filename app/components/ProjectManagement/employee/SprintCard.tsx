@@ -1,8 +1,8 @@
-// app/components/ProjectManagement/depthead/SprintCard.tsx
+// app/components/ProjectManagement/employee/SprintCard.tsx
 'use client';
 
 import React from 'react';
-import { Zap, ChevronRight, Users, Calendar, Activity, AlertTriangle } from 'lucide-react';
+import { Zap, ChevronRight, Users, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 
 interface SprintCardProps {
@@ -10,22 +10,21 @@ interface SprintCardProps {
   onClick: () => void;
 }
 
-export default function SprintCard({ sprint, onClick }: SprintCardProps) {
+export default function EmployeeSprintCard({ sprint, onClick }: SprintCardProps) {
   const { colors, cardCharacters } = useTheme();
 
-  // Get health-based character - FIXED: at-risk should use urgent/warning colors, not informative (blue)
   const getHealthCharacter = () => {
     switch (sprint.health) {
       case 'healthy':
         return cardCharacters.completed;
       case 'at-risk':
-        return cardCharacters.urgent; // Changed from informative to urgent
+        return cardCharacters.urgent;
       case 'delayed':
         return cardCharacters.urgent;
       case 'critical':
         return cardCharacters.urgent;
       default:
-        return cardCharacters.interactive;
+        return cardCharacters.neutral;
     }
   };
 
@@ -43,6 +42,7 @@ export default function SprintCard({ sprint, onClick }: SprintCardProps) {
   const now = new Date();
   const endDate = new Date(sprint.endDate);
   const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const isOverdue = daysRemaining < 0 && sprint.status === 'active';
 
   return (
     <div
@@ -69,7 +69,7 @@ export default function SprintCard({ sprint, onClick }: SprintCardProps) {
           
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 group-hover:translate-x-1 bg-gradient-to-r ${charColors.bg}`}>
             <span className={`text-xs font-bold ${charColors.accent}`}>
-              Manage
+              View
             </span>
             <ChevronRight 
               className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${charColors.iconColor}`}
@@ -101,7 +101,7 @@ export default function SprintCard({ sprint, onClick }: SprintCardProps) {
           </div>
           
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
-            <Activity className={`w-3.5 h-3.5 ${colors.textMuted}`} />
+            <Zap className={`w-3.5 h-3.5 ${colors.textMuted}`} />
             <span className={`text-xs font-semibold ${colors.textSecondary}`}>
               {totalActions} actions
             </span>
@@ -112,6 +112,14 @@ export default function SprintCard({ sprint, onClick }: SprintCardProps) {
               <AlertTriangle className={`w-3.5 h-3.5 ${cardCharacters.urgent.iconColor}`} />
               <span className={`text-xs font-bold ${cardCharacters.urgent.text}`}>
                 {overdueActions} overdue
+              </span>
+            </div>
+          )}
+
+          {sprint.isLead && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${cardCharacters.completed.bg}`}>
+              <span className={`text-xs font-bold ${cardCharacters.completed.text}`}>
+                LEAD
               </span>
             </div>
           )}
@@ -138,14 +146,14 @@ export default function SprintCard({ sprint, onClick }: SprintCardProps) {
             </div>
           </div>
           
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
-            daysRemaining < 0 ? `bg-gradient-to-r ${cardCharacters.urgent.bg}` : `${colors.inputBg} border ${colors.inputBorder}`
-          }`}>
-            <Calendar className={`w-3.5 h-3.5 ${daysRemaining < 0 ? cardCharacters.urgent.iconColor : colors.textMuted}`} />
-            <span className={`text-xs font-semibold ${daysRemaining < 0 ? cardCharacters.urgent.text : colors.textSecondary}`}>
-              {daysRemaining < 0 ? 'Overdue' : `${daysRemaining}d left`}
-            </span>
-          </div>
+          {sprint.status === 'active' && (
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isOverdue ? `bg-gradient-to-r ${cardCharacters.urgent.bg} border ${cardCharacters.urgent.border}` : `${colors.inputBg} border ${colors.inputBorder}`}`}>
+              <Clock className={`w-3.5 h-3.5 ${isOverdue ? cardCharacters.urgent.iconColor : colors.textMuted}`} />
+              <span className={`text-xs font-semibold ${isOverdue ? cardCharacters.urgent.text + ' font-bold' : colors.textSecondary}`}>
+                {daysRemaining >= 0 ? `${daysRemaining}d left` : `${Math.abs(daysRemaining)}d over`}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
