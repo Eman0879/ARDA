@@ -1,12 +1,11 @@
 // app/components/ProjectManagement/depthead/DeliverableCard.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
 import {
-  ChevronDown,
-  ChevronUp,
-  Users,
+  Package,
+  ChevronRight,
   Calendar,
   MessageSquare,
   AlertTriangle,
@@ -15,9 +14,11 @@ import {
   Clock,
   Send,
   Paperclip,
-  UserPlus,
-  UserMinus,
-  X
+  Download,
+  FileText,
+  Image as ImageIcon,
+  File,
+  Loader2
 } from 'lucide-react';
 
 interface DeliverableCardProps {
@@ -42,9 +43,6 @@ export default function DeliverableCard({
   const [expanded, setExpanded] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showMemberManager, setShowMemberManager] = useState(false);
-  const [availableMembers, setAvailableMembers] = useState<any[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(false);
 
   const getStatusColors = (status: string) => {
     switch (status) {
@@ -56,31 +54,11 @@ export default function DeliverableCard({
     }
   };
 
-  const statusColors = getStatusColors(deliverable.status);
+  const charColors = getStatusColors(deliverable.status);
   const unresolvedBlockers = deliverable.blockers?.filter((b: any) => !b.isResolved) || [];
   const isOverdue = deliverable.dueDate && new Date(deliverable.dueDate) < new Date() && deliverable.status !== 'done';
-
-  useEffect(() => {
-    if (showMemberManager && availableMembers.length === 0) {
-      fetchAvailableMembers();
-    }
-  }, [showMemberManager]);
-
-  const fetchAvailableMembers = async () => {
-    try {
-      setLoadingMembers(true);
-      const response = await fetch(`/api/dept-employees?department=${encodeURIComponent(department)}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setAvailableMembers(data.employees || []);
-      }
-    } catch (error) {
-      showToast('Failed to fetch employees', 'error');
-    } finally {
-      setLoadingMembers(false);
-    }
-  };
+  const totalComments = deliverable.comments?.length || 0;
+  const totalAttachments = deliverable.attachments?.length || 0;
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -100,8 +78,15 @@ export default function DeliverableCard({
 
       if (!response.ok) throw new Error('Failed to update status');
       
-      showToast('Status updated successfully', 'success');
-      // Stay on page - no redirect
+      const statusLabels: Record<string, string> = {
+        'in-progress': 'In Progress',
+        'in-review': 'In Review',
+        'done': 'Done',
+        'pending': 'Pending'
+      };
+      
+      showToast(`Deliverable marked as ${statusLabels[newStatus] || newStatus}`, 'success');
+      onUpdate();
     } catch (error: any) {
       showToast(error.message || 'Failed to update status', 'error');
     } finally {
@@ -111,6 +96,7 @@ export default function DeliverableCard({
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!commentText.trim()) return;
 
     try {
@@ -130,9 +116,9 @@ export default function DeliverableCard({
 
       if (!response.ok) throw new Error('Failed to add comment');
       
-      showToast('Comment added', 'success');
+      showToast('Comment added successfully', 'success');
       setCommentText('');
-      // Stay on page - no redirect
+      onUpdate();
     } catch (error: any) {
       showToast(error.message || 'Failed to add comment', 'error');
     } finally {
@@ -158,8 +144,8 @@ export default function DeliverableCard({
 
       if (!response.ok) throw new Error('Failed to resolve blocker');
       
-      showToast('Blocker resolved', 'success');
-      // Stay on page - no redirect
+      showToast('Blocker resolved successfully', 'success');
+      onUpdate();
     } catch (error: any) {
       showToast(error.message || 'Failed to resolve blocker', 'error');
     } finally {
@@ -167,393 +153,308 @@ export default function DeliverableCard({
     }
   };
 
-  const handleToggleMember = async (memberId: string) => {
-    const isAssigned = deliverable.assignedTo?.some((id: string) => id === memberId);
-    
-    try {
-      setLoading(true);
-      const response = await fetch('/api/ProjectManagement/depthead/deliverables', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          deliverableId: deliverable._id,
-          action: isAssigned ? 'remove-member' : 'add-member',
-          memberId,
-          userId,
-          userName
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update team');
-      
-      showToast(isAssigned ? 'Member removed' : 'Member added', 'success');
-      // Stay on page - no redirect
-    } catch (error: any) {
-      showToast(error.message || 'Failed to update team', 'error');
-    } finally {
-      setLoading(false);
-    }
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) return <ImageIcon className="w-4 h-4" />;
+    if (['pdf'].includes(ext || '')) return <FileText className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
   };
 
-  return (
-    <div className={`group relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${statusColors.bg} ${statusColors.border} ${colors.shadowCard} hover:${colors.shadowHover} transition-all`}>
-      <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+  const getAttachmentUrl = (attachmentPath: string): string => {
+    if (attachmentPath.includes('\\') || attachmentPath.startsWith('D:') || attachmentPath.startsWith('C:')) {
+      const uploadsIndex = attachmentPath.indexOf('uploads');
+      if (uploadsIndex !== -1) {
+        const relativePath = attachmentPath.substring(uploadsIndex).replace(/\\/g, '/');
+        return `/api/attachments/${relativePath.replace('uploads/projects/', '')}`;
+      }
+    }
+    return `/api/attachments/${attachmentPath.replace('uploads/projects/', '')}`;
+  };
 
-      {/* Header */}
+  if (!expanded) {
+    // COLLAPSED STATE - Mini Project Card Style
+    return (
       <div
-        className="relative p-4 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setExpanded(true)}
+        className={`group relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} ${colors.shadowCard} hover:${colors.shadowHover} transition-all duration-300 hover:scale-[1.02] cursor-pointer`}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className={`text-base font-black ${statusColors.text}`}>
-                {deliverable.title}
-              </h4>
-              <div className={`px-3 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${statusColors.bg}`}>
-                {deliverable.status.toUpperCase().replace('-', ' ')}
-              </div>
-              {unresolvedBlockers.length > 0 && (
-                <div className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.urgent.bg}`}>
-                  <AlertTriangle className={`w-3 h-3 ${cardCharacters.urgent.iconColor}`} />
-                  {unresolvedBlockers.length}
-                </div>
-              )}
-              {isOverdue && (
-                <div className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.urgent.bg}`}>
-                  <Clock className={`w-3 h-3 ${cardCharacters.urgent.iconColor}`} />
-                  OVERDUE
-                </div>
-              )}
+        {/* Paper Texture */}
+        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+        
+        {/* Internal Glow on Hover */}
+        <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{ boxShadow: `inset 0 0 20px ${colors.glowPrimary}` }}
+        ></div>
+
+        <div className="relative p-6 space-y-4">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div 
+              className={`p-3 rounded-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 bg-gradient-to-r ${charColors.bg}`}
+            >
+              <Package className={`w-7 h-7 transition-transform duration-500 group-hover:rotate-12 ${charColors.iconColor}`} />
             </div>
             
-            <p className={`text-sm ${colors.textSecondary} ${!expanded && 'line-clamp-2'}`}>
-              {deliverable.description}
-            </p>
-            
-            <div className={`flex items-center gap-3 text-xs ${colors.textMuted} flex-wrap`}>
-              <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                <span>{deliverable.assignedTo?.length || 0} assigned</span>
-              </div>
-              {deliverable.dueDate && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Due {new Date(deliverable.dueDate).toLocaleDateString()}</span>
-                  </div>
-                </>
-              )}
-              {deliverable.comments?.length > 0 && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>{deliverable.comments.length} comments</span>
-                  </div>
-                </>
-              )}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 group-hover:translate-x-1 bg-gradient-to-r ${charColors.bg}`}>
+              <span className={`text-xs font-bold ${charColors.accent}`}>
+                View
+              </span>
+              <ChevronRight 
+                className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${charColors.iconColor}`}
+              />
             </div>
           </div>
+
+          {/* Content - Title */}
+          <div className="space-y-1">
+            <h3 className={`text-xl font-black ${charColors.text} line-clamp-1 group-hover:${charColors.accent} transition-colors duration-300`}>
+              {deliverable.title}
+            </h3>
+          </div>
           
-          <button className={`p-2 rounded-lg transition-all ${colors.inputBg} hover:${colors.cardBgHover}`}>
-            {expanded ? (
-              <ChevronUp className={`w-5 h-5 ${colors.textMuted}`} />
-            ) : (
-              <ChevronDown className={`w-5 h-5 ${colors.textMuted}`} />
+          <p className={`text-sm ${colors.textSecondary} line-clamp-2 min-h-[2.5rem] leading-relaxed`}>
+            {deliverable.description || 'No description provided'}
+          </p>
+
+          {/* Stats Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {totalComments > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <MessageSquare className={`w-3.5 h-3.5 ${colors.textMuted}`} />
+                <span className={`text-xs font-semibold ${colors.textSecondary}`}>
+                  {totalComments}
+                </span>
+              </div>
             )}
-          </button>
+            
+            {totalAttachments > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <Paperclip className={`w-3.5 h-3.5 ${colors.textMuted}`} />
+                <span className={`text-xs font-semibold ${colors.textSecondary}`}>
+                  {totalAttachments}
+                </span>
+              </div>
+            )}
+
+            {unresolvedBlockers.length > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg}`}>
+                <AlertTriangle className={`w-3.5 h-3.5 ${cardCharacters.urgent.iconColor}`} />
+                <span className={`text-xs font-bold ${cardCharacters.urgent.text}`}>
+                  {unresolvedBlockers.length} blocker{unresolvedBlockers.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className={`flex items-center justify-between pt-4 border-t ${charColors.border} transition-colors duration-300`}>
+            <div className="flex items-center gap-2">
+              <div 
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-300 bg-gradient-to-r ${charColors.bg} ${charColors.text}`}
+              >
+                {deliverable.status.toUpperCase().replace('-', ' ')}
+              </div>
+            </div>
+            
+            {deliverable.dueDate && (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isOverdue ? `bg-gradient-to-r ${cardCharacters.urgent.bg} border ${cardCharacters.urgent.border}` : `${colors.inputBg} border ${colors.inputBorder}`}`}>
+                <Calendar className={`w-3.5 h-3.5 ${isOverdue ? cardCharacters.urgent.iconColor : colors.textMuted}`} />
+                <span className={`text-xs font-semibold ${isOverdue ? cardCharacters.urgent.text + ' font-bold' : colors.textSecondary}`}>
+                  {new Date(deliverable.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // EXPANDED STATE - Full Detail View
+  return (
+    <div 
+      className={`relative overflow-hidden rounded-xl border-2 backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} hover:shadow-lg transition-all duration-300`}
+    >
+      <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03] pointer-events-none`}></div>
+      <div 
+        className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ boxShadow: `inset 0 0 20px ${colors.glowPrimary}` }}
+      ></div>
+
+      {/* Header - Clickable to collapse */}
+      <div 
+        className="relative p-4 cursor-pointer"
+        onClick={() => setExpanded(false)}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className={`p-2 rounded-lg bg-gradient-to-r ${charColors.bg}`}>
+              <Package className={`w-5 h-5 ${charColors.iconColor}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className={`text-base font-bold ${charColors.text} truncate`}>
+                {deliverable.title}
+              </h3>
+              <p className={`text-sm ${charColors.text} opacity-70 truncate mt-0.5`}>
+                Click to collapse
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {unresolvedBlockers.length > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg} ${cardCharacters.urgent.border} border`}>
+                <AlertTriangle className={`w-4 h-4 ${cardCharacters.urgent.iconColor}`} />
+                <span className={`text-sm font-bold ${cardCharacters.urgent.text}`}>{unresolvedBlockers.length}</span>
+              </div>
+            )}
+            {deliverable.comments?.length > 0 && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <MessageSquare className={`w-4 h-4 ${colors.textMuted}`} />
+                <span className={`text-sm ${colors.textSecondary}`}>{deliverable.comments.length}</span>
+              </div>
+            )}
+            {deliverable.dueDate && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <Calendar className={`w-4 h-4 ${isOverdue ? cardCharacters.urgent.iconColor : colors.textMuted}`} />
+                <span className={`text-sm ${isOverdue ? cardCharacters.urgent.text + ' font-bold' : colors.textSecondary}`}>
+                  {new Date(deliverable.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Expanded Content */}
-      {expanded && (
-        <div className={`relative border-t ${statusColors.border} p-4 space-y-4`} onClick={(e) => e.stopPropagation()}>
-          
-          {/* Submission Note */}
-          {deliverable.submissionNote && (
-            <div className={`p-3 rounded-lg bg-gradient-to-r ${cardCharacters.informative.bg} border ${cardCharacters.informative.border}`}>
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2 relative z-10`}>SUBMISSION NOTE</h5>
-              <p className={`text-sm ${colors.textPrimary} mb-2 relative z-10`}>{deliverable.submissionNote}</p>
-              {deliverable.submittedAt && (
-                <p className={`text-xs ${colors.textMuted} relative z-10`}>
-                  Submitted by {deliverable.submittedBy || 'Unknown'} on {new Date(deliverable.submittedAt).toLocaleString()}
-                </p>
-              )}
-              {deliverable.submissionAttachments && deliverable.submissionAttachments.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2 relative z-10">
-                  {deliverable.submissionAttachments.map((attachment: string, i: number) => (
-                    <a
-                      key={i}
-                      href={`/api/download?path=${encodeURIComponent(attachment)}`}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${colors.inputBg} border ${colors.inputBorder} hover:${colors.cardBgHover} transition-all cursor-pointer`}
-                    >
-                      <Paperclip className={`w-3 h-3 ${colors.textMuted}`} />
-                      <span className={`text-xs ${colors.textSecondary}`}>
-                        {attachment.split('/').pop()?.split('_').slice(1).join('_') || 'Download'}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+      <div 
+        className={`relative border-t-2 ${charColors.border} p-4 space-y-4`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div>
+          <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>DESCRIPTION</h5>
+          <p className={`text-sm ${charColors.text} leading-relaxed`}>{deliverable.description}</p>
+        </div>
 
-          {/* Status Change Buttons */}
-          <div>
-            <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>CHANGE STATUS</h5>
-            <div className="flex flex-wrap gap-2">
-              {deliverable.status !== 'in-progress' && (
-                <button
-                  onClick={() => handleStatusChange('in-progress')}
-                  disabled={loading}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.interactive.bg} ${cardCharacters.interactive.text} disabled:opacity-50 hover:scale-105 transition-all`}
-                >
-                  <Clock className="w-3 h-3" />
-                  IN PROGRESS
-                </button>
-              )}
-              
-              {deliverable.status !== 'in-review' && (
-                <button
-                  onClick={() => handleStatusChange('in-review')}
-                  disabled={loading}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.informative.bg} ${cardCharacters.informative.text} disabled:opacity-50 hover:scale-105 transition-all`}
-                >
-                  <MessageSquare className="w-3 h-3" />
-                  IN REVIEW
-                </button>
-              )}
-              
-              {deliverable.status !== 'done' && (
-                <button
-                  onClick={() => handleStatusChange('done')}
-                  disabled={loading}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.text} disabled:opacity-50 hover:scale-105 transition-all`}
-                >
-                  <CheckCircle className="w-3 h-3" />
-                  DONE
-                </button>
-              )}
-              
-              {deliverable.status === 'done' && (
-                <button
-                  onClick={() => handleStatusChange('in-progress')}
-                  disabled={loading}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 bg-gradient-to-r ${cardCharacters.neutral.bg} ${cardCharacters.neutral.text} disabled:opacity-50 hover:scale-105 transition-all`}
-                >
-                  <XCircle className="w-3 h-3" />
-                  REOPEN
-                </button>
-              )}
-            </div>
+        {deliverable.submissionNote && (
+          <div className={`p-3 rounded-lg bg-gradient-to-r ${cardCharacters.informative.bg} border-2 ${cardCharacters.informative.border}`}>
+            <h5 className={`text-xs font-bold ${colors.textMuted} mb-1.5`}>SUBMISSION NOTE</h5>
+            <p className={`text-sm ${colors.textPrimary} mb-2`}>{deliverable.submissionNote}</p>
+            <p className={`text-xs ${colors.textMuted}`}>{deliverable.submittedBy} • {new Date(deliverable.submittedAt).toLocaleDateString()}</p>
           </div>
+        )}
 
-          {/* Team Management */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h5 className={`text-xs font-bold ${colors.textMuted}`}>MANAGE TEAM</h5>
-              <button
-                onClick={() => setShowMemberManager(!showMemberManager)}
-                disabled={loading}
-                className={`text-xs font-bold ${cardCharacters.interactive.text} hover:underline flex items-center gap-1`}
-              >
-                <UserPlus className="w-3 h-3" />
-                {showMemberManager ? 'Close' : 'Add/Remove Members'}
+        <div>
+          <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>QUICK ACTIONS</h5>
+          <div className="flex flex-wrap gap-2">
+            {deliverable.status !== 'in-progress' && (
+              <button onClick={() => handleStatusChange('in-progress')} disabled={loading} className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.interactive.bg} ${cardCharacters.interactive.text} border-2 ${cardCharacters.interactive.border} disabled:opacity-50 transition-all`}>
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}></div>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin relative z-10" /> : <Clock className="w-4 h-4 relative z-10" />}
+                <span className="relative z-10">In Progress</span>
               </button>
-            </div>
-            
-            {showMemberManager && (
-              <div className={`p-3 rounded-lg ${colors.inputBg} border ${colors.inputBorder} space-y-2`}>
-                {loadingMembers ? (
-                  <p className={`text-sm ${colors.textMuted}`}>Loading employees...</p>
-                ) : availableMembers.length === 0 ? (
-                  <p className={`text-sm ${colors.textMuted}`}>No employees found in {department}</p>
-                ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                    {availableMembers.map((member) => {
-                      const isAssigned = deliverable.assignedTo?.some((id: string) => id === member._id || id === member.email);
-                      
-                      return (
-                        <div
-                          key={member._id}
-                          className={`flex items-center justify-between p-2 rounded-lg ${colors.cardBg} border ${colors.borderSubtle}`}
-                        >
-                          <div>
-                            <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                              {member.username}
-                            </p>
-                            <p className={`text-xs ${colors.textMuted}`}>
-                              {member.email}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleToggleMember(member._id)}
-                            disabled={loading}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all hover:scale-105 ${
-                              isAssigned
-                                ? `bg-gradient-to-r ${cardCharacters.urgent.bg} ${cardCharacters.urgent.text}`
-                                : `bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.text}`
-                            } disabled:opacity-50`}
-                          >
-                            {isAssigned ? (
-                              <>
-                                <UserMinus className="w-3 h-3" />
-                                Remove
-                              </>
-                            ) : (
-                              <>
-                                <UserPlus className="w-3 h-3" />
-                                Add
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+            )}
+            {deliverable.status !== 'in-review' && (
+              <button onClick={() => handleStatusChange('in-review')} disabled={loading} className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.informative.bg} ${cardCharacters.informative.text} border-2 ${cardCharacters.informative.border} disabled:opacity-50 transition-all`}>
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}></div>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin relative z-10" /> : <MessageSquare className="w-4 h-4 relative z-10" />}
+                <span className="relative z-10">In Review</span>
+              </button>
+            )}
+            {deliverable.status !== 'done' && (
+              <button onClick={() => handleStatusChange('done')} disabled={loading} className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.text} border-2 ${cardCharacters.completed.border} disabled:opacity-50 transition-all`}>
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ boxShadow: `inset 0 0 14px ${colors.glowSuccess}` }}></div>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin relative z-10" /> : <CheckCircle className="w-4 h-4 relative z-10" />}
+                <span className="relative z-10">Mark Done</span>
+              </button>
+            )}
+            {deliverable.status === 'done' && (
+              <button onClick={() => handleStatusChange('in-progress')} disabled={loading} className={`group/btn relative px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 overflow-hidden bg-gradient-to-r ${cardCharacters.neutral.bg} ${cardCharacters.neutral.text} border-2 ${cardCharacters.neutral.border} disabled:opacity-50 transition-all`}>
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}></div>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin relative z-10" /> : <XCircle className="w-4 h-4 relative z-10" />}
+                <span className="relative z-10">Reopen</span>
+              </button>
             )}
           </div>
-
-          {/* Blockers */}
-          {unresolvedBlockers.length > 0 && (
-            <div>
-              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>BLOCKERS</h5>
-              <div className="space-y-2">
-                {deliverable.blockers?.map((blocker: any, index: number) => {
-                  if (blocker.isResolved) return null;
-                  
-                  return (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg} border ${cardCharacters.urgent.border}`}
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <p className={`text-sm ${colors.textPrimary} flex-1`}>
-                          {blocker.description}
-                        </p>
-                        <button
-                          onClick={() => handleResolveBlocker(index)}
-                          disabled={loading}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.text} disabled:opacity-50 hover:scale-105 transition-all whitespace-nowrap`}
-                        >
-                          Resolve
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs ${colors.textMuted}`}>
-                          Reported by {blocker.reportedBy}
-                        </span>
-                        <span className={`text-xs ${colors.textMuted}`}>
-                          {new Date(blocker.reportedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {blocker.attachments && blocker.attachments.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {blocker.attachments.map((attachment: string, i: number) => (
-                            <a
-                              key={i}
-                              href={`/api/download?path=${encodeURIComponent(attachment)}`}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`flex items-center gap-2 px-2 py-1 rounded-lg ${colors.inputBg} border ${colors.inputBorder} hover:${colors.cardBgHover} transition-all cursor-pointer`}
-                            >
-                              <Paperclip className={`w-3 h-3 ${colors.textMuted}`} />
-                              <span className={`text-xs ${colors.textSecondary}`}>
-                                {attachment.split('/').pop()?.split('_').slice(1).join('_') || 'Download'}
-                              </span>
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Attachments */}
-          {deliverable.attachments && deliverable.attachments.length > 0 && (
-            <div>
-              <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>ATTACHMENTS</h5>
-              <div className="flex flex-wrap gap-2">
-                {deliverable.attachments.map((attachment: string, index: number) => (
-                  <a
-                    key={index}
-                    href={`/api/download?path=${encodeURIComponent(attachment)}`}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colors.inputBg} border ${colors.inputBorder} hover:${colors.cardBgHover} transition-all cursor-pointer`}
-                  >
-                    <Paperclip className={`w-3.5 h-3.5 ${colors.textMuted}`} />
-                    <span className={`text-xs ${colors.textSecondary}`}>
-                      {attachment.split('/').pop()?.split('_').slice(1).join('_') || 'Download'}
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Comments */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <MessageSquare className={`w-4 h-4 ${colors.textMuted}`} />
-              <h5 className={`text-xs font-bold ${colors.textMuted}`}>
-                COMMENTS ({deliverable.comments?.length || 0})
-              </h5>
-            </div>
-            
-            <div className="space-y-3 mb-3">
-              {deliverable.comments?.slice(-3).map((comment: any, index: number) => (
-                <div key={index} className={`p-3 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
-                  <div className="flex justify-between mb-1">
-                    <span className={`text-sm font-bold ${colors.textPrimary}`}>
-                      {comment.userName}
-                    </span>
-                    <span className={`text-xs ${colors.textMuted}`}>
-                      {new Date(comment.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className={`text-sm ${colors.textSecondary}`}>{comment.message}</p>
-                </div>
-              ))}
-            </div>
-            
-            <form onSubmit={handleAddComment} className="flex gap-2">
-              <input
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Add a comment..."
-                disabled={loading}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} disabled:opacity-50`}
-              />
-              <button
-                type="submit"
-                disabled={!commentText.trim() || loading}
-                className={`group relative p-2 rounded-lg ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50 overflow-hidden`}
-              >
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}
-                ></div>
-                <Send className="w-4 h-4 relative z-10" />
-              </button>
-            </form>
-          </div>
         </div>
-      )}
+
+        {unresolvedBlockers.length > 0 && (
+          <div>
+            <h5 className={`text-xs font-bold ${colors.textMuted} mb-2`}>BLOCKERS ({unresolvedBlockers.length})</h5>
+            <div className="space-y-2">
+              {deliverable.blockers?.map((blocker: any, index: number) => {
+                if (blocker.isResolved) return null;
+                return (
+                  <div key={index} className={`p-3 rounded-lg bg-gradient-to-r ${cardCharacters.urgent.bg} border-2 ${cardCharacters.urgent.border}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className={`text-sm ${colors.textPrimary} flex-1`}>{blocker.description}</p>
+                      <button onClick={() => handleResolveBlocker(index)} disabled={loading} className={`group/btn relative px-3 py-1.5 rounded-lg text-sm font-bold overflow-hidden bg-gradient-to-r ${cardCharacters.completed.bg} ${cardCharacters.completed.text} border-2 ${cardCharacters.completed.border} disabled:opacity-50 whitespace-nowrap`}>
+                        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                        <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ boxShadow: `inset 0 0 14px ${colors.glowSuccess}` }}></div>
+                        <span className="relative z-10">{loading ? 'Resolving...' : 'Resolve'}</span>
+                      </button>
+                    </div>
+                    <p className={`text-xs ${colors.textMuted} mt-2`}>{blocker.reportedBy} • {new Date(blocker.reportedAt).toLocaleDateString()}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {deliverable.attachments && deliverable.attachments.length > 0 && (
+          <div>
+            <h5 className={`text-xs font-bold ${colors.textMuted} mb-2 flex items-center gap-1.5`}>
+              <Paperclip className="w-4 h-4" /> ATTACHMENTS ({deliverable.attachments.length})
+            </h5>
+            <div className="grid grid-cols-2 gap-2">
+              {deliverable.attachments.map((attachment: any, index: number) => {
+                const fileUrl = typeof attachment === 'string' ? getAttachmentUrl(attachment) : getAttachmentUrl(attachment.path);
+                const fileName = typeof attachment === 'string' ? attachment.split('/').pop()?.split('_').slice(1).join('_') || 'File' : attachment.name;
+                
+                return (
+                  <a key={index} href={fileUrl} download target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className={`flex items-center gap-2 p-2.5 rounded-lg border-2 ${charColors.border} ${colors.cardBg} hover:${colors.cardBgHover} transition-all group/file`}>
+                    <div className={`p-1.5 rounded bg-gradient-to-r ${charColors.bg} ${charColors.iconColor}`}>{getFileIcon(fileName)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-bold ${colors.textPrimary} truncate`}>{fileName}</p>
+                      {typeof attachment !== 'string' && attachment.size && <p className={`text-xs ${colors.textMuted}`}>{(attachment.size / 1024).toFixed(1)} KB</p>}
+                    </div>
+                    <Download className={`w-4 h-4 ${colors.textMuted} group-hover/file:${charColors.iconColor}`} />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <h5 className={`text-xs font-bold ${colors.textMuted} mb-2 flex items-center gap-1.5`}>
+            <MessageSquare className="w-4 h-4" /> COMMENTS ({deliverable.comments?.length || 0})
+          </h5>
+          <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
+            {deliverable.comments?.slice(-3).map((comment: any, index: number) => (
+              <div key={index} className={`p-2.5 rounded-lg ${colors.inputBg} border ${colors.inputBorder}`}>
+                <div className="flex justify-between items-start mb-1">
+                  <span className={`text-sm font-bold ${colors.textPrimary}`}>{comment.userName}</span>
+                  <span className={`text-xs ${colors.textMuted}`}>{new Date(comment.createdAt).toLocaleString()}</span>
+                </div>
+                <p className={`text-sm ${colors.textSecondary}`}>{comment.message}</p>
+              </div>
+            ))}
+          </div>
+          <form onSubmit={handleAddComment} className="flex gap-2">
+            <input value={commentText} onChange={(e) => setCommentText(e.target.value)} onClick={(e) => e.stopPropagation()} placeholder="Add comment..." disabled={loading} className={`flex-1 px-3 py-2 rounded-lg text-sm ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} disabled:opacity-50`} />
+            <button type="submit" disabled={!commentText.trim() || loading} className={`px-3 py-2 rounded-lg ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50 hover:scale-105 transition-transform`}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

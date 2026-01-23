@@ -3,10 +3,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 interface IMember {
   userId: string;
-  username?: string; // NEW: Store username alongside userId for querying
+  username?: string;
   name: string;
   role: 'lead' | 'member' | 'dept-head';
-  department?: string; // NEW: Track member's department for cross-dept sprints
+  department?: string;
   joinedAt: Date;
   leftAt?: Date;
 }
@@ -60,6 +60,19 @@ interface IChatMessage {
   userName: string;
   message: string;
   timestamp: Date;
+  attachments?: string[]; // ADDED: Support for chat attachments
+}
+
+interface IAttachment {
+  name: string;
+  path: string;
+  type: string;
+  size: number;
+  uploadedAt: Date;
+  uploadedBy: {
+    userId: string;
+    name: string;
+  };
 }
 
 interface ISprint extends Document {
@@ -79,6 +92,7 @@ interface ISprint extends Document {
   status: 'active' | 'completed' | 'archived';
   actions: IAction[];
   chat: IChatMessage[];
+  attachments: IAttachment[];
   health: 'healthy' | 'at-risk' | 'delayed' | 'critical';
   createdAt: Date;
   updatedAt: Date;
@@ -86,14 +100,14 @@ interface ISprint extends Document {
 
 const MemberSchema = new Schema<IMember>({
   userId: { type: String, required: true },
-  username: { type: String }, // NEW: For username-based queries
+  username: { type: String },
   name: { type: String, required: true },
   role: { 
     type: String, 
     enum: ['lead', 'member', 'dept-head'], 
     default: 'member' 
   },
-  department: { type: String }, // NEW: Track member's home department
+  department: { type: String },
   joinedAt: { type: Date, required: true },
   leftAt: { type: Date }
 });
@@ -149,7 +163,20 @@ const ChatMessageSchema = new Schema<IChatMessage>({
   userId: { type: String, required: true },
   userName: { type: String, required: true },
   message: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
+  attachments: [{ type: String }] // ADDED: Support for chat attachments
+});
+
+const AttachmentSchema = new Schema<IAttachment>({
+  name: { type: String, required: true },
+  path: { type: String, required: true },
+  type: { type: String, required: true },
+  size: { type: Number, required: true },
+  uploadedAt: { type: Date, default: Date.now },
+  uploadedBy: {
+    userId: { type: String, required: true },
+    name: { type: String, required: true }
+  }
 });
 
 const SprintSchema = new Schema<ISprint>({
@@ -173,6 +200,7 @@ const SprintSchema = new Schema<ISprint>({
   },
   actions: [ActionSchema],
   chat: [ChatMessageSchema],
+  attachments: [AttachmentSchema],
   health: {
     type: String,
     enum: ['healthy', 'at-risk', 'delayed', 'critical'],
@@ -187,7 +215,7 @@ SprintSchema.index({ sprintNumber: 1 });
 SprintSchema.index({ department: 1, status: 1 });
 SprintSchema.index({ projectId: 1 });
 SprintSchema.index({ 'members.userId': 1 });
-SprintSchema.index({ 'members.username': 1 }); // NEW: Index for username queries
+SprintSchema.index({ 'members.username': 1 });
 SprintSchema.index({ 'members.role': 1 });
 SprintSchema.index({ status: 1 });
 SprintSchema.index({ createdAt: -1 });

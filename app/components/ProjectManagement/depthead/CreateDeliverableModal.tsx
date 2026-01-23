@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
-import { X, Package, Loader2, CheckCircle, Paperclip, Trash2, Users } from 'lucide-react';
+import { X, Package, Loader2, CheckCircle, Paperclip, Trash2, Users, Upload } from 'lucide-react';
 
 interface Member {
   userId: string;
@@ -50,7 +50,7 @@ export default function CreateDeliverableModal({
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [attachments, setAttachments] = useState<Array<{ name: string; data: string; type: string }>>([]);
+  const [attachments, setAttachments] = useState<Array<{ name: string; data: string; type: string; size: number }>>([]);
   const [loading, setLoading] = useState(false);
   
   const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
@@ -149,24 +149,69 @@ export default function CreateDeliverableModal({
     return Array.from(departmentHeads.values()).some(head => head.userId === employeeId);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setAttachments(prev => [...prev, {
-          name: file.name,
-          data: reader.result as string,
-          type: file.type
-        }]);
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of files) {
+      // Check file size (limit to 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(`File ${file.name} is too large. Maximum size is 10MB.`, 'error');
+        continue;
+      }
+
+      try {
+        const reader = new FileReader();
+        await new Promise((resolve, reject) => {
+          reader.onload = () => {
+            setAttachments(prev => [...prev, {
+              name: file.name,
+              data: reader.result as string,
+              type: file.type,
+              size: file.size
+            }]);
+            resolve(null);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      } catch (error) {
+        console.error('Error reading file:', error);
+        showToast(`Failed to read file ${file.name}`, 'error');
+      }
+    }
+
+    // Reset the input
+    e.target.value = '';
   };
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext || '')) {
+      return '🖼️';
+    }
+    if (['pdf'].includes(ext || '')) {
+      return '📄';
+    }
+    if (['doc', 'docx'].includes(ext || '')) {
+      return '📝';
+    }
+    if (['xls', 'xlsx', 'csv'].includes(ext || '')) {
+      return '📊';
+    }
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) {
+      return '🗜️';
+    }
+    return '📎';
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -193,20 +238,23 @@ export default function CreateDeliverableModal({
           userName,
           attachments: attachments.map(a => ({
             name: a.name,
-            data: a.data.split(',')[1],
-            type: a.type
+            data: a.data.split(',')[1], // Remove data URL prefix
+            type: a.type,
+            size: a.size
           }))
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create deliverable');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create deliverable');
       }
 
       showToast('Deliverable created successfully!', 'success');
       onSuccess();
-    } catch (error) {
-      showToast('Failed to create deliverable', 'error');
+    } catch (error: any) {
+      console.error('Error creating deliverable:', error);
+      showToast(error.message || 'Failed to create deliverable', 'error');
     } finally {
       setLoading(false);
     }
@@ -339,47 +387,55 @@ export default function CreateDeliverableModal({
                   </div>
                   
                   <div className="max-h-48 overflow-y-auto">
-                    {filteredEmployees.map((employee) => (
-                      <div
-                        key={employee._id}
-                        className={`flex items-center justify-between p-3 border-b last:border-b-0 ${colors.borderSubtle} ${
-                          selectedMembers.includes(employee._id)
-                            ? `bg-gradient-to-r ${cardCharacters.informative.bg}`
-                            : `${colors.cardBg} hover:${colors.cardBgHover}`
-                        } transition-all cursor-pointer`}
-                        onClick={() => handleMemberToggle(employee._id)}
-                      >
-                        <div className="flex items-center space-x-3 flex-1 min-w-0">
-                          <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                              selectedMembers.includes(employee._id)
-                                ? `${cardCharacters.informative.border} ${cardCharacters.informative.bg}`
-                                : colors.border
-                            }`}
-                          >
-                            {selectedMembers.includes(employee._id) && (
-                              <CheckCircle className={`w-3.5 h-3.5 ${cardCharacters.informative.iconColor}`} />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className={`text-sm font-bold ${colors.textPrimary}`}>
-                                {employee['basicDetails.name'] || employee.username}
-                              </p>
-                              {getEmployeeDepartmentBadge(employee)}
-                              {isDeptHead(employee._id) && (
-                                <span className={`text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400`}>
-                                  Dept Head
-                                </span>
+                    {filteredEmployees.length === 0 ? (
+                      <div className="p-4 text-center">
+                        <p className={`text-sm ${colors.textMuted}`}>
+                          {employeeSearch ? 'No members match your search' : 'No project members found'}
+                        </p>
+                      </div>
+                    ) : (
+                      filteredEmployees.map((employee) => (
+                        <div
+                          key={employee._id}
+                          className={`flex items-center justify-between p-3 border-b last:border-b-0 ${colors.borderSubtle} ${
+                            selectedMembers.includes(employee._id)
+                              ? `bg-gradient-to-r ${cardCharacters.informative.bg}`
+                              : `${colors.cardBg} hover:${colors.cardBgHover}`
+                          } transition-all cursor-pointer`}
+                          onClick={() => handleMemberToggle(employee._id)}
+                        >
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                                selectedMembers.includes(employee._id)
+                                  ? `${cardCharacters.informative.border} ${cardCharacters.informative.bg}`
+                                  : colors.border
+                              }`}
+                            >
+                              {selectedMembers.includes(employee._id) && (
+                                <CheckCircle className={`w-3.5 h-3.5 ${cardCharacters.informative.iconColor}`} />
                               )}
                             </div>
-                            <p className={`text-xs ${colors.textMuted}`}>
-                              {activeMembers.find((m: Member) => m.userId === employee._id)?.role === 'lead' ? '👑 Group Lead' : employee.title || 'Member'}
-                            </p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`text-sm font-bold ${colors.textPrimary}`}>
+                                  {employee['basicDetails.name'] || employee.username}
+                                </p>
+                                {getEmployeeDepartmentBadge(employee)}
+                                {isDeptHead(employee._id) && (
+                                  <span className={`text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400`}>
+                                    Dept Head
+                                  </span>
+                                )}
+                              </div>
+                              <p className={`text-xs ${colors.textMuted}`}>
+                                {activeMembers.find((m: Member) => m.userId === employee._id)?.role === 'lead' ? '👑 Group Lead' : employee.title || 'Member'}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -394,8 +450,14 @@ export default function CreateDeliverableModal({
             {/* File Attachments */}
             <div>
               <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
-                Attachments (Optional)
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  <span>Attachments (Optional)</span>
+                </div>
               </label>
+              <p className={`text-xs ${colors.textMuted} mb-3`}>
+                Upload files up to 10MB each. Supported formats: images, PDFs, documents, spreadsheets, archives.
+              </p>
               
               <input
                 type="file"
@@ -403,16 +465,23 @@ export default function CreateDeliverableModal({
                 multiple
                 onChange={handleFileChange}
                 className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.zip,.rar,.7z,.tar,.gz"
               />
               
               <label
                 htmlFor="file-upload"
-                className={`group relative flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition-all ${colors.border} ${colors.cardBg} hover:${colors.cardBgHover}`}
+                className={`group relative flex items-center justify-center gap-2 w-full px-4 py-6 rounded-lg border-2 border-dashed cursor-pointer transition-all ${colors.border} ${colors.cardBg} hover:${colors.cardBgHover}`}
               >
-                <Paperclip className={`w-4 h-4 ${colors.textMuted}`} />
-                <span className={`text-sm font-medium ${colors.textSecondary}`}>
-                  Click to upload files
-                </span>
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div className="relative z-10 text-center">
+                  <Upload className={`w-8 h-8 mx-auto mb-2 ${colors.textMuted}`} />
+                  <p className={`text-sm font-bold ${colors.textPrimary} mb-1`}>
+                    Click to upload files
+                  </p>
+                  <p className={`text-xs ${colors.textMuted}`}>
+                    or drag and drop
+                  </p>
+                </div>
               </label>
 
               {attachments.length > 0 && (
@@ -420,23 +489,37 @@ export default function CreateDeliverableModal({
                   {attachments.map((file, index) => (
                     <div
                       key={index}
-                      className={`flex items-center justify-between p-2 rounded-lg ${colors.cardBg} border ${colors.border}`}
+                      className={`group relative flex items-center gap-3 p-3 rounded-lg ${colors.cardBg} border ${colors.border} overflow-hidden`}
                     >
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <Paperclip className={`w-4 h-4 flex-shrink-0 ${colors.textMuted}`} />
-                        <span className={`text-sm truncate ${colors.textPrimary}`}>
-                          {file.name}
+                      <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                      
+                      <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-2xl flex-shrink-0">
+                          {getFileIcon(file.name)}
                         </span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-bold ${colors.textPrimary} truncate`}>
+                            {file.name}
+                          </p>
+                          <p className={`text-xs ${colors.textMuted}`}>
+                            {formatFileSize(file.size)} • {file.type || 'Unknown type'}
+                          </p>
+                        </div>
                       </div>
+                      
                       <button
                         type="button"
                         onClick={() => removeAttachment(index)}
-                        className={`p-1 rounded hover:bg-red-500/10 transition-colors ${cardCharacters.urgent.iconColor}`}
+                        className={`relative z-10 p-2 rounded-lg hover:bg-red-500/10 transition-colors ${cardCharacters.urgent.iconColor} flex-shrink-0`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
+                  
+                  <p className={`text-xs ${colors.textMuted} text-center`}>
+                    {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached • Total: {formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))}
+                  </p>
                 </div>
               )}
             </div>

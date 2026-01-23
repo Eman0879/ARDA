@@ -1,4 +1,4 @@
-// app/components/SprintManagement/depthead/SprintDetailsModal.tsx
+// app/components/ProjectManagement/depthead/SprintDetailsModal.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -16,7 +16,12 @@ import {
   Loader2,
   UserPlus,
   UserMinus,
-  Crown
+  Crown,
+  Paperclip,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  File
 } from 'lucide-react';
 import ActionCard from './ActionCard';
 import CreateActionModal from './CreateActionModal';
@@ -34,6 +39,18 @@ interface DepartmentHead {
   username: string;
   name: string;
   department: string;
+}
+
+interface Attachment {
+  name: string;
+  path: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+  uploadedBy: {
+    userId: string;
+    name: string;
+  };
 }
 
 interface SprintDetailsModalProps {
@@ -56,7 +73,7 @@ export default function SprintDetailsModal({
   const { colors, cardCharacters, showToast, getModalStyles } = useTheme();
   const charColors = cardCharacters.interactive;
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'actions' | 'members' | 'chat'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'actions' | 'members' | 'chat' | 'attachments'>('overview');
   const [showCreateAction, setShowCreateAction] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -71,7 +88,8 @@ export default function SprintDetailsModal({
     { id: 'overview', label: 'Overview', icon: Zap },
     { id: 'actions', label: 'Actions', icon: Zap },
     { id: 'members', label: 'Members', icon: Users },
-    { id: 'chat', label: 'Chat', icon: MessageSquare }
+    { id: 'chat', label: 'Chat', icon: MessageSquare },
+    { id: 'attachments', label: 'Attachments', icon: Paperclip }
   ];
 
   useEffect(() => {
@@ -178,7 +196,7 @@ export default function SprintDetailsModal({
   const handleStatusAction = async (action: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/SprintManagement/depthead/sprints/${sprint._id}`, {
+      const response = await fetch(`/api/ProjectManagement/depthead/sprints/${sprint._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, userId, userName })
@@ -213,7 +231,7 @@ export default function SprintDetailsModal({
         };
       });
 
-      const response = await fetch(`/api/SprintManagement/depthead/sprints/${sprint._id}`, {
+      const response = await fetch(`/api/ProjectManagement/depthead/sprints/${sprint._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,7 +260,7 @@ export default function SprintDetailsModal({
   const handleRemoveMember = async (memberId: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/SprintManagement/depthead/sprints/${sprint._id}`, {
+      const response = await fetch(`/api/ProjectManagement/depthead/sprints/${sprint._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -270,7 +288,7 @@ export default function SprintDetailsModal({
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/SprintManagement/depthead/sprints/${sprint._id}`, {
+      const response = await fetch(`/api/ProjectManagement/depthead/sprints/${sprint._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -292,8 +310,42 @@ export default function SprintDetailsModal({
     }
   };
 
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) {
+      return <ImageIcon className="w-4 h-4" />;
+    }
+    if (['pdf'].includes(ext || '')) {
+      return <FileText className="w-4 h-4" />;
+    }
+    return <File className="w-4 h-4" />;
+  };
+
+  const getAttachmentUrl = (attachmentPath: string): string => {
+    // Handle absolute paths
+    if (attachmentPath.includes('\\') || attachmentPath.startsWith('D:') || attachmentPath.startsWith('C:')) {
+      const uploadsIndex = attachmentPath.indexOf('uploads');
+      if (uploadsIndex !== -1) {
+        const relativePath = attachmentPath.substring(uploadsIndex).replace(/\\/g, '/');
+        return `/api/attachments/${relativePath.replace('uploads/projects/', '')}`;
+      }
+      const parts = attachmentPath.split(/[\\\/]/);
+      const sprintIndex = parts.findIndex(p => p.startsWith('SPR-'));
+      if (sprintIndex !== -1 && sprintIndex < parts.length - 1) {
+        const sprintNumber = parts[sprintIndex];
+        const filename = parts[parts.length - 1];
+        return `/api/attachments/${sprintNumber}/${filename}`;
+      }
+      return attachmentPath;
+    }
+    
+    // Handle relative paths
+    return `/api/attachments/${attachmentPath.replace('uploads/projects/', '')}`;
+  };
+
   const activeMembers = sprint.members?.filter((m: any) => !m.leftAt) || [];
   const pendingActions = sprint.actions?.filter((d: any) => d.status !== 'done') || [];
+  const sprintAttachments = sprint.attachments || [];
 
   return (
     <>
@@ -347,6 +399,7 @@ export default function SprintDetailsModal({
             <div className="flex gap-2 overflow-x-auto pb-1">
               {tabs.map(tab => {
                 const Icon = tab.icon;
+                const count = tab.id === 'attachments' ? sprintAttachments.length : undefined;
                 return (
                   <button
                     key={tab.id}
@@ -359,6 +412,15 @@ export default function SprintDetailsModal({
                   >
                     <Icon className="w-4 h-4" />
                     {tab.label}
+                    {count !== undefined && count > 0 && (
+                      <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                        activeTab === tab.id 
+                          ? `${colors.badgeBg} ${colors.badgeText}` 
+                          : `${colors.badge} ${colors.badgeText}`
+                      }`}>
+                        {count}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -700,6 +762,79 @@ export default function SprintDetailsModal({
                       )}
                     </button>
                   </form>
+                </div>
+              )}
+
+              {/* Attachments Tab */}
+              {activeTab === 'attachments' && (
+                <div className="space-y-4">
+                  <h3 className={`text-lg font-black ${colors.textPrimary} flex items-center gap-2`}>
+                    <Paperclip className="w-5 h-5" />
+                    Sprint Attachments ({sprintAttachments.length})
+                  </h3>
+
+                  {sprintAttachments.length === 0 ? (
+                    <div className={`p-12 text-center rounded-lg ${colors.cardBg} border ${colors.border}`}>
+                      <Paperclip className={`w-12 h-12 mx-auto mb-3 ${colors.textMuted} opacity-40`} />
+                      <p className={`${colors.textPrimary} font-bold mb-2`}>No attachments</p>
+                      <p className={`${colors.textSecondary} text-sm`}>
+                        Attachments uploaded with this sprint will appear here
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {sprintAttachments.map((attachment: Attachment, index: number) => {
+                        const fileUrl = getAttachmentUrl(attachment.path);
+                        
+                        return (
+                          <a
+                            key={index}
+                            href={fileUrl}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`
+                              group relative flex items-center gap-4 p-4 rounded-xl border-2 
+                              transition-all duration-300 overflow-hidden
+                              ${colors.cardBg} ${colors.border}
+                              hover:shadow-lg
+                            `}
+                          >
+                            {/* Paper Texture */}
+                            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                            
+                            {/* Internal Glow */}
+                            <div 
+                              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                              style={{ boxShadow: `inset 0 0 20px ${colors.glowPrimary}` }}
+                            ></div>
+                            
+                            {/* Icon */}
+                            <div className={`relative z-10 p-3 rounded-lg bg-gradient-to-r ${charColors.bg} ${charColors.iconColor} flex-shrink-0`}>
+                              {getFileIcon(attachment.name)}
+                            </div>
+                            
+                            {/* File Info */}
+                            <div className="relative z-10 flex-1 min-w-0">
+                              <p className={`text-sm font-bold ${colors.textPrimary} truncate`}>
+                                {attachment.name}
+                              </p>
+                              <div className={`flex items-center gap-3 mt-1 text-xs ${colors.textMuted}`}>
+                                <span>{(attachment.size / 1024).toFixed(1)} KB</span>
+                                <span>•</span>
+                                <span>Uploaded by {attachment.uploadedBy.name}</span>
+                                <span>•</span>
+                                <span>{new Date(attachment.uploadedAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Download Icon */}
+                            <Download className={`relative z-10 w-5 h-5 ${colors.textMuted} group-hover:${charColors.iconColor} group-hover:translate-x-1 transition-all duration-300 flex-shrink-0`} />
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

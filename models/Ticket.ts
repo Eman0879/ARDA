@@ -19,6 +19,8 @@ export interface IBlocker {
   resolvedBy?: string;
   resolvedByName?: string;
   resolvedAt?: Date;
+  attachments?: string[];          // 📧 NEW
+  resolutionAttachments?: string[]; // 📧 NEW
 }
 
 export interface IWorkflowHistoryEntry {
@@ -38,7 +40,7 @@ export interface IWorkflowHistoryEntry {
     name: string;
     isLead: boolean;
   }>;
-  attachments?: string[];  // ✅ ADD THIS LINE
+  attachments?: string[];
 }
 
 export interface ITicket extends Document {
@@ -88,7 +90,7 @@ const ContributorSchema = new Schema({
   contributorType: {
     type: String,
     enum: ['primary', 'secondary'],
-    required: false  // Not required since we use primaryCredit/secondaryCredits now
+    required: false
   },
   joinedAt: { type: Date, default: Date.now },
   leftAt: { type: Date }
@@ -102,7 +104,9 @@ const BlockerSchema = new Schema({
   isResolved: { type: Boolean, default: false },
   resolvedBy: { type: String },
   resolvedByName: { type: String },
-  resolvedAt: { type: Date }
+  resolvedAt: { type: Date },
+  attachments: [{ type: String }],          // 📧 NEW
+  resolutionAttachments: [{ type: String }] // 📧 NEW
 });
 
 const WorkflowHistorySchema = new Schema({
@@ -126,9 +130,8 @@ const WorkflowHistorySchema = new Schema({
     name: String,
     isLead: Boolean
   }],
-  attachments: [{ type: String }]  // ✅ ADD THIS LINE
+  attachments: [{ type: String }]
 });
-
 
 const CreditSchema = new Schema({
   userId: { type: String, required: true },

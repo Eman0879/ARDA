@@ -5,36 +5,9 @@ import Sprint from '@/models/ProjectManagement/Sprint';
 import FormData from '@/models/FormData';
 import { sendSprintNotification } from '@/app/utils/projectNotifications';
 import { TimeIntent } from '@/models/CalendarEvent';
+import { saveAttachment } from '@/app/utils/projectFileUpload';
 
-// Helper to calculate health
-function calculateHealth(sprint: any): string {
-  const now = new Date();
-  let hasOverdue = false;
-  let hasBlockers = false;
-  let isNearDeadline = false;
-
-  sprint.actions?.forEach((a: any) => {
-    if (a.status !== 'done' && a.dueDate && new Date(a.dueDate) < now) {
-      hasOverdue = true;
-    }
-    if (a.blockers?.some((b: any) => !b.isResolved)) {
-      hasBlockers = true;
-    }
-    if (a.dueDate) {
-      const daysUntilDue = Math.ceil((new Date(a.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysUntilDue <= 3 && daysUntilDue >= 0 && a.status !== 'done') {
-        isNearDeadline = true;
-      }
-    }
-  });
-
-  if (hasOverdue && hasBlockers) return 'critical';
-  if (hasOverdue) return 'delayed';
-  if (hasBlockers || isNearDeadline) return 'at-risk';
-  return 'healthy';
-}
-
-// Helper function to create calendar event directly
+// Helper function to create calendar event
 async function createCalendarEvent(eventData: any) {
   try {
     const event = new TimeIntent({
@@ -46,7 +19,7 @@ async function createCalendarEvent(eventData: any) {
       endTime: eventData.endTime ? new Date(eventData.endTime) : undefined,
       priority: eventData.priority || 'medium',
       color: eventData.color || '#2196F3',
-      linkedProjectId: eventData.linkedProjectId,
+      linkedSprintId: eventData.linkedSprintId,
       autoCompleteOnExpiry: eventData.autoCompleteOnExpiry || false,
       isSystemGenerated: true,
       createdBy: {
@@ -69,9 +42,8 @@ export async function GET(request: NextRequest) {
     
     const { searchParams } = new URL(request.url);
     const department = searchParams.get('department');
-    const projectId = searchParams.get('projectId');
     const status = searchParams.get('status');
-    const username = searchParams.get('username'); // Dept head's username
+    const username = searchParams.get('username');
     
     if (!department) {
       return NextResponse.json(
@@ -80,31 +52,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query to include:
-    // 1. Sprints in this department
-    // 2. Sprints where dept head is a member (cross-department sprints)
     const query: any = {
       $or: [
-        { department }, // Own department sprints
-        { 'members.username': username, 'members.role': 'dept-head' } // Cross-dept sprints where added as dept-head
+        { department },
+        { 'members.username': username, 'members.role': 'dept-head' }
       ]
     };
 
-    if (projectId) {
-      query.projectId = projectId;
-    }
     if (status && status !== 'all') {
       query.status = status;
     }
 
     const sprints = await Sprint.find(query).sort({ createdAt: -1 });
-
-    // Calculate health for each sprint
-    sprints.forEach(sprint => {
-      sprint.health = calculateHealth(sprint);
-    });
-
-    await Promise.all(sprints.map(s => s.save()));
 
     return NextResponse.json({
       success: true,
@@ -137,8 +96,16 @@ export async function POST(request: NextRequest) {
       groupLead,
       startDate,
       endDate,
-      defaultAction
+      defaultAction,
+      attachments
     } = body;
+
+    console.log('📥 Received sprint creation request:', {
+      title,
+      department,
+      memberCount: members?.length,
+      attachmentCount: attachments?.length
+    });
 
     if (!title || !description || !department || !createdBy || !members || !groupLead || !startDate || !endDate) {
       return NextResponse.json(
@@ -159,12 +126,13 @@ export async function POST(request: NextRequest) {
       sprintNumber = 'SPR-0001';
     }
 
-    // Fetch usernames for all members by their userId
+    console.log(`🔢 Generated sprint number: ${sprintNumber}`);
+
+    // Fetch usernames for all members
     const memberUserIds = members.map((m: any) => m.userId);
     const employeeRecords = await FormData.find({ _id: { $in: memberUserIds } })
       .select('_id username');
     
-    // Create a map of userId -> username
     const userIdToUsername = new Map();
     employeeRecords.forEach((emp: any) => {
       userIdToUsername.set(emp._id.toString(), emp.username);
@@ -173,43 +141,37 @@ export async function POST(request: NextRequest) {
     // Enrich members with username
     const enrichedMembers = members.map((m: any) => ({
       userId: m.userId,
-      username: userIdToUsername.get(m.userId) || m.userId, // Fallback to userId if username not found
+      username: userIdToUsername.get(m.userId) || m.userId,
       name: m.name,
       role: m.role,
       department: m.department,
       joinedAt: new Date()
     }));
 
-    // Create default action
-    const action = {
-      title: defaultAction?.title || 'Sprint Kickoff',
-      description: defaultAction?.description || 'Initialize sprint and define goals',
+    // Create default action if provided - FIXED: Changed 'todo' to 'pending'
+    const actions = defaultAction ? [{
+      title: defaultAction.title,
+      description: defaultAction.description,
       assignedTo: [groupLead],
-      status: 'pending',
-      dueDate: new Date(endDate),
+      status: 'pending', // FIXED: Changed from 'todo' to 'pending'
+      priority: 'medium',
       attachments: [],
       blockers: [],
       comments: [],
-      history: [
-        {
-          action: 'created',
-          performedBy: createdBy,
-          performedByName: createdByName,
-          timestamp: new Date(),
-          details: 'Action created'
-        }
-      ],
+      history: [],
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    }] : [];
+
+    console.log('✅ Created default action with status: pending');
 
     const sprint = new Sprint({
       sprintNumber,
       title,
       description,
       department,
-      projectId,
-      projectNumber,
+      projectId: projectId || null,
+      projectNumber: projectNumber || null,
       createdBy,
       createdByName,
       members: enrichedMembers,
@@ -217,25 +179,71 @@ export async function POST(request: NextRequest) {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       status: 'active',
-      actions: [action],
+      actions,
       chat: [],
-      health: 'healthy'
+      attachments: []
     });
 
+    // Save sprint first to get the ID
+    console.log('💾 Saving sprint to database...');
     await sprint.save();
+    console.log(`✅ Sprint saved with ID: ${sprint._id}`);
 
-    // Get all unique user IDs from members for calendar sync
-    const allUserIds = memberUserIds;
-    
-    // Get dept head's userId from FormData using createdBy (username)
+    // Handle attachments if provided
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      console.log(`📎 Processing ${attachments.length} attachments for sprint ${sprintNumber}`);
+      
+      const savedAttachments = [];
+      
+      for (const attachment of attachments) {
+        try {
+          console.log(`📄 Processing attachment: ${attachment.name} (${attachment.type}, ${attachment.size} bytes)`);
+          
+          const savedPath = saveAttachment(sprintNumber, {
+            name: attachment.name,
+            data: attachment.data,
+            type: attachment.type
+          });
+          
+          savedAttachments.push({
+            name: attachment.name,
+            path: savedPath,
+            type: attachment.type,
+            size: attachment.size,
+            uploadedAt: new Date(),
+            uploadedBy: {
+              userId: createdBy,
+              name: createdByName
+            }
+          });
+          
+          console.log(`✅ Saved attachment: ${attachment.name} to ${savedPath}`);
+        } catch (attError) {
+          console.error(`❌ Failed to save attachment ${attachment.name}:`, attError);
+        }
+      }
+      
+      // Update sprint with saved attachments
+      if (savedAttachments.length > 0) {
+        sprint.attachments = savedAttachments;
+        await sprint.save();
+        console.log(`✅ Updated sprint with ${savedAttachments.length} attachments`);
+        console.log('📋 Attachment details:', savedAttachments.map(a => ({ name: a.name, path: a.path })));
+      }
+    } else {
+      console.log('ℹ️ No attachments to process');
+    }
+
+    // Get dept head's userId
     const deptHeadUser = await FormData.findOne({ username: createdBy }).select('_id');
     const deptHeadUserId = deptHeadUser ? deptHeadUser._id.toString() : null;
     
-    // Combine member userIds and dept head userId
     const allUserIdsWithHead = deptHeadUserId 
-      ? [...new Set([...allUserIds, deptHeadUserId])]
-      : [...new Set(allUserIds)];
-    
+      ? [...new Set([...memberUserIds, deptHeadUserId])]
+      : [...new Set(memberUserIds)];
+
+    console.log(`📅 Creating calendar events for ${allUserIdsWithHead.length} users`);
+
     // Create calendar events for all involved users
     const calendarSyncPromises = allUserIdsWithHead.map(async (userId: string) => {
       try {
@@ -248,7 +256,7 @@ export async function POST(request: NextRequest) {
           startTime: new Date(startDate),
           endTime: new Date(startDate),
           priority: 'medium',
-          linkedProjectId: sprint._id.toString(),
+          linkedSprintId: sprint._id.toString(),
           color: '#9C27B0'
         });
 
@@ -261,8 +269,8 @@ export async function POST(request: NextRequest) {
           startTime: new Date(endDate),
           endTime: new Date(endDate),
           priority: 'high',
-          linkedProjectId: sprint._id.toString(),
-          color: '#9C27B0'
+          linkedSprintId: sprint._id.toString(),
+          color: '#E91E63'
         });
       } catch (err) {
         console.error(`Calendar sync error for user ${userId}:`, err);
@@ -270,8 +278,9 @@ export async function POST(request: NextRequest) {
     });
 
     await Promise.allSettled(calendarSyncPromises);
+    console.log('✅ Calendar events created');
 
-    // Send notifications (don't let notification failure break sprint creation)
+    // Send notifications
     try {
       await sendSprintNotification(
         sprint,
@@ -279,18 +288,24 @@ export async function POST(request: NextRequest) {
         createdBy,
         createdByName
       );
+      console.log('✅ Notifications sent');
     } catch (notifError) {
       console.error('Failed to send sprint notification:', notifError);
     }
 
+    console.log('🎉 Sprint creation completed successfully');
+
     return NextResponse.json({
       success: true,
-      sprint
+      sprint: {
+        ...sprint.toObject(),
+        _id: sprint._id.toString()
+      }
     });
   } catch (error) {
-    console.error('Error creating sprint:', error);
+    console.error('❌ Error creating sprint:', error);
     return NextResponse.json(
-      { error: 'Failed to create sprint' },
+      { error: 'Failed to create sprint', details: String(error) },
       { status: 500 }
     );
   }

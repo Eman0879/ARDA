@@ -9,10 +9,12 @@ export function ensureUploadDir(identifier: string): string {
   
   if (!fs.existsSync(UPLOAD_BASE_DIR)) {
     fs.mkdirSync(UPLOAD_BASE_DIR, { recursive: true });
+    console.log(`📁 Created base upload directory: ${UPLOAD_BASE_DIR}`);
   }
   
   if (!fs.existsSync(itemDir)) {
     fs.mkdirSync(itemDir, { recursive: true });
+    console.log(`📁 Created item directory: ${itemDir}`);
   }
   
   return itemDir;
@@ -34,6 +36,9 @@ export function saveAttachment(
     : Buffer.from(file.data, 'base64');
   
   fs.writeFileSync(savedPath, buffer);
+  
+  console.log(`💾 Saved file: ${filename} to ${savedPath}`);
+  console.log(`📊 File size: ${buffer.length} bytes`);
   
   return savedPath;
 }

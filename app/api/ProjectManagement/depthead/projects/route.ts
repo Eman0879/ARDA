@@ -5,6 +5,7 @@ import Project from '@/models/ProjectManagement/Project';
 import FormData from '@/models/FormData';
 import { sendProjectNotification } from '@/app/utils/projectNotifications';
 import { TimeIntent } from '@/models/CalendarEvent';
+import { saveAttachment } from '@/app/utils/projectFileUpload';
 
 // Helper to calculate health
 function calculateHealth(project: any): string {
@@ -130,9 +131,11 @@ export async function POST(request: NextRequest) {
       members,
       groupLead,
       startDate,
-      targetEndDate 
+      targetEndDate,
+      attachments
     } = body;
 
+    // Validate required fields - targetEndDate is now REQUIRED
     if (!title || !description || !department || !createdBy || !members || !groupLead || !targetEndDate) {
       return NextResponse.json(
         { error: 'Missing required fields. Target end date is required.' },
@@ -166,7 +169,7 @@ export async function POST(request: NextRequest) {
     // Enrich members with username
     const enrichedMembers = members.map((m: any) => ({
       userId: m.userId,
-      username: userIdToUsername.get(m.userId) || m.userId, // Fallback to userId if username not found
+      username: userIdToUsername.get(m.userId) || m.userId,
       name: m.name,
       role: m.role,
       department: m.department,
@@ -187,10 +190,52 @@ export async function POST(request: NextRequest) {
       status: 'active',
       deliverables: [],
       chat: [],
-      health: 'healthy'
+      health: 'healthy',
+      attachments: [] // Will be populated below
     });
 
+    // Save project first to get the ID
     await project.save();
+
+    // Handle attachments if provided
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      console.log(`📎 Processing ${attachments.length} attachments for project ${projectNumber}`);
+      
+      const savedAttachments = [];
+      
+      for (const attachment of attachments) {
+        try {
+          const savedPath = saveAttachment(projectNumber, {
+            name: attachment.name,
+            data: attachment.data,
+            type: attachment.type
+          });
+          
+          savedAttachments.push({
+            name: attachment.name,
+            path: savedPath,
+            type: attachment.type,
+            size: attachment.size,
+            uploadedAt: new Date(),
+            uploadedBy: {
+              userId: createdBy,
+              name: createdByName
+            }
+          });
+          
+          console.log(`✅ Saved attachment: ${attachment.name}`);
+        } catch (attError) {
+          console.error(`❌ Failed to save attachment ${attachment.name}:`, attError);
+        }
+      }
+      
+      // Update project with saved attachments
+      if (savedAttachments.length > 0) {
+        project.attachments = savedAttachments;
+        await project.save();
+        console.log(`✅ Updated project with ${savedAttachments.length} attachments`);
+      }
+    }
 
     // Get all unique user IDs from members for calendar sync
     const allUserIds = memberUserIds;

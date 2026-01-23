@@ -209,9 +209,9 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
     <>
       {/* Dashboard Grid Layout */}
       <div className="space-y-6">
-        {/* Top Section - Announcements/Tickets and Calendar/Canvas/Quick Actions */}
+        {/* Top Section - Announcements and Calendar/Canvas/Quick Actions */}
         <div className="grid grid-cols-12 gap-5">
-          {/* Left Column - Announcements & Department Tickets */}
+          {/* Left Column - Announcements */}
           <div className="col-span-12 lg:col-span-4 space-y-5">
             {/* Organization Announcements */}
             <div className={`relative overflow-hidden h-[320px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-4 border-2 ${cardCharacters.authoritative.border} ${colors.shadowCard}`}>
@@ -238,32 +238,29 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
                 />
               </div>
             </div>
+          </div>
 
-            {/* Department Tickets Donut - Below Announcements */}
+          {/* Right Column - Quick Actions, Today's Events, Day Canvas */}
+          <div className="col-span-12 lg:col-span-8 space-y-5">
+            {/* Quick Actions */}
             <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
               {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
               
               <div className="relative">
-                <DeptTicketsDonut 
-                  department={department}
-                  onClick={handleNavigateToTeam}
-                />
+                <QuickActionsWidget onNavigate={handleQuickActionNavigate} />
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Mini Calendar, Day Canvas, Quick Actions & Events */}
-          <div className="col-span-12 lg:col-span-8 space-y-5">
-            {/* Mini Calendar & Day Canvas - Side by Side */}
+            {/* Today's Events & Day Canvas - Side by Side */}
             <div className="grid grid-cols-2 gap-5">
-              {/* Mini Calendar - Non-clickable */}
-              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-4 border-2 ${cardCharacters.informative.border} ${colors.shadowCard}`}>
+              {/* Today's Events */}
+              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
                 {/* Paper Texture */}
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <MiniCalendarWidget userId={userId} />
+                  <TodaysEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
 
@@ -277,67 +274,71 @@ export default function DeptHeadHomeContent({ department, onSectionChange }: Dep
                 </div>
               </div>
             </div>
-
-            {/* Quick Actions */}
-            <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-              {/* Paper Texture */}
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-              
-              <div className="relative">
-                <QuickActionsWidget onNavigate={handleQuickActionNavigate} />
-              </div>
-            </div>
-
-            {/* Today's Events & Upcoming Events - Side by Side */}
-            <div className="grid grid-cols-2 gap-5">
-              {/* Today's Events */}
-              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-                {/* Paper Texture */}
-                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-                
-                <div className="relative h-full">
-                  <TodaysEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
-                </div>
-              </div>
-
-              {/* Upcoming Events */}
-              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-                {/* Paper Texture */}
-                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-                
-                <div className="relative h-full">
-                  <UpcomingEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Middle Section - Assigned Tickets & Projects/Sprints */}
-        <div className="grid grid-cols-12 gap-5">
+        {/* Assigned Tickets & Projects/Sprints - Full Width Row */}
+        <div className="grid grid-cols-2 gap-5">
           {/* Assigned Tickets Widget */}
-          <div className="col-span-12 lg:col-span-6">
-            <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-              {/* Paper Texture */}
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-              
-              <div className="relative">
-                <AssignedTicketsWidget onViewAll={handleNavigateToAssignedTickets} />
-              </div>
+          <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
+            {/* Paper Texture */}
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+            
+            <div className="relative">
+              <AssignedTicketsWidget onViewAll={handleNavigateToAssignedTickets} />
             </div>
           </div>
 
           {/* Projects/Sprints Widget */}
-          <div className="col-span-12 lg:col-span-6">
+          <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
+            {/* Paper Texture */}
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+            
+            <div className="relative">
+              <ProjectsSprintsWidget 
+                department={department}
+                onNavigate={onSectionChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Department Tickets Donut, Mini Calendar & Upcoming Events Row */}
+        <div className="grid grid-cols-12 gap-5">
+          {/* Department Tickets Donut - Left Side */}
+          <div className="col-span-12 lg:col-span-4">
             <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
               {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
               
               <div className="relative">
-                <ProjectsSprintsWidget 
+                <DeptTicketsDonut 
                   department={department}
-                  onNavigate={onSectionChange}
+                  onClick={handleNavigateToTeam}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Mini Calendar & Upcoming Events - Right Side */}
+          <div className="col-span-12 lg:col-span-8 grid grid-cols-2 gap-5">
+            {/* Mini Calendar - Non-clickable */}
+            <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-4 border-2 ${cardCharacters.informative.border} ${colors.shadowCard}`}>
+              {/* Paper Texture */}
+              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+              
+              <div className="relative h-full">
+                <MiniCalendarWidget userId={userId} />
+              </div>
+            </div>
+
+            {/* Upcoming Events */}
+            <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
+              {/* Paper Texture */}
+              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+              
+              <div className="relative h-full">
+                <UpcomingEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
               </div>
             </div>
           </div>

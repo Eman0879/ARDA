@@ -1,4 +1,4 @@
-// app/(Dashboard)/hr-head/components/HRHeadHomeContent.tsx
+// app/(Dashboard)/dept-head/components/DeptHeadHomeContent.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,11 +14,12 @@ import UpcomingEventsWidget from './HomeContent/UpcomingEventsWidget';
 import MiniCalendarWidget from './HomeContent/MiniCalendarWidget';
 import DayCanvasWidget from './HomeContent/DayCanvasWidget';
 import AssignedTicketsWidget from './HomeContent/AssignedTicketsWidget';
-import LoadingState from './HomeContent/LoadingState';
 import Styles from './HomeContent/Styles';
 import { useTheme } from '@/app/context/ThemeContext';
+import { Loader2 } from 'lucide-react';
 
-interface HRHeadHomeContentProps {
+
+interface DeptHeadHomeContentProps {
   department: string;
   onSectionChange?: (section: string) => void;
 }
@@ -33,7 +34,13 @@ interface OrgAnnouncement {
   edited?: boolean;
 }
 
-export default function HRHeadHomeContent({ department, onSectionChange }: HRHeadHomeContentProps) {
+interface NotificationMessage {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
+export default function DeptHeadHomeContent({ department, onSectionChange }: DeptHeadHomeContentProps) {
   const { colors, showToast, cardCharacters } = useTheme();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [orgAnnouncements, setOrgAnnouncements] = useState<OrgAnnouncement[]>([]);
@@ -46,7 +53,7 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
       try {
         const userData = localStorage.getItem('user');
         if (!userData) {
-          console.error('❌ HRHeadHomeContent: No user data in localStorage');
+          console.error('❌ DeptHeadHomeContent: No user data in localStorage');
           return;
         }
 
@@ -54,7 +61,7 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
         
         // If _id already exists, use it
         if (user._id) {
-          console.log('✅ HRHeadHomeContent: User ID found in localStorage:', user._id);
+          console.log('✅ DeptHeadHomeContent: User ID found in localStorage:', user._id);
           setUserId(user._id);
           return;
         }
@@ -63,24 +70,24 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
         const identifier = user.username || user.id || user.userId;
         
         if (!identifier) {
-          console.error('❌ HRHeadHomeContent: No user identifier found');
+          console.error('❌ DeptHeadHomeContent: No user identifier found');
           return;
         }
         
-        console.log('🔄 HRHeadHomeContent: Fetching user ID from API for:', identifier);
+        console.log('🔄 DeptHeadHomeContent: Fetching user ID from API for:', identifier);
         
         const response = await fetch(`/api/users/get-user-id?identifier=${encodeURIComponent(identifier)}`);
         
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          console.error('❌ HRHeadHomeContent: Invalid response from API');
+          console.error('❌ DeptHeadHomeContent: Invalid response from API');
           return;
         }
         
         const data = await response.json();
         
         if (response.ok) {
-          console.log('✅ HRHeadHomeContent: User ID fetched from API:', data.userId);
+          console.log('✅ DeptHeadHomeContent: User ID fetched from API:', data.userId);
           
           // Update localStorage with the _id
           user._id = data.userId;
@@ -88,10 +95,10 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
           
           setUserId(data.userId);
         } else {
-          console.error('❌ HRHeadHomeContent: Failed to fetch user ID from API');
+          console.error('❌ DeptHeadHomeContent: Failed to fetch user ID from API');
         }
       } catch (error) {
-        console.error('❌ HRHeadHomeContent: Error fetching user ID:', error);
+        console.error('❌ DeptHeadHomeContent: Error fetching user ID:', error);
       }
     };
 
@@ -99,7 +106,7 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
   }, []);
 
   useEffect(() => {
-    console.log('HRHeadHomeContent mounted, onSectionChange:', onSectionChange ? 'defined' : 'undefined');
+    console.log('DeptHeadHomeContent mounted, onSectionChange:', onSectionChange ? 'defined' : 'undefined');
     fetchAnnouncements();
     fetchOrgAnnouncements();
   }, [department]);
@@ -188,18 +195,25 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
   };
 
   if (loading) {
-    return <LoadingState />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
+          <p className={`${colors.textPrimary} text-base font-bold`}>Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
       {/* Dashboard Grid Layout */}
       <div className="space-y-6">
-        {/* Top Section - Announcements/Tickets and Calendar/Canvas/Quick Actions */}
+        {/* Top Section - Announcements and Calendar/Canvas/Quick Actions */}
         <div className="grid grid-cols-12 gap-5">
-          {/* Left Column - Announcements & Department Tickets */}
+          {/* Left Column - Announcements */}
           <div className="col-span-12 lg:col-span-4 space-y-5">
-            {/* Organization Announcements - HR Head has CRUD access */}
+            {/* Organization Announcements */}
             <div className={`relative overflow-hidden h-[320px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-4 border-2 ${cardCharacters.authoritative.border} ${colors.shadowCard}`}>
               {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
@@ -224,32 +238,29 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
                 />
               </div>
             </div>
+          </div>
 
-            {/* Department Tickets Donut - Below Announcements */}
+          {/* Right Column - Quick Actions, Today's Events, Day Canvas */}
+          <div className="col-span-12 lg:col-span-8 space-y-5">
+            {/* Quick Actions */}
             <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
               {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
               
               <div className="relative">
-                <DeptTicketsDonut 
-                  department={department}
-                  onClick={handleNavigateToTeam}
-                />
+                <QuickActionsWidget onNavigate={handleQuickActionNavigate} />
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Mini Calendar, Day Canvas, Quick Actions & Events */}
-          <div className="col-span-12 lg:col-span-8 space-y-5">
-            {/* Mini Calendar & Day Canvas - Side by Side */}
+            {/* Today's Events & Day Canvas - Side by Side */}
             <div className="grid grid-cols-2 gap-5">
-              {/* Mini Calendar - Non-clickable */}
-              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-4 border-2 ${cardCharacters.informative.border} ${colors.shadowCard}`}>
+              {/* Today's Events */}
+              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
                 {/* Paper Texture */}
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative h-full">
-                  <MiniCalendarWidget userId={userId} />
+                  <TodaysEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
                 </div>
               </div>
 
@@ -263,67 +274,71 @@ export default function HRHeadHomeContent({ department, onSectionChange }: HRHea
                 </div>
               </div>
             </div>
-
-            {/* Quick Actions */}
-            <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-              {/* Paper Texture */}
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-              
-              <div className="relative">
-                <QuickActionsWidget onNavigate={handleQuickActionNavigate} />
-              </div>
-            </div>
-
-            {/* Today's Events & Upcoming Events - Side by Side */}
-            <div className="grid grid-cols-2 gap-5">
-              {/* Today's Events */}
-              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-                {/* Paper Texture */}
-                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-                
-                <div className="relative h-full">
-                  <TodaysEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
-                </div>
-              </div>
-
-              {/* Upcoming Events */}
-              <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-                {/* Paper Texture */}
-                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-                
-                <div className="relative h-full">
-                  <UpcomingEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Middle Section - Assigned Tickets & Projects/Sprints */}
-        <div className="grid grid-cols-12 gap-5">
+        {/* Assigned Tickets & Projects/Sprints - Full Width Row */}
+        <div className="grid grid-cols-2 gap-5">
           {/* Assigned Tickets Widget */}
-          <div className="col-span-12 lg:col-span-6">
-            <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
-              {/* Paper Texture */}
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-              
-              <div className="relative">
-                <AssignedTicketsWidget onViewAll={handleNavigateToAssignedTickets} />
-              </div>
+          <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
+            {/* Paper Texture */}
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+            
+            <div className="relative">
+              <AssignedTicketsWidget onViewAll={handleNavigateToAssignedTickets} />
             </div>
           </div>
 
           {/* Projects/Sprints Widget */}
-          <div className="col-span-12 lg:col-span-6">
+          <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
+            {/* Paper Texture */}
+            <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+            
+            <div className="relative">
+              <ProjectsSprintsWidget 
+                department={department}
+                onNavigate={onSectionChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Department Tickets Donut, Mini Calendar & Upcoming Events Row */}
+        <div className="grid grid-cols-12 gap-5">
+          {/* Department Tickets Donut - Left Side */}
+          <div className="col-span-12 lg:col-span-4">
             <div className={`relative overflow-hidden backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
               {/* Paper Texture */}
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
               
               <div className="relative">
-                <ProjectsSprintsWidget 
+                <DeptTicketsDonut 
                   department={department}
-                  onNavigate={onSectionChange}
+                  onClick={handleNavigateToTeam}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Mini Calendar & Upcoming Events - Right Side */}
+          <div className="col-span-12 lg:col-span-8 grid grid-cols-2 gap-5">
+            {/* Mini Calendar - Non-clickable */}
+            <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-4 border-2 ${cardCharacters.informative.border} ${colors.shadowCard}`}>
+              {/* Paper Texture */}
+              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+              
+              <div className="relative h-full">
+                <MiniCalendarWidget userId={userId} />
+              </div>
+            </div>
+
+            {/* Upcoming Events */}
+            <div className={`relative overflow-hidden h-[380px] backdrop-blur-xl bg-gradient-to-br ${colors.cardBg} rounded-xl p-5 border-2 ${colors.borderStrong} ${colors.shadowCard}`}>
+              {/* Paper Texture */}
+              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+              
+              <div className="relative h-full">
+                <UpcomingEventsWidget userId={userId} onViewAll={handleNavigateToCalendar} />
               </div>
             </div>
           </div>

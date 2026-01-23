@@ -1,7 +1,6 @@
 // ============================================
 // UPDATED: app/components/universal/WorkflowsContent.tsx
-// Added error handling for deletion with active tickets
-// Updated with consistent loading screen
+// Added onToggleActive handler
 // ============================================
 
 'use client';
@@ -14,7 +13,9 @@ import DeleteConfirmModal from './WorkflowComponents/DeleteConfirmModal';
 import { Functionality, Employee } from './WorkflowComponents/types';
 
 export default function WorkflowsContent() {
-  const { colors } = useTheme();
+  const { colors, cardCharacters } = useTheme();
+  const charColors = cardCharacters.informative;
+  
   const [functionalities, setFunctionalities] = useState<Functionality[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,12 @@ export default function WorkflowsContent() {
     setShowModal(true);
   };
 
+  const handleToggleActive = (id: string, newStatus: boolean) => {
+    setFunctionalities(prev => 
+      prev.map(f => f._id === id ? { ...f, isActive: newStatus } : f)
+    );
+  };
+
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/functionalities/${id}`, { method: 'DELETE' });
@@ -78,7 +85,6 @@ export default function WorkflowsContent() {
         setDeleteConfirm(null);
         setDeleteError(null);
       } else {
-        // Handle deletion error (active tickets exist)
         setDeleteError({
           message: data.message || data.error,
           count: data.activeTicketCount || 0
@@ -113,7 +119,6 @@ export default function WorkflowsContent() {
       if (res.ok) {
         const data = await res.json();
         
-        // Show update message if tickets were reset
         if (method === 'PUT' && data.ticketsReset > 0) {
           setUpdateMessage(
             `Functionality updated successfully. ${data.ticketsReset} active ticket(s) have been reset to the start of the new workflow.`
@@ -132,19 +137,26 @@ export default function WorkflowsContent() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br ${colors.background} p-8`}>
-        <div className="mb-8">
-          <h1 className={`text-4xl font-black ${colors.textPrimary} mb-2`}>
-            Workflow Management
-          </h1>
-          <p className={colors.textSecondary}>
-            Loading functionalities and workflows...
-          </p>
+      <div className="min-h-screen p-4 md:p-6 space-y-4">
+        <div className={`relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} ${colors.shadowCard} p-8`}>
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+          <div className="relative">
+            <h1 className={`text-4xl font-black ${charColors.text} mb-2`}>
+              Workflow Management
+            </h1>
+            <p className={colors.textSecondary}>
+              Loading functionalities and workflows...
+            </p>
+          </div>
         </div>
+
         <div className="flex items-center justify-center py-20">
           <div className="text-center space-y-4">
-            <Loader2 className={`w-14 h-14 ${colors.textAccent} animate-spin mx-auto`} />
-            <p className={`${colors.textPrimary} text-base font-bold`}>
+            <div className="relative inline-block">
+              <div className={`absolute inset-0 rounded-full blur-2xl opacity-30 animate-pulse`} style={{ backgroundColor: charColors.iconColor.replace('text-', '') }} />
+              <Loader2 className={`relative w-12 h-12 animate-spin ${charColors.iconColor}`} />
+            </div>
+            <p className={`${colors.textSecondary} text-sm font-semibold`}>
               Loading workflows...
             </p>
           </div>
@@ -154,44 +166,45 @@ export default function WorkflowsContent() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${colors.background} p-8`}>
-      <div className="mb-8">
-        <h1 className={`text-4xl font-black ${colors.textPrimary} mb-2`}>
-          Workflow Management
-        </h1>
-        <p className={colors.textSecondary}>
-          Create and manage ticketing functionalities with visual workflows
-        </p>
+    <div className="min-h-screen p-4 md:p-6 space-y-6">
+      <div className={`relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} ${colors.shadowCard} p-6`}>
+        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+        <div className="relative">
+          <h1 className={`text-4xl font-black ${charColors.text} mb-2`}>
+            Workflow Management
+          </h1>
+          <p className={colors.textSecondary}>
+            Create and manage ticketing functionalities with visual workflows
+          </p>
+        </div>
       </div>
 
-      {/* Update Message */}
       {updateMessage && (
-        <div className={`mb-6 p-4 rounded-lg border-2 ${colors.border} bg-gradient-to-r from-green-500/20 to-emerald-500/20`}>
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+        <div className={`relative overflow-hidden p-4 rounded-xl border-2 flex items-center gap-4 bg-gradient-to-br ${cardCharacters.completed.bg} ${cardCharacters.completed.border}`}>
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+          <div className="relative flex items-start space-x-3">
+            <AlertCircle className={`w-5 h-5 ${cardCharacters.completed.iconColor} mt-0.5 flex-shrink-0`} />
             <p className={`${colors.textPrimary} text-sm`}>{updateMessage}</p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <button
           onClick={handleCreate}
-          className={`relative group bg-gradient-to-br ${colors.cardBg} backdrop-blur-xl border-2 ${colors.border} rounded-2xl p-8 transition-all duration-300 hover:scale-105 ${colors.cardBgHover} ${colors.borderHover} hover:shadow-2xl`}
-          style={{ boxShadow: `0 0 30px ${colors.brandBlue}20` }}
+          className={`group relative overflow-hidden rounded-xl border-2 backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} ${colors.shadowCard} hover:${colors.shadowHover} p-8 transition-all duration-300 hover:scale-105`}
         >
-          <div className="flex flex-col items-center justify-center space-y-4 h-full min-h-[280px]">
-            <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-              style={{
-                background: `linear-gradient(135deg, ${colors.brandBlue}20, ${colors.brandLightBlue}20)`,
-                boxShadow: `0 0 30px ${colors.brandBlue}40`,
-              }}
-            >
-              <Plus className="w-10 h-10" style={{ color: colors.brandSkyBlue }} />
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+          <div 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ boxShadow: `inset 0 0 30px ${colors.glowPrimary}` }}
+          ></div>
+          <div className="relative flex flex-col items-center justify-center space-y-4 h-full min-h-[280px]">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 bg-gradient-to-r ${charColors.bg} border-2 ${charColors.border}`}>
+              <Plus className={`w-10 h-10 ${charColors.iconColor}`} />
             </div>
             <div>
-              <h3 className={`text-xl font-black ${colors.textPrimary} text-center`}>
+              <h3 className={`text-xl font-black ${charColors.text} text-center`}>
                 Create New Functionality
               </h3>
               <p className={`${colors.textSecondary} text-sm text-center mt-2`}>
@@ -205,9 +218,9 @@ export default function WorkflowsContent() {
           <FunctionalityCard
             key={func._id}
             functionality={func}
-            colors={colors}
             onEdit={handleEdit}
             onDelete={() => setDeleteConfirm(func._id)}
+            onToggleActive={handleToggleActive}
           />
         ))}
       </div>
@@ -216,7 +229,6 @@ export default function WorkflowsContent() {
         <WorkflowModal
           functionality={editingFunctionality}
           employees={employees}
-          colors={colors}
           onClose={() => {
             setShowModal(false);
             setEditingFunctionality(null);
@@ -227,7 +239,6 @@ export default function WorkflowsContent() {
 
       {deleteConfirm && (
         <DeleteConfirmModal
-          colors={colors}
           error={deleteError}
           onConfirm={() => handleDelete(deleteConfirm)}
           onCancel={() => {

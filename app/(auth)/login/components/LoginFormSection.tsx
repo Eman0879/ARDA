@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LogIn, Users, Lock, Eye, EyeOff, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { LogIn, Users, Lock, Eye, EyeOff, Hash, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function LoginFormSection() {
   // Use dark mode colors directly
@@ -46,7 +46,7 @@ export default function LoginFormSection() {
   // Forgot password states
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [forgotUsername, setForgotUsername] = useState('');
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotEmployeeId, setForgotEmployeeId] = useState('');
   
   // Common states
   const [error, setError] = useState('');
@@ -76,6 +76,7 @@ export default function LoginFormSection() {
       const data = await response.json();
       
       if (data.success && data.user) {
+        // Store user data in localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('authToken', 'authenticated');
         
@@ -125,15 +126,8 @@ export default function LoginFormSection() {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotUsername || !forgotEmail) {
+    if (!forgotUsername || !forgotEmployeeId) {
       setError('Please fill in all fields');
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(forgotEmail)) {
-      setError('Please enter a valid email address');
       return;
     }
 
@@ -149,7 +143,7 @@ export default function LoginFormSection() {
         },
         body: JSON.stringify({ 
           username: forgotUsername, 
-          email: forgotEmail 
+          employeeId: forgotEmployeeId 
         }),
       });
 
@@ -160,7 +154,7 @@ export default function LoginFormSection() {
         setError('');
         // Clear form fields
         setForgotUsername('');
-        setForgotEmail('');
+        setForgotEmployeeId('');
         
         // Switch back to login after 5 seconds
         setTimeout(() => {
@@ -197,7 +191,7 @@ export default function LoginFormSection() {
     setUsername('');
     setPassword('');
     setForgotUsername('');
-    setForgotEmail('');
+    setForgotEmployeeId('');
   };
 
   return (
@@ -311,7 +305,7 @@ export default function LoginFormSection() {
 
                   {/* Instructions */}
                   <p className={`${darkColors.textSecondary} text-sm`}>
-                    Enter your username and email address. We'll send you a new password.
+                    Enter your username and Employee ID. We'll send password reset instructions to your registered email address.
                   </p>
 
                   {/* Username Input */}
@@ -339,26 +333,26 @@ export default function LoginFormSection() {
                     </div>
                   </div>
 
-                  {/* Email Input */}
+                  {/* Employee ID Input */}
                   <div className="space-y-2">
                     <label className={`block text-xs font-bold ${darkColors.textAccent} uppercase tracking-wider`}>
-                      Email Address
+                      Employee ID
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className={`h-4 w-4 transition-colors duration-300 ${
-                          focusedField === 'forgot-email' ? authoritativeChar.iconColor : 'text-[#6495ED]/60'
+                        <Hash className={`h-4 w-4 transition-colors duration-300 ${
+                          focusedField === 'forgot-employeeid' ? authoritativeChar.iconColor : 'text-[#6495ED]/60'
                         }`} />
                       </div>
                       <input
-                        type="email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
+                        type="text"
+                        value={forgotEmployeeId}
+                        onChange={(e) => setForgotEmployeeId(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        onFocus={() => setFocusedField('forgot-email')}
+                        onFocus={() => setFocusedField('forgot-employeeid')}
                         onBlur={() => setFocusedField(null)}
                         className={`w-full pl-10 pr-3 py-3 ${darkColors.inputBg} border-2 ${darkColors.inputBorder} rounded-lg focus:border-[#0000FF] ${darkColors.inputFocusBg} focus:ring-2 focus:ring-[#0000FF]/30 outline-none transition-all duration-300 ${darkColors.inputText} text-sm ${darkColors.inputPlaceholder} hover:border-[#6495ED]/50`}
-                        placeholder="Enter your email"
+                        placeholder="Enter your Employee ID"
                         disabled={loading}
                       />
                     </div>
@@ -404,7 +398,7 @@ export default function LoginFormSection() {
                     ) : (
                       <>
                         <span className="relative z-10 font-black tracking-wide">RESET PASSWORD</span>
-                        <Mail className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                        <Hash className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                   </button>

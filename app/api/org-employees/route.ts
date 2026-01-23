@@ -1,6 +1,7 @@
 // ============================================
 // app/api/org-employees/route.ts
 // Fetch all employees across the organization
+// UPDATED: Added email field to response
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -30,21 +31,22 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Fetch employees
+    // Fetch employees with email
     const employeesRaw = await FormData.find(query)
-      .select('_id basicDetails.name username title department basicDetails.profileImage')
+      .select('_id basicDetails.name username title department basicDetails.profileImage contactInformation.email')
       .sort({ 'basicDetails.name': 1 })
       .lean();
 
     // Transform to include 'name' field at top level
     const employees = employeesRaw.map(emp => ({
       _id: emp._id,
-      name: emp.basicDetails?.name || emp.username, // Extract name from basicDetails
+      name: emp.basicDetails?.name || emp.username,
       username: emp.username,
       title: emp.title,
       department: emp.department,
       profileImage: emp.basicDetails?.profileImage,
-      'basicDetails.name': emp.basicDetails?.name || emp.username // Keep for backwards compatibility
+      contactInformation: emp.contactInformation, // ✅ Include email
+      'basicDetails.name': emp.basicDetails?.name || emp.username
     }));
 
     console.log(`📋 Fetched ${employees.length} employees from organization`);

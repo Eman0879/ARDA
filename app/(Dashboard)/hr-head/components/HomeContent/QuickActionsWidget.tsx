@@ -1,4 +1,4 @@
-// app/(Dashboard)/hr-head/components/HomeContent/QuickActionsWidget.tsx
+// app/(Dashboard)/dept-head/components/HomeContent/QuickActionsWidget.tsx
 'use client';
 
 import React from 'react';
@@ -7,6 +7,7 @@ import {
   TicketIcon,
   FileText,
   Users,
+  FolderKanban,
   Calendar,
   Building2,
   GitBranch,
@@ -31,7 +32,6 @@ interface QuickActionsWidgetProps {
 export default function QuickActionsWidget({ onNavigate }: QuickActionsWidgetProps) {
   const { colors, theme } = useTheme();
 
-  // Combination of HR Employee and Dept Head - most essential actions
   const quickActions: QuickAction[] = [
     {
       id: 'create-ticket',
@@ -51,12 +51,12 @@ export default function QuickActionsWidget({ onNavigate }: QuickActionsWidgetPro
       icon: <Users className="h-4 w-4" />,
       section: 'team'
     },
-    // {
-    //   id: 'manage-users',
-    //   label: 'Manage Users',
-    //   icon: <Users className="h-4 w-4" />,
-    //   section: 'manage-users'
-    // },
+    {
+      id: 'projects',
+      label: 'Projects',
+      icon: <FolderKanban className="h-4 w-4" />,
+      section: 'projects'
+    },
     {
       id: 'calendar',
       label: 'Calendar',

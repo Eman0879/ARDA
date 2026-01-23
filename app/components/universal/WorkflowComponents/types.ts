@@ -76,6 +76,7 @@ export interface Functionality {
     edges: WorkflowEdge[];
   };
   formSchema: FormSchema;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

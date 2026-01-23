@@ -1,11 +1,11 @@
 // ============================================
 // app/components/ticketing/TicketFormModal.tsx
 // Modal for creating tickets with dynamic form
-// UPDATED: Fixed conditional field display for priority-reason
+// UPDATED: Fixed email issue + searchable notification recipients
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Send, Loader2, CheckCircle, AlertCircle, UserPlus, Search } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import DynamicFormField from './DynamicFormField';
 
@@ -49,6 +49,80 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ticketNumber, setTicketNumber] = useState('');
+  
+  // 📧 Notification recipients state
+  const [notificationRecipients, setNotificationRecipients] = useState<any[]>([]);
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<any[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // 📧 Fetch all organization employees
+  useEffect(() => {
+    fetchAllEmployees();
+  }, []);
+
+  // 📧 Filter employees based on search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredEmployees([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = allEmployees.filter(emp => {
+      // Don't show already selected employees
+      if (notificationRecipients.some(r => r.userId === emp._id.toString())) {
+        return false;
+      }
+      
+      // Search by name, username, title, or department
+      return (
+        emp.name?.toLowerCase().includes(query) ||
+        emp.username?.toLowerCase().includes(query) ||
+        emp.title?.toLowerCase().includes(query) ||
+        emp.department?.toLowerCase().includes(query)
+      );
+    });
+
+    setFilteredEmployees(filtered.slice(0, 10)); // Limit to 10 results
+  }, [searchQuery, allEmployees, notificationRecipients]);
+
+  const fetchAllEmployees = async () => {
+    try {
+      setLoadingEmployees(true);
+      const response = await fetch('/api/org-employees');
+      if (!response.ok) throw new Error('Failed to fetch employees');
+      const data = await response.json();
+      setAllEmployees(data.employees || []);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
+  // 📧 Add recipient from search
+  const addRecipient = (employee: any) => {
+    // ✅ FIX: Use the email field directly from the employee data
+    const newRecipient = {
+      userId: employee._id.toString(),
+      name: employee.name,
+      email: employee.contactInformation?.email || employee.username // Use actual email field
+    };
+    
+    setNotificationRecipients(prev => [...prev, newRecipient]);
+    setSearchQuery('');
+    setShowDropdown(false);
+    
+    console.log('📧 Added recipient:', newRecipient);
+  };
+
+  // 📧 Remove recipient
+  const removeRecipient = (userId: string) => {
+    setNotificationRecipients(prev => prev.filter(r => r.userId !== userId));
+  };
 
   const handleFieldChange = (fieldId: string, value: any) => {
     console.log(`🔄 Field "${fieldId}" changed:`, {
@@ -153,10 +227,18 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
       // Prepare form data
       const preparedFormData = { ...formData };
       
+      // 📧 Add notification recipients if any selected
+      if (notificationRecipients.length > 0) {
+        preparedFormData['notification-recipients'] = notificationRecipients;
+        console.log(`📧 Added ${notificationRecipients.length} notification recipients to formData`);
+        console.log('📧 Recipients:', notificationRecipients);
+      }
+      
       // ====== COMPREHENSIVE DEBUG LOGGING ======
       console.log('🔍 ====== FORM SUBMISSION DEBUG ======');
       console.log('🌟 Is Super Functionality?:', isSuper);
       console.log('📋 Functionality Department:', functionality.department);
+      console.log('📧 Notification Recipients:', notificationRecipients.length);
       console.log('📋 All form fields:', Object.keys(preparedFormData));
       console.log('📋 Full formData:', preparedFormData);
       
@@ -195,7 +277,8 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
         functionalityId: requestBody.functionalityId,
         isSuper: requestBody.isSuper,
         formDataKeys: Object.keys(requestBody.formData),
-        attachments: requestBody.formData['default-attachments']
+        attachments: requestBody.formData['default-attachments'],
+        notificationRecipients: requestBody.formData['notification-recipients']?.length || 0
       });
 
       const response = await fetch('/api/tickets', {
@@ -315,7 +398,6 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
                 Create New Ticket
               </h2>
               <p className={`text-sm ${colors.textSecondary} flex items-center gap-2 flex-wrap`}>
-                {/* CONSISTENT BADGE - Only visual indicator for Super */}
                 <span className={`px-3 py-1 rounded-lg text-xs font-bold bg-gradient-to-r ${charColors.bg} ${charColors.text} border ${charColors.border}`}>
                   {isSuper && '⚡ '}
                   {functionality.department}
@@ -339,20 +421,18 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
           <form onSubmit={handleSubmit} className={`space-y-6 ${colors.modalContentText}`}>
             {functionality.formSchema.fields.map((field) => {
               // BACKWARD COMPATIBILITY: Handle old workflows without conditional metadata
-              // Check for hardcoded priority-reason field IDs (old and new)
               if (field.id === 'default-priority-reason' || field.id === 'default-urgency-reason') {
                 const priorityValue = formData['default-priority'] || formData['default-urgency'];
                 if (priorityValue !== 'High') {
-                  return null; // Hide if priority is not High
+                  return null;
                 }
               }
               
-              // NEW: Generic conditional field rendering for fields with conditional metadata
+              // NEW: Generic conditional field rendering
               if (field.conditional) {
                 const dependentValue = formData[field.conditional.dependsOn];
-                // Only show if the dependent field's value matches one of the showWhen values
                 if (!field.conditional.showWhen.includes(dependentValue)) {
-                  return null; // Hide this field
+                  return null;
                 }
               }
 
@@ -366,10 +446,107 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
                 />
               );
             })}
+
+            {/* 📧 NEW: Searchable Notification Recipients Selection */}
+            <div>
+              <label className={`block text-sm font-bold ${colors.textPrimary} mb-2 flex items-center gap-2`}>
+                <UserPlus className="w-4 h-4" />
+                Additional Email Notifications (Optional)
+              </label>
+              <p className={`text-xs ${colors.textSecondary} mb-3`}>
+                Search and select people who should receive email updates for every action on this ticket
+              </p>
+              
+              {/* Search Input */}
+              <div className="relative">
+                <div className={`relative rounded-xl border-2 ${colors.inputBorder} ${colors.inputBg}`}>
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <Search className={`w-5 h-5 ${colors.textMuted}`} />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    placeholder="Search by name, username, title, or department..."
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-transparent border-none outline-none ${colors.inputText} ${colors.inputPlaceholder}`}
+                  />
+                </div>
+                
+                {/* Search Results Dropdown */}
+                {showDropdown && searchQuery && filteredEmployees.length > 0 && (
+                  <div className={`absolute z-50 w-full mt-2 rounded-xl border-2 shadow-lg max-h-64 overflow-y-auto ${colors.inputBg} ${colors.inputBorder}`}>
+                    {filteredEmployees.map(employee => (
+                      <button
+                        key={employee._id}
+                        type="button"
+                        onClick={() => addRecipient(employee)}
+                        className={`w-full text-left p-3 hover:bg-opacity-50 transition-all duration-200 border-b last:border-b-0 ${colors.borderSubtle}`}
+                      >
+                        <p className={`text-sm font-semibold ${colors.textPrimary}`}>
+                          {employee.name}
+                        </p>
+                        <p className={`text-xs ${colors.textMuted} mt-1`}>
+                          {employee.username} • {employee.department} {employee.title && `• ${employee.title}`}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {showDropdown && searchQuery && filteredEmployees.length === 0 && (
+                  <div className={`absolute z-50 w-full mt-2 rounded-xl border-2 shadow-lg p-4 text-center ${colors.inputBg} ${colors.inputBorder}`}>
+                    <p className={`text-sm ${colors.textMuted}`}>
+                      No employees found matching "{searchQuery}"
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected Recipients */}
+              {notificationRecipients.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <p className={`text-xs font-semibold ${colors.textPrimary}`}>
+                    Selected Recipients ({notificationRecipients.length})
+                  </p>
+                  {notificationRecipients.map((recipient) => (
+                    <div
+                      key={recipient.userId}
+                      className={`flex items-center justify-between p-3 rounded-lg border-2 bg-gradient-to-br ${charColors.bg} ${charColors.border}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${charColors.text} truncate`}>
+                          {recipient.name}
+                        </p>
+                        <p className={`text-xs ${colors.textMuted} truncate`}>
+                          {recipient.email}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipient(recipient.userId)}
+                        className={`ml-2 p-1.5 rounded-lg transition-all duration-300 hover:scale-110 ${colors.buttonGhost} ${colors.buttonGhostText}`}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {notificationRecipients.length > 0 && (
+                <p className={`text-xs mt-2 ${charColors.text}`}>
+                  ✉️ These {notificationRecipients.length} {notificationRecipients.length === 1 ? 'person will' : 'people will'} receive emails for all ticket updates
+                </p>
+              )}
+            </div>
           </form>
         </div>
 
-        {/* Footer - CONSISTENT SUBMIT BUTTON */}
+        {/* Footer */}
         <div className={`
           relative px-6 py-4 border-t ${colors.modalFooterBorder}
           ${colors.modalFooterBg} flex justify-end gap-3
@@ -382,7 +559,6 @@ export default function TicketFormModal({ functionality, onClose, onSuccess }: P
             Cancel
           </button>
           
-          {/* CONSISTENT SUBMIT BUTTON - Same styling for both Super and Normal */}
           <button
             type="button"
             onClick={handleSubmit}

@@ -1,6 +1,6 @@
 // ============================================
 // app/components/ticketing/TicketActionsList.tsx
-// UPDATED: Forward attachments, required explanation, theme-compliant buttons (NO SCALE)
+// UPDATED: Blocker attachments + required explanation + theme-compliant buttons
 // ============================================
 
 'use client';
@@ -67,8 +67,13 @@ export default function TicketActionsList({
   const [revertFiles, setRevertFiles] = useState<FileWithPreview[]>([]);
   const [forwardMessage, setForwardMessage] = useState('');
   const [forwardFiles, setForwardFiles] = useState<FileWithPreview[]>([]);
+  const [blockerFiles, setBlockerFiles] = useState<FileWithPreview[]>([]);
+  const [resolutionFiles, setResolutionFiles] = useState<FileWithPreview[]>([]);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const forwardFileInputRef = useRef<HTMLInputElement>(null);
+  const blockerFileInputRef = useRef<HTMLInputElement>(null);
+  const resolutionFileInputRef = useRef<HTMLInputElement>(null);
   
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
@@ -130,7 +135,7 @@ export default function TicketActionsList({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'revert' | 'forward') => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'revert' | 'forward' | 'blocker' | 'resolution') => {
     const files = Array.from(e.target.files || []);
     
     const newFiles: FileWithPreview[] = files.map(file => {
@@ -146,8 +151,12 @@ export default function TicketActionsList({
           fileWithPreview.preview = reader.result as string;
           if (type === 'revert') {
             setRevertFiles(prev => [...prev]);
-          } else {
+          } else if (type === 'forward') {
             setForwardFiles(prev => [...prev]);
+          } else if (type === 'blocker') {
+            setBlockerFiles(prev => [...prev]);
+          } else {
+            setResolutionFiles(prev => [...prev]);
           }
         };
         reader.readAsDataURL(file);
@@ -158,16 +167,24 @@ export default function TicketActionsList({
     
     if (type === 'revert') {
       setRevertFiles(prev => [...prev, ...newFiles]);
-    } else {
+    } else if (type === 'forward') {
       setForwardFiles(prev => [...prev, ...newFiles]);
+    } else if (type === 'blocker') {
+      setBlockerFiles(prev => [...prev, ...newFiles]);
+    } else {
+      setResolutionFiles(prev => [...prev, ...newFiles]);
     }
   };
 
-  const removeFile = (index: number, type: 'revert' | 'forward') => {
+  const removeFile = (index: number, type: 'revert' | 'forward' | 'blocker' | 'resolution') => {
     if (type === 'revert') {
       setRevertFiles(prev => prev.filter((_, i) => i !== index));
-    } else {
+    } else if (type === 'forward') {
       setForwardFiles(prev => prev.filter((_, i) => i !== index));
+    } else if (type === 'blocker') {
+      setBlockerFiles(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setResolutionFiles(prev => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -230,7 +247,7 @@ export default function TicketActionsList({
         return;
       }
       payload.toNode = nextNode.id;
-      payload.explanation = forwardMessage; // REQUIRED
+      payload.explanation = forwardMessage;
       
       // Process forward attachments (OPTIONAL)
       if (forwardFiles.length > 0) {
@@ -279,12 +296,50 @@ export default function TicketActionsList({
       }
     }
 
-    if (explanation && !['forward', 'revert'].includes(selectedAction)) {
-      payload.explanation = explanation;
+    // 📧 NEW: Handle blocker attachments
+    if (selectedAction === 'report_blocker') {
+      payload.blockerDescription = blockerDescription;
+      
+      if (blockerFiles.length > 0) {
+        try {
+          const attachments = await Promise.all(
+            blockerFiles.map(async ({ file }) => ({
+              name: file.name,
+              type: file.type,
+              data: await fileToBase64(file)
+            }))
+          );
+          payload.blockerAttachments = attachments;
+        } catch (error) {
+          console.error('Error processing blocker files:', error);
+          showToast('Failed to process file attachments', 'error');
+          return;
+        }
+      }
     }
 
-    if (blockerDescription) {
-      payload.blockerDescription = blockerDescription;
+    // 📧 NEW: Handle resolution attachments
+    if (selectedAction === 'blocker_resolved') {
+      if (resolutionFiles.length > 0) {
+        try {
+          const attachments = await Promise.all(
+            resolutionFiles.map(async ({ file }) => ({
+              name: file.name,
+              type: file.type,
+              data: await fileToBase64(file)
+            }))
+          );
+          payload.resolutionAttachments = attachments;
+        } catch (error) {
+          console.error('Error processing resolution files:', error);
+          showToast('Failed to process file attachments', 'error');
+          return;
+        }
+      }
+    }
+
+    if (explanation && !['forward', 'revert'].includes(selectedAction)) {
+      payload.explanation = explanation;
     }
     
     if (selectedAction === 'reassign') {
@@ -316,6 +371,8 @@ export default function TicketActionsList({
     setRevertFiles([]);
     setForwardMessage('');
     setForwardFiles([]);
+    setBlockerFiles([]);
+    setResolutionFiles([]);
     setSelectedEmployees([]);
   };
 
@@ -340,7 +397,6 @@ export default function TicketActionsList({
         actions.push('form_group');
       }
       
-      // Can revert from pending if not at first node
       if (workflowPosition.canRevert && !workflowPosition.isFirst) {
         actions.push('revert');
       }
@@ -361,7 +417,6 @@ export default function TicketActionsList({
       
       actions.push('report_blocker');
       
-      // Can revert from in-progress if not at first node
       if (workflowPosition.canRevert && !workflowPosition.isFirst) {
         actions.push('revert');
       }
@@ -370,7 +425,6 @@ export default function TicketActionsList({
     if (ticket.status === 'blocked') {
       actions.push('blocker_resolved');
       
-      // Can revert from blocked if not at first node
       if (workflowPosition.canRevert && !workflowPosition.isFirst) {
         actions.push('revert');
       }
@@ -488,7 +542,10 @@ export default function TicketActionsList({
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeFile(index, 'forward')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(index, 'forward');
+                        }}
                         className={`group relative p-1 rounded-lg transition-all duration-300 overflow-hidden ${colors.buttonGhost} ${colors.buttonGhostText}`}
                       >
                         <div 
@@ -576,7 +633,10 @@ export default function TicketActionsList({
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeFile(index, 'revert')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(index, 'revert');
+                        }}
                         className={`group relative p-1 rounded-lg transition-all duration-300 overflow-hidden ${colors.buttonGhost} ${colors.buttonGhostText}`}
                       >
                         <div 
@@ -593,6 +653,172 @@ export default function TicketActionsList({
           </>
         )}
 
+        {/* 📧 NEW: Blocker Description & Files */}
+        {selectedAction === 'report_blocker' && (
+          <>
+            <div>
+              <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
+                Blocker Description (Required) *
+              </label>
+              <textarea
+                value={blockerDescription}
+                onChange={(e) => setBlockerDescription(e.target.value)}
+                placeholder="Describe what's blocking progress..."
+                rows={4}
+                className={`w-full px-4 py-3 rounded-xl text-sm transition-all resize-none ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder} ${colors.inputFocusBg}`}
+                required
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
+                Attachments (Optional)
+              </label>
+              
+              <input
+                ref={blockerFileInputRef}
+                type="file"
+                multiple
+                onChange={(e) => handleFileSelect(e, 'blocker')}
+                className="hidden"
+                accept="*/*"
+              />
+              
+              <button
+                type="button"
+                onClick={() => blockerFileInputRef.current?.click()}
+                className={`group relative w-full px-4 py-3 rounded-xl border-2 border-dashed transition-all duration-300 overflow-hidden ${colors.inputBg} ${colors.inputBorder} ${colors.textPrimary} flex items-center justify-center gap-2`}
+              >
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ boxShadow: `inset 0 0 20px ${colors.glowSecondary}` }}
+                ></div>
+                <Paperclip className="w-5 h-5 relative z-10 group-hover:rotate-12 transition-all duration-300" />
+                <span className="relative z-10">Click to attach files</span>
+              </button>
+              
+              {blockerFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {blockerFiles.map((fileObj, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-3 p-3 rounded-lg border ${colors.inputBg} ${colors.inputBorder}`}
+                    >
+                      {fileObj.preview ? (
+                        <img
+                          src={fileObj.preview}
+                          alt={fileObj.name}
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                      ) : (
+                        <Paperclip className={`w-5 h-5 ${colors.textMuted}`} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${colors.textPrimary} truncate`}>
+                          {fileObj.name}
+                        </p>
+                        <p className={`text-xs ${colors.textMuted}`}>
+                          {(fileObj.file.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(index, 'blocker');
+                        }}
+                        className={`group relative p-1 rounded-lg transition-all duration-300 overflow-hidden ${colors.buttonGhost} ${colors.buttonGhostText}`}
+                      >
+                        <div 
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                          style={{ boxShadow: `inset 0 0 10px ${colors.glowWarning}` }}
+                        ></div>
+                        <X className="w-4 h-4 relative z-10 group-hover:rotate-90 transition-all duration-300" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* 📧 NEW: Blocker Resolution Files */}
+        {selectedAction === 'blocker_resolved' && (
+          <div>
+            <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
+              Resolution Attachments (Optional)
+            </label>
+            
+            <input
+              ref={resolutionFileInputRef}
+              type="file"
+              multiple
+              onChange={(e) => handleFileSelect(e, 'resolution')}
+              className="hidden"
+              accept="*/*"
+            />
+            
+            <button
+              type="button"
+              onClick={() => resolutionFileInputRef.current?.click()}
+              className={`group relative w-full px-4 py-3 rounded-xl border-2 border-dashed transition-all duration-300 overflow-hidden ${colors.inputBg} ${colors.inputBorder} ${colors.textPrimary} flex items-center justify-center gap-2`}
+            >
+              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ boxShadow: `inset 0 0 20px ${colors.glowSecondary}` }}
+              ></div>
+              <Paperclip className="w-5 h-5 relative z-10 group-hover:rotate-12 transition-all duration-300" />
+              <span className="relative z-10">Click to attach files</span>
+            </button>
+            
+            {resolutionFiles.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {resolutionFiles.map((fileObj, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-3 p-3 rounded-lg border ${colors.inputBg} ${colors.inputBorder}`}
+                  >
+                    {fileObj.preview ? (
+                      <img
+                        src={fileObj.preview}
+                        alt={fileObj.name}
+                        className="w-10 h-10 object-cover rounded"
+                      />
+                    ) : (
+                      <Paperclip className={`w-5 h-5 ${colors.textMuted}`} />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${colors.textPrimary} truncate`}>
+                        {fileObj.name}
+                      </p>
+                      <p className={`text-xs ${colors.textMuted}`}>
+                        {(fileObj.file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(index, 'resolution');
+                      }}
+                      className={`group relative p-1 rounded-lg transition-all duration-300 overflow-hidden ${colors.buttonGhost} ${colors.buttonGhostText}`}
+                    >
+                      <div 
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                        style={{ boxShadow: `inset 0 0 10px ${colors.glowWarning}` }}
+                      ></div>
+                      <X className="w-4 h-4 relative z-10 group-hover:rotate-90 transition-all duration-300" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Explanation Field (for reassign) */}
         {['reassign'].includes(selectedAction) && (
           <div>
@@ -605,23 +831,6 @@ export default function TicketActionsList({
               placeholder="Provide details about this action..."
               rows={4}
               className={`w-full px-4 py-3 rounded-xl text-sm transition-all resize-none ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder} ${colors.inputFocusBg}`}
-            />
-          </div>
-        )}
-
-        {/* Blocker Description */}
-        {selectedAction === 'report_blocker' && (
-          <div>
-            <label className={`block text-sm font-bold ${colors.textPrimary} mb-2`}>
-              Blocker Description (Required) *
-            </label>
-            <textarea
-              value={blockerDescription}
-              onChange={(e) => setBlockerDescription(e.target.value)}
-              placeholder="Describe what's blocking progress..."
-              rows={4}
-              className={`w-full px-4 py-3 rounded-xl text-sm transition-all resize-none ${colors.inputBg} border ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder} ${colors.inputFocusBg}`}
-              required
             />
           </div>
         )}
@@ -688,7 +897,7 @@ export default function TicketActionsList({
           </div>
         )}
 
-        {/* Action Buttons - THEME COMPLIANT (NO SCALE) */}
+        {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <button
             onClick={() => {
@@ -699,6 +908,8 @@ export default function TicketActionsList({
               setRevertFiles([]);
               setForwardMessage('');
               setForwardFiles([]);
+              setBlockerFiles([]);
+              setResolutionFiles([]);
               setSelectedEmployees([]);
             }}
             className={`group relative flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 overflow-hidden border-2 ${colors.inputBg} ${colors.inputBorder} ${colors.textPrimary} flex items-center justify-center gap-2`}
@@ -846,7 +1057,7 @@ export default function TicketActionsList({
   );
 }
 
-// Action Button Component - THEME COMPLIANT (NO SCALE)
+// Action Button Component
 function ActionButton({ icon, label, description, character, colors, onClick }: any) {
   return (
     <button

@@ -1,6 +1,8 @@
 // utils/sendTicketNotification.ts
+// VERSION: WITH FORMDATA NAME ENRICHMENT
 import sendEmail from './sendEmail';
 import { buildTicketDetailsTable, buildEmailTemplate, buildWorkflowHistoryTable } from './ticketEmailTemplates';
+import { getUserDisplayName, getBulkUserDisplayNames } from './getUserDisplayName';
 import type { Model } from 'mongoose';
 import fs from 'fs';
 import path from 'path';
@@ -34,6 +36,58 @@ export const getUserEmail = async (userIdentifier: string, FormDataModel: Model<
     return null;
   }
 };
+
+/**
+ * Enriches workflow history with actual names from FormData
+ */
+async function enrichWorkflowHistory(workflowHistory: any[], FormDataModel: Model<any>): Promise<any[]> {
+  if (!workflowHistory || workflowHistory.length === 0) {
+    return workflowHistory;
+  }
+
+  try {
+    // Collect all user IDs from workflow history
+    const userIds = new Set<string>();
+    
+    workflowHistory.forEach((entry: any) => {
+      if (entry.performedBy?.userId) {
+        userIds.add(entry.performedBy.userId);
+      }
+      if (entry.groupMembers) {
+        entry.groupMembers.forEach((m: any) => {
+          if (m.userId) userIds.add(m.userId);
+        });
+      }
+    });
+
+    // Fetch all names at once
+    const nameMap = await getBulkUserDisplayNames(Array.from(userIds), FormDataModel);
+
+    // Enrich the history
+    return workflowHistory.map((entry: any) => {
+      const enrichedEntry = { ...entry };
+      
+      if (enrichedEntry.performedBy?.userId) {
+        enrichedEntry.performedBy = {
+          ...enrichedEntry.performedBy,
+          name: nameMap.get(enrichedEntry.performedBy.userId) || enrichedEntry.performedBy.name
+        };
+      }
+      
+      if (enrichedEntry.groupMembers) {
+        enrichedEntry.groupMembers = enrichedEntry.groupMembers.map((m: any) => ({
+          ...m,
+          name: nameMap.get(m.userId) || m.name
+        }));
+      }
+      
+      return enrichedEntry;
+    });
+  } catch (error) {
+    console.error('❌ Error enriching workflow history:', error);
+    return workflowHistory;
+  }
+}
 
 /**
  * Process attachments from form data AND workflow history
@@ -177,8 +231,11 @@ export const sendTicketAssignmentEmail = async (ticket: any, FormDataModel: Mode
       console.warn('⚠️  Could not fetch functionality labels');
     }
 
+    // ✅ Enrich workflow history before building email
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
-    const workflowHistoryTable = buildWorkflowHistoryTable(ticket.workflowHistory);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
     
     const emailHtml = buildEmailTemplate({
       recipientName: assigneeData.name,
@@ -194,7 +251,7 @@ export const sendTicketAssignmentEmail = async (ticket: any, FormDataModel: Mode
       closingMessage: 'For questions, contact the ticket creator or your team lead.',
     });
 
-    const attachments = processAllAttachments(ticket.formData, ticket.workflowHistory);
+    const attachments = processAllAttachments(ticket.formData, enrichedHistory);
 
     await sendEmail(
       assigneeData.email,
@@ -217,11 +274,19 @@ export const sendTicketForwardedEmail = async (
   ticket: any,
   performedBy: { userId: string; name: string },
   explanation: string,
-  FormDataModel: Model<any>
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
 ): Promise<void> => {
   try {
-    // Send to new assignee
-    const assigneeData = await getUserEmail(ticket.currentAssignee, FormDataModel);
+    // ✅ Ensure we have the actual name
+    const actualPerformerName = await getUserDisplayName(performedBy.userId, FormDataModel);
+    const enrichedPerformedBy = {
+      ...performedBy,
+      name: actualPerformerName
+    };
+
+    const recipientId = overrideRecipient || ticket.currentAssignee;
+    const assigneeData = await getUserEmail(recipientId, FormDataModel);
     if (!assigneeData?.email) return;
 
     // Fetch functionality
@@ -241,15 +306,18 @@ export const sendTicketForwardedEmail = async (
       console.warn('⚠️  Could not fetch functionality labels');
     }
 
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
-    const workflowHistoryTable = buildWorkflowHistoryTable(ticket.workflowHistory);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
     
     const emailHtml = buildEmailTemplate({
       recipientName: assigneeData.name,
       subject: `Ticket Forwarded: ${ticket.ticketNumber}`,
       greeting: `Hi ${assigneeData.name},`,
       mainMessage: `
-        <p style="margin: 0 0 8px 0;">A ticket has been forwarded to you by <strong>${performedBy.name}</strong>.</p>
+        <p style="margin: 0 0 8px 0;">A ticket has been forwarded to you by <strong>${enrichedPerformedBy.name}</strong>.</p>
         ${explanation ? `<p style="margin: 8px 0 0 0; padding: 12px; background: #f3f4f6; border-left: 3px solid #6366f1; border-radius: 4px; font-style: italic; color: #4b5563;">"${explanation}"</p>` : ''}
       `,
       detailsTable: ticketDetailsTable,
@@ -257,20 +325,20 @@ export const sendTicketForwardedEmail = async (
       actionRequired: 'Please review and take necessary action.',
     });
 
-    const attachments = processAllAttachments(ticket.formData, ticket.workflowHistory);
+    const attachments = processAllAttachments(ticket.formData, enrichedHistory);
 
     await sendEmail(
       assigneeData.email,
       `Ticket Forwarded: ${ticket.ticketNumber}`,
-      `Ticket ${ticket.ticketNumber} forwarded to you by ${performedBy.name}`,
+      `Ticket ${ticket.ticketNumber} forwarded to you by ${enrichedPerformedBy.name}`,
       emailHtml,
       attachments
     );
     
     console.log(`✅ Forward email sent to ${assigneeData.name}`);
     
-    // If forwarded to a group, send to all members
-    if (ticket.currentAssignees && ticket.currentAssignees.length > 1) {
+    // If not override and forwarded to a group, send to all members
+    if (!overrideRecipient && ticket.currentAssignees && ticket.currentAssignees.length > 1) {
       for (const memberId of ticket.currentAssignees) {
         if (memberId !== ticket.currentAssignee) {
           try {
@@ -303,10 +371,19 @@ export const sendTicketReassignedEmail = async (
   ticket: any,
   performedBy: { userId: string; name: string },
   explanation: string | undefined,
-  FormDataModel: Model<any>
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
 ): Promise<void> => {
   try {
-    const assigneeData = await getUserEmail(ticket.currentAssignee, FormDataModel);
+    // ✅ Ensure we have the actual name
+    const actualPerformerName = await getUserDisplayName(performedBy.userId, FormDataModel);
+    const enrichedPerformedBy = {
+      ...performedBy,
+      name: actualPerformerName
+    };
+
+    const recipientId = overrideRecipient || ticket.currentAssignee;
+    const assigneeData = await getUserEmail(recipientId, FormDataModel);
     if (!assigneeData?.email) return;
 
     // Fetch functionality
@@ -326,15 +403,18 @@ export const sendTicketReassignedEmail = async (
       console.warn('⚠️  Could not fetch functionality labels');
     }
 
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
-    const workflowHistoryTable = buildWorkflowHistoryTable(ticket.workflowHistory);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
     
     const emailHtml = buildEmailTemplate({
       recipientName: assigneeData.name,
       subject: `Ticket Reassigned: ${ticket.ticketNumber}`,
       greeting: `Hi ${assigneeData.name},`,
       mainMessage: `
-        <p style="margin: 0 0 8px 0;">A ticket has been reassigned to you by <strong>${performedBy.name}</strong>.</p>
+        <p style="margin: 0 0 8px 0;">A ticket has been reassigned to you by <strong>${enrichedPerformedBy.name}</strong>.</p>
         ${explanation ? `<p style="margin: 8px 0 0 0; padding: 12px; background: #f3f4f6; border-left: 3px solid #8b5cf6; border-radius: 4px; font-style: italic; color: #4b5563;">"${explanation}"</p>` : ''}
       `,
       detailsTable: ticketDetailsTable,
@@ -342,7 +422,7 @@ export const sendTicketReassignedEmail = async (
       actionRequired: 'Please review and take necessary action.',
     });
 
-    const attachments = processAllAttachments(ticket.formData, ticket.workflowHistory);
+    const attachments = processAllAttachments(ticket.formData, enrichedHistory);
 
     await sendEmail(
       assigneeData.email,
@@ -365,9 +445,17 @@ export const sendGroupFormedEmail = async (
   ticket: any,
   performedBy: { userId: string; name: string },
   groupMembers: Array<{ userId: string; name: string; isLead: boolean }>,
-  FormDataModel: Model<any>
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
 ): Promise<void> => {
   try {
+    // ✅ Ensure we have the actual name
+    const actualPerformerName = await getUserDisplayName(performedBy.userId, FormDataModel);
+    const enrichedPerformedBy = {
+      ...performedBy,
+      name: actualPerformerName
+    };
+
     // Fetch functionality
     let functionality = null;
     try {
@@ -385,12 +473,49 @@ export const sendGroupFormedEmail = async (
       console.warn('⚠️  Could not fetch functionality labels');
     }
 
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
-    const workflowHistoryTable = buildWorkflowHistoryTable(ticket.workflowHistory);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
     
     const groupMembersList = groupMembers.map(m => 
       `<li style="margin: 4px 0;">${m.name}${m.isLead ? ' <strong>(Lead)</strong>' : ''}</li>`
     ).join('');
+    
+    // If override recipient, send only to them
+    if (overrideRecipient) {
+      const recipientData = await getUserEmail(overrideRecipient, FormDataModel);
+      if (!recipientData?.email) return;
+      
+      const emailHtml = buildEmailTemplate({
+        recipientName: recipientData.name,
+        subject: `Group Formed for Ticket: ${ticket.ticketNumber}`,
+        greeting: `Hi ${recipientData.name},`,
+        mainMessage: `
+          <p style="margin: 0 0 8px 0;">A group has been formed for ticket <strong>${ticket.ticketNumber}</strong> by <strong>${enrichedPerformedBy.name}</strong>.</p>
+          <p style="margin: 8px 0 0 0;"><strong>Group Members:</strong></p>
+          <ul style="margin: 4px 0; padding-left: 20px;">
+            ${groupMembersList}
+          </ul>
+        `,
+        detailsTable: ticketDetailsTable,
+        workflowHistoryTable,
+      });
+
+      const attachments = processAllAttachments(ticket.formData, enrichedHistory);
+
+      await sendEmail(
+        recipientData.email,
+        `Group Formed for Ticket: ${ticket.ticketNumber}`,
+        `A group has been formed for ticket ${ticket.ticketNumber}`,
+        emailHtml,
+        attachments
+      );
+      
+      console.log(`✅ Group formation email sent to notification recipient: ${recipientData.name}`);
+      return;
+    }
     
     // Send to all group members
     for (const member of groupMembers) {
@@ -403,7 +528,7 @@ export const sendGroupFormedEmail = async (
           subject: `Group Formed for Ticket: ${ticket.ticketNumber}`,
           greeting: `Hi ${memberData.name},`,
           mainMessage: `
-            <p style="margin: 0 0 8px 0;">A group has been formed for ticket <strong>${ticket.ticketNumber}</strong> by <strong>${performedBy.name}</strong>.</p>
+            <p style="margin: 0 0 8px 0;">A group has been formed for ticket <strong>${ticket.ticketNumber}</strong> by <strong>${enrichedPerformedBy.name}</strong>.</p>
             <p style="margin: 8px 0 0 0;"><strong>Group Members:</strong></p>
             <ul style="margin: 4px 0; padding-left: 20px;">
               ${groupMembersList}
@@ -415,7 +540,7 @@ export const sendGroupFormedEmail = async (
           actionRequired: member.isLead ? 'As group lead, please coordinate with team members.' : 'Please coordinate with your group lead.',
         });
 
-        const attachments = processAllAttachments(ticket.formData, ticket.workflowHistory);
+        const attachments = processAllAttachments(ticket.formData, enrichedHistory);
 
         await sendEmail(
           memberData.email,
@@ -442,10 +567,19 @@ export const sendTicketRevertedEmail = async (
   ticket: any,
   performedBy: { userId: string; name: string },
   revertMessage: string,
-  FormDataModel: Model<any>
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
 ): Promise<void> => {
   try {
-    const assigneeData = await getUserEmail(ticket.currentAssignee, FormDataModel);
+    // ✅ Ensure we have the actual name
+    const actualPerformerName = await getUserDisplayName(performedBy.userId, FormDataModel);
+    const enrichedPerformedBy = {
+      ...performedBy,
+      name: actualPerformerName
+    };
+
+    const recipientId = overrideRecipient || ticket.currentAssignee;
+    const assigneeData = await getUserEmail(recipientId, FormDataModel);
     if (!assigneeData?.email) return;
 
     // Fetch functionality
@@ -465,15 +599,18 @@ export const sendTicketRevertedEmail = async (
       console.warn('⚠️  Could not fetch functionality labels');
     }
 
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
-    const workflowHistoryTable = buildWorkflowHistoryTable(ticket.workflowHistory);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
     
     const emailHtml = buildEmailTemplate({
       recipientName: assigneeData.name,
       subject: `Ticket Reverted: ${ticket.ticketNumber}`,
       greeting: `Hi ${assigneeData.name},`,
       mainMessage: `
-        <p style="margin: 0 0 8px 0;">Ticket <strong>${ticket.ticketNumber}</strong> has been reverted back to you by <strong>${performedBy.name}</strong>.</p>
+        <p style="margin: 0 0 8px 0;">Ticket <strong>${ticket.ticketNumber}</strong> has been reverted back to you by <strong>${enrichedPerformedBy.name}</strong>.</p>
         <p style="margin: 8px 0 0 0; padding: 12px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; color: #92400e;"><strong>Reason for revert:</strong><br/>"${revertMessage}"</p>
       `,
       detailsTable: ticketDetailsTable,
@@ -481,7 +618,7 @@ export const sendTicketRevertedEmail = async (
       actionRequired: 'Please address the issues mentioned and resubmit.',
     });
 
-    const attachments = processAllAttachments(ticket.formData, ticket.workflowHistory);
+    const attachments = processAllAttachments(ticket.formData, enrichedHistory);
 
     await sendEmail(
       assigneeData.email,
@@ -493,8 +630,8 @@ export const sendTicketRevertedEmail = async (
     
     console.log(`✅ Revert email sent to ${assigneeData.name}`);
     
-    // If reverted to a group, send to all members
-    if (ticket.currentAssignees && ticket.currentAssignees.length > 1) {
+    // If not override and reverted to a group, send to all members
+    if (!overrideRecipient && ticket.currentAssignees && ticket.currentAssignees.length > 1) {
       for (const memberId of ticket.currentAssignees) {
         if (memberId !== ticket.currentAssignee) {
           try {
@@ -526,11 +663,26 @@ export const sendTicketRevertedEmail = async (
 export const sendTicketResolvedEmail = async (
   ticket: any,
   resolvedBy: { userId: string; name: string },
-  FormDataModel: Model<any>
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
 ): Promise<void> => {
   try {
-    const creatorEmail = ticket.raisedBy?.email;
-    if (!creatorEmail) return;
+    // ✅ Ensure we have the actual name
+    const actualResolverName = await getUserDisplayName(resolvedBy.userId, FormDataModel);
+    const enrichedResolvedBy = {
+      ...resolvedBy,
+      name: actualResolverName
+    };
+
+    const recipientEmail = overrideRecipient 
+      ? (await getUserEmail(overrideRecipient, FormDataModel))?.email
+      : ticket.raisedBy?.email;
+      
+    if (!recipientEmail) return;
+
+    const recipientName = overrideRecipient 
+      ? (await getUserEmail(overrideRecipient, FormDataModel))?.name || 'User'
+      : ticket.raisedBy.name;
 
     // Fetch functionality
     let functionality = null;
@@ -549,35 +701,338 @@ export const sendTicketResolvedEmail = async (
       console.warn('⚠️  Could not fetch functionality labels');
     }
 
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
-    const workflowHistoryTable = buildWorkflowHistoryTable(ticket.workflowHistory);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
 
     const emailHtml = buildEmailTemplate({
-      recipientName: ticket.raisedBy.name,
+      recipientName: recipientName,
       subject: `Ticket Resolved: ${ticket.ticketNumber}`,
-      greeting: `Hi ${ticket.raisedBy.name},`,
+      greeting: `Hi ${recipientName},`,
       mainMessage: `
-        <p style="margin: 0 0 8px 0;">Your ticket <strong>${ticket.ticketNumber}</strong> has been resolved by <strong>${resolvedBy.name}</strong>.</p>
+        <p style="margin: 0 0 8px 0;">Ticket <strong>${ticket.ticketNumber}</strong> has been resolved by <strong>${enrichedResolvedBy.name}</strong>.</p>
         <div style="margin: 12px 0; padding: 12px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
           <p style="margin: 0; color: #166534; font-weight: 600;">✓ Resolution Complete</p>
-          <p style="margin: 4px 0 0 0; color: #166534; font-size: 13px;">Your request has been successfully processed.</p>
+          <p style="margin: 4px 0 0 0; color: #166534; font-size: 13px;">The request has been successfully processed.</p>
         </div>
       `,
       detailsTable: ticketDetailsTable,
       workflowHistoryTable,
-      closingMessage: 'If you have concerns about this resolution, please contact the resolver or reopen the ticket.',
+      closingMessage: overrideRecipient ? '' : 'If you have concerns about this resolution, please contact the resolver or reopen the ticket.',
     });
 
     await sendEmail(
-      creatorEmail,
+      recipientEmail,
       `Ticket Resolved: ${ticket.ticketNumber}`,
-      `Your ticket ${ticket.ticketNumber} has been resolved`,
+      `Ticket ${ticket.ticketNumber} has been resolved`,
       emailHtml
     );
     
-    console.log(`✅ Resolution email sent to ${ticket.raisedBy.name}`);
+    console.log(`✅ Resolution email sent to ${recipientName}`);
   } catch (error) {
     console.error(`❌ Resolution email failed: ${ticket.ticketNumber}`, error);
+  }
+};
+
+/**
+ * Sends blocker reported notification to creator
+ */
+export const sendBlockerReportedEmail = async (
+  ticket: any,
+  reportedBy: { userId: string; name: string },
+  blockerDescription: string,
+  attachmentPaths: string[],
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
+): Promise<void> => {
+  try {
+    // ✅ Ensure we have the actual name
+    const actualReporterName = await getUserDisplayName(reportedBy.userId, FormDataModel);
+    const enrichedReportedBy = {
+      ...reportedBy,
+      name: actualReporterName
+    };
+
+    const recipientEmail = overrideRecipient 
+      ? (await getUserEmail(overrideRecipient, FormDataModel))?.email
+      : ticket.raisedBy?.email;
+      
+    if (!recipientEmail) return;
+
+    const recipientName = overrideRecipient 
+      ? (await getUserEmail(overrideRecipient, FormDataModel))?.name || 'User'
+      : ticket.raisedBy.name;
+
+    // Fetch functionality
+    let functionality = null;
+    try {
+      const mongoose = require('mongoose');
+      const Functionality = mongoose.models.Functionality || mongoose.model('Functionality');
+      const SuperFunctionality = mongoose.models.SuperFunctionality || mongoose.model('SuperFunctionality');
+      
+      const isSuper = ticket.department === 'Super Workflow';
+      if (isSuper) {
+        functionality = await SuperFunctionality.findById(ticket.functionality).lean();
+      } else {
+        functionality = await Functionality.findById(ticket.functionality).lean();
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not fetch functionality labels');
+    }
+
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
+    const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
+    const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
+
+    const attachmentsList = attachmentPaths.length > 0 
+      ? `<p style="margin: 8px 0 0 0;"><strong>Attachments:</strong></p>
+         <ul style="margin: 4px 0; padding-left: 20px; color: #4b5563;">
+           ${attachmentPaths.map(att => `<li style="margin: 2px 0;">${path.basename(att)}</li>`).join('')}
+         </ul>`
+      : '';
+
+    const emailHtml = buildEmailTemplate({
+      recipientName: recipientName,
+      subject: `🚧 Blocker Reported - ${ticket.ticketNumber}`,
+      greeting: `Hi ${recipientName},`,
+      mainMessage: `
+        <div style="margin: 12px 0; padding: 12px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
+          <p style="margin: 0; color: #92400e; font-weight: 600;">⚠️ Blocker Reported</p>
+          <p style="margin: 4px 0 0 0; color: #92400e; font-size: 13px;">A blocker has been reported on your ticket by <strong>${enrichedReportedBy.name}</strong>.</p>
+        </div>
+        <p style="margin: 12px 0 0 0; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; color: #1f2937;">
+          <strong style="display: block; margin-bottom: 6px;">Blocker Description:</strong>
+          "${blockerDescription}"
+        </p>
+        ${attachmentsList}
+      `,
+      detailsTable: ticketDetailsTable,
+      workflowHistoryTable,
+      actionRequired: overrideRecipient ? '' : 'Please coordinate with the assignee to resolve this blocker.',
+    });
+
+    const emailAttachments = processAllAttachments(ticket.formData, enrichedHistory);
+
+    await sendEmail(
+      recipientEmail,
+      `🚧 Blocker Reported - ${ticket.ticketNumber}`,
+      `A blocker has been reported on ticket ${ticket.ticketNumber}`,
+      emailHtml,
+      emailAttachments
+    );
+    
+    console.log(`✅ Blocker reported email sent to ${recipientName}`);
+  } catch (error) {
+    console.error(`❌ Blocker reported email failed: ${ticket.ticketNumber}`, error);
+  }
+};
+
+/**
+ * Sends blocker resolved notification to creator and assignee
+ */
+export const sendBlockerResolvedEmail = async (
+  ticket: any,
+  resolvedBy: { userId: string; name: string },
+  attachmentPaths: string[],
+  FormDataModel: Model<any>,
+  overrideRecipient?: string
+): Promise<void> => {
+  try {
+    // ✅ Ensure we have the actual name
+    const actualResolverName = await getUserDisplayName(resolvedBy.userId, FormDataModel);
+    const enrichedResolvedBy = {
+      ...resolvedBy,
+      name: actualResolverName
+    };
+
+    // ✅ Enrich workflow history
+    const enrichedHistory = await enrichWorkflowHistory(ticket.workflowHistory, FormDataModel);
+
+    // If override recipient, send only to them
+    if (overrideRecipient) {
+      const recipientData = await getUserEmail(overrideRecipient, FormDataModel);
+      if (!recipientData?.email) return;
+
+      // Fetch functionality
+      let functionality = null;
+      try {
+        const mongoose = require('mongoose');
+        const Functionality = mongoose.models.Functionality || mongoose.model('Functionality');
+        const SuperFunctionality = mongoose.models.SuperFunctionality || mongoose.model('SuperFunctionality');
+        
+        const isSuper = ticket.department === 'Super Workflow';
+        if (isSuper) {
+          functionality = await SuperFunctionality.findById(ticket.functionality).lean();
+        } else {
+          functionality = await Functionality.findById(ticket.functionality).lean();
+        }
+      } catch (error) {
+        console.warn('⚠️  Could not fetch functionality labels');
+      }
+
+      const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
+      const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
+
+      const attachmentsList = attachmentPaths.length > 0 
+        ? `<p style="margin: 8px 0 0 0;"><strong>Resolution Attachments:</strong></p>
+           <ul style="margin: 4px 0; padding-left: 20px; color: #4b5563;">
+             ${attachmentPaths.map(att => `<li style="margin: 2px 0;">${path.basename(att)}</li>`).join('')}
+           </ul>`
+        : '';
+
+      const emailHtml = buildEmailTemplate({
+        recipientName: recipientData.name,
+        subject: `✅ Blocker Resolved - ${ticket.ticketNumber}`,
+        greeting: `Hi ${recipientData.name},`,
+        mainMessage: `
+          <div style="margin: 12px 0; padding: 12px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+            <p style="margin: 0; color: #166534; font-weight: 600;">✓ Blocker Resolved</p>
+            <p style="margin: 4px 0 0 0; color: #166534; font-size: 13px;">The blocker on ticket <strong>${ticket.ticketNumber}</strong> has been resolved by <strong>${enrichedResolvedBy.name}</strong>.</p>
+          </div>
+          ${attachmentsList}
+        `,
+        detailsTable: ticketDetailsTable,
+        workflowHistoryTable,
+      });
+
+      const emailAttachments = processAllAttachments(ticket.formData, enrichedHistory);
+
+      await sendEmail(
+        recipientData.email,
+        `✅ Blocker Resolved - ${ticket.ticketNumber}`,
+        `Blocker resolved on ticket ${ticket.ticketNumber}`,
+        emailHtml,
+        emailAttachments
+      );
+      
+      console.log(`✅ Blocker resolved email sent to notification recipient: ${recipientData.name}`);
+      return;
+    }
+
+    // Send to creator
+    const creatorEmail = ticket.raisedBy?.email;
+    if (creatorEmail) {
+      // Fetch functionality
+      let functionality = null;
+      try {
+        const mongoose = require('mongoose');
+        const Functionality = mongoose.models.Functionality || mongoose.model('Functionality');
+        const SuperFunctionality = mongoose.models.SuperFunctionality || mongoose.model('SuperFunctionality');
+        
+        const isSuper = ticket.department === 'Super Workflow';
+        if (isSuper) {
+          functionality = await SuperFunctionality.findById(ticket.functionality).lean();
+        } else {
+          functionality = await Functionality.findById(ticket.functionality).lean();
+        }
+      } catch (error) {
+        console.warn('⚠️  Could not fetch functionality labels');
+      }
+
+      const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
+      const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
+
+      const attachmentsList = attachmentPaths.length > 0 
+        ? `<p style="margin: 8px 0 0 0;"><strong>Resolution Attachments:</strong></p>
+           <ul style="margin: 4px 0; padding-left: 20px; color: #4b5563;">
+             ${attachmentPaths.map(att => `<li style="margin: 2px 0;">${path.basename(att)}</li>`).join('')}
+           </ul>`
+        : '';
+
+      const creatorEmailHtml = buildEmailTemplate({
+        recipientName: ticket.raisedBy.name,
+        subject: `✅ Blocker Resolved - ${ticket.ticketNumber}`,
+        greeting: `Hi ${ticket.raisedBy.name},`,
+        mainMessage: `
+          <div style="margin: 12px 0; padding: 12px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+            <p style="margin: 0; color: #166534; font-weight: 600;">✓ Blocker Resolved</p>
+            <p style="margin: 4px 0 0 0; color: #166534; font-size: 13px;">The blocker on your ticket has been resolved by <strong>${enrichedResolvedBy.name}</strong>.</p>
+          </div>
+          <p style="margin: 12px 0 0 0; color: #4b5563;">The ticket is now back in progress and work will continue.</p>
+          ${attachmentsList}
+        `,
+        detailsTable: ticketDetailsTable,
+        workflowHistoryTable,
+      });
+
+      const emailAttachments = processAllAttachments(ticket.formData, enrichedHistory);
+
+      await sendEmail(
+        creatorEmail,
+        `✅ Blocker Resolved - ${ticket.ticketNumber}`,
+        `Blocker resolved on ticket ${ticket.ticketNumber}`,
+        creatorEmailHtml,
+        emailAttachments
+      );
+      
+      console.log(`✅ Blocker resolved email sent to creator: ${ticket.raisedBy.name}`);
+    }
+
+    // Send to current assignee
+    const assigneeData = await getUserEmail(ticket.currentAssignee, FormDataModel);
+    if (assigneeData?.email && assigneeData.email !== creatorEmail) {
+      // Fetch functionality
+      let functionality = null;
+      try {
+        const mongoose = require('mongoose');
+        const Functionality = mongoose.models.Functionality || mongoose.model('Functionality');
+        const SuperFunctionality = mongoose.models.SuperFunctionality || mongoose.model('SuperFunctionality');
+        
+        const isSuper = ticket.department === 'Super Workflow';
+        if (isSuper) {
+          functionality = await SuperFunctionality.findById(ticket.functionality).lean();
+        } else {
+          functionality = await Functionality.findById(ticket.functionality).lean();
+        }
+      } catch (error) {
+        console.warn('⚠️  Could not fetch functionality labels');
+      }
+
+      const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
+      const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
+
+      const attachmentsList = attachmentPaths.length > 0 
+        ? `<p style="margin: 8px 0 0 0;"><strong>Resolution Attachments:</strong></p>
+           <ul style="margin: 4px 0; padding-left: 20px; color: #4b5563;">
+             ${attachmentPaths.map(att => `<li style="margin: 2px 0;">${path.basename(att)}</li>`).join('')}
+           </ul>`
+        : '';
+
+      const assigneeEmailHtml = buildEmailTemplate({
+        recipientName: assigneeData.name,
+        subject: `✅ Blocker Resolved - ${ticket.ticketNumber}`,
+        greeting: `Hi ${assigneeData.name},`,
+        mainMessage: `
+          <div style="margin: 12px 0; padding: 12px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+            <p style="margin: 0; color: #166534; font-weight: 600;">✓ Blocker Resolved</p>
+            <p style="margin: 4px 0 0 0; color: #166534; font-size: 13px;">The blocker on ticket <strong>${ticket.ticketNumber}</strong> has been resolved by <strong>${enrichedResolvedBy.name}</strong>.</p>
+          </div>
+          <p style="margin: 12px 0 0 0; color: #4b5563;">You can now continue working on this ticket.</p>
+          ${attachmentsList}
+        `,
+        detailsTable: ticketDetailsTable,
+        workflowHistoryTable,
+        actionRequired: 'Please continue with your assigned work.',
+      });
+
+      const emailAttachments = processAllAttachments(ticket.formData, enrichedHistory);
+
+      await sendEmail(
+        assigneeData.email,
+        `✅ Blocker Resolved - ${ticket.ticketNumber}`,
+        `Blocker resolved on ticket ${ticket.ticketNumber}`,
+        assigneeEmailHtml,
+        emailAttachments
+      );
+      
+      console.log(`✅ Blocker resolved email sent to assignee: ${assigneeData.name}`);
+    }
+  } catch (error) {
+    console.error(`❌ Blocker resolved email failed: ${ticket.ticketNumber}`, error);
   }
 };
 
@@ -601,5 +1056,7 @@ export default {
   sendGroupFormedEmail,
   sendTicketRevertedEmail,
   sendTicketResolvedEmail,
+  sendBlockerReportedEmail,
+  sendBlockerResolvedEmail,
   getUserEmail,
 };

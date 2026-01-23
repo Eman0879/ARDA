@@ -1,6 +1,6 @@
 // ============================================
-// FIXED: models/Functionality.ts
-// Properly structured formSchema to ensure it saves to DB
+// UPDATED: models/Functionality.ts
+// Added isActive field for toggling functionality visibility
 // ============================================
 
 import mongoose, { Schema, Document } from 'mongoose';
@@ -68,6 +68,7 @@ interface IFunctionality extends Document {
     fields: IFormField[];
     useDefaultFields: boolean;
   };
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,7 +106,6 @@ const WorkflowEdgeSchema = new Schema({
   target: { type: String, required: true }
 }, { _id: false });
 
-// FIXED: Simplified FormFieldSchema with proper Mixed type for complex fields
 const FormFieldSchema = new Schema({
   id: { type: String, required: true },
   type: {
@@ -153,7 +153,6 @@ const FunctionalitySchema = new Schema<IFunctionality>({
       required: true
     }
   },
-  // FIXED: Explicitly define formSchema structure
   formSchema: {
     type: {
       fields: {
@@ -170,24 +169,30 @@ const FunctionalitySchema = new Schema<IFunctionality>({
       fields: [],
       useDefaultFields: true
     })
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+    index: true
   }
 }, {
   timestamps: true,
-  // CRITICAL: Ensure strict mode doesn't strip fields
   strict: true
 });
 
 // Indexes for efficient queries
 FunctionalitySchema.index({ department: 1, createdAt: -1 });
+FunctionalitySchema.index({ department: 1, isActive: 1 });
 FunctionalitySchema.index({ name: 'text', description: 'text' });
 
 // Add a post-save hook for debugging
 FunctionalitySchema.post('save', function(doc) {
-  console.log('🔍 POST-SAVE HOOK - Document saved with formSchema:', {
+  console.log('🔍 POST-SAVE HOOK - Document saved:', {
     id: doc._id,
+    name: doc.name,
+    isActive: doc.isActive,
     hasFormSchema: !!doc.formSchema,
-    fieldCount: doc.formSchema?.fields?.length || 0,
-    useDefaultFields: doc.formSchema?.useDefaultFields
+    fieldCount: doc.formSchema?.fields?.length || 0
   });
 });
 

@@ -1,6 +1,6 @@
 // app/api/tickets/[id]/actions/route.ts
-// VERSION: 2025-01-19-WITH-EMAIL-NOTIFICATIONS
-// Adds email notifications for: forward, reassign, form_group, revert, resolve
+// VERSION: 2025-01-22-WITH-ACTUAL-NAMES-FROM-FORMDATA
+// Enhancement: Fetches actual user names from FormData collection for all actions
 
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongoose';
@@ -9,12 +9,15 @@ import Functionality from '@/models/Functionality';
 import SuperFunctionality from '@/models/SuperFunctionality';
 import FormData from '@/models/FormData';
 import { saveAttachment } from '@/app/utils/fileUpload';
+import { getUserDisplayName } from '@/app/utils/getUserDisplayName';
 import { 
   sendTicketForwardedEmail,
   sendTicketReassignedEmail,
   sendGroupFormedEmail,
   sendTicketRevertedEmail,
-  sendTicketResolvedEmail
+  sendTicketResolvedEmail,
+  sendBlockerReportedEmail,
+  sendBlockerResolvedEmail
 } from '@/app/utils/sendTicketNotification';
 
 function isFirstEmployeeNode(nodeId: string, workflow: any): boolean {
@@ -51,11 +54,35 @@ function getRelativeAttachmentPath(absolutePath: string): string {
   return normalizedPath;
 }
 
+// 📧 Helper function to send emails to notification recipients
+async function sendToNotificationRecipients(
+  ticket: any, 
+  emailFunction: Function, 
+  ...args: any[]
+) {
+  const recipients = ticket.formData?.['notification-recipients'];
+  if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+    console.log('📧 No notification recipients configured');
+    return;
+  }
+  
+  console.log(`📧 Sending to ${recipients.length} notification recipients`);
+  
+  for (const recipient of recipients) {
+    try {
+      await emailFunction(...args, recipient.userId);
+      console.log(`✅ Notification email sent to: ${recipient.name} (${recipient.email})`);
+    } catch (err) {
+      console.error(`❌ Failed to send notification to ${recipient.name}:`, err);
+    }
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log('\n🎯🎯🎯 ACTIONS ROUTE - WITH EMAIL NOTIFICATIONS 🎯🎯🎯\n');
+  console.log('\n🎯🎯🎯 ACTIONS ROUTE - WITH FORMDATA NAMES 🎯🎯🎯\n');
   
   try {
     await dbConnect();
@@ -89,22 +116,34 @@ export async function POST(
       groupLead,
       revertMessage,
       revertAttachments,
-      forwardAttachments
+      forwardAttachments,
+      blockerAttachments,
+      resolutionAttachments
     } = body;
 
     console.log(`\n🎬 TICKET ACTION: ${action}`);
     console.log(`Ticket ID: ${id}`);
-    console.log(`performedBy object:`, performedBy);
+    console.log(`performedBy object (from client):`, performedBy);
 
-    if (!action || !performedBy || !performedBy.userId || !performedBy.name) {
+    if (!action || !performedBy || !performedBy.userId) {
       console.error('❌ VALIDATION FAILED!');
       return NextResponse.json(
-        { error: 'Missing required fields: action, performedBy (with userId and name)' },
+        { error: 'Missing required fields: action, performedBy (with userId)' },
         { status: 400 }
       );
     }
 
-    console.log(`Performed by: ${performedBy.name} (${performedBy.userId})`);
+    // ✅ FETCH ACTUAL NAME FROM FORMDATA
+    console.log(`\n🔍 Fetching actual name for user: ${performedBy.userId}`);
+    const actualPerformerName = await getUserDisplayName(performedBy.userId, FormData);
+    
+    const enrichedPerformedBy = {
+      userId: performedBy.userId,
+      name: actualPerformerName  // Use fetched name instead of client-provided name
+    };
+
+    console.log(`✅ Enriched performer: ${performedBy.name || 'N/A'} → ${actualPerformerName}`);
+    console.log(`Performed by: ${enrichedPerformedBy.name} (${enrichedPerformedBy.userId})`);
 
     const ticket = await Ticket.findById(id);
     
@@ -211,14 +250,14 @@ export async function POST(
 
         console.log(`📊 Total revert attachments saved: ${savedAttachmentPaths.length}`);
 
-        // Give credit to performer
+        // Give credit to performer using ACTUAL NAME
         if (!isFirstNode) {
           ticket.secondaryCredits = addSecondaryCredit(
             ticket.secondaryCredits,
-            performedBy.userId,
-            performedBy.name
+            enrichedPerformedBy.userId,
+            enrichedPerformedBy.name
           );
-          console.log(`✅ Gave SECONDARY credit to ${performedBy.name} for revert action`);
+          console.log(`✅ Gave SECONDARY credit to ${enrichedPerformedBy.name} for revert action`);
         }
 
         // Determine new assignee based on previous node type
@@ -248,12 +287,12 @@ export async function POST(
         ticket.groupLead = newGroupLead;
         ticket.status = 'pending';
 
-        // Create history entry with attachments
+        // Create history entry with ACTUAL NAME
         const historyEntry: any = {
           actionType: 'reverted',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name  // Using actual name
           },
           performedAt: new Date(),
           fromNode,
@@ -274,8 +313,10 @@ export async function POST(
         // 📧 SEND EMAIL NOTIFICATION
         try {
           const ticketObject = ticket.toObject();
-          await sendTicketRevertedEmail(ticketObject, performedBy, revertMessage, FormData);
+          await sendTicketRevertedEmail(ticketObject, enrichedPerformedBy, revertMessage, FormData);
           console.log('✅ Revert email sent');
+          
+          await sendToNotificationRecipients(ticket, sendTicketRevertedEmail, ticketObject, enrichedPerformedBy, revertMessage, FormData);
         } catch (emailError) {
           console.error('❌ Revert email failed:', emailError);
         }
@@ -290,17 +331,17 @@ export async function POST(
         
         if (isFirstNode && !ticket.primaryCredit) {
           ticket.primaryCredit = {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           };
-          console.log(`✅ Gave PRIMARY credit to ${performedBy.name}`);
+          console.log(`✅ Gave PRIMARY credit to ${enrichedPerformedBy.name}`);
         } else if (!isFirstNode) {
           ticket.secondaryCredits = addSecondaryCredit(
             ticket.secondaryCredits,
-            performedBy.userId,
-            performedBy.name
+            enrichedPerformedBy.userId,
+            enrichedPerformedBy.name
           );
-          console.log(`✅ Gave SECONDARY credit to ${performedBy.name}`);
+          console.log(`✅ Gave SECONDARY credit to ${enrichedPerformedBy.name}`);
         }
 
         ticket.status = 'in-progress';
@@ -308,8 +349,8 @@ export async function POST(
         ticket.workflowHistory.push({
           actionType: 'in_progress',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date()
         });
@@ -389,8 +430,8 @@ export async function POST(
         ticket.workflowHistory.push({
           actionType: 'group_formed',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date(),
           groupMembers: groupMembersForHistory
@@ -402,8 +443,10 @@ export async function POST(
         // 📧 SEND EMAIL NOTIFICATION
         try {
           const ticketObject = ticket.toObject();
-          await sendGroupFormedEmail(ticketObject, performedBy, groupMembersForHistory, FormData);
+          await sendGroupFormedEmail(ticketObject, enrichedPerformedBy, groupMembersForHistory, FormData);
           console.log('✅ Group formation emails sent');
+          
+          await sendToNotificationRecipients(ticket, sendGroupFormedEmail, ticketObject, enrichedPerformedBy, groupMembersForHistory, FormData);
         } catch (emailError) {
           console.error('❌ Group formation email failed:', emailError);
         }
@@ -422,7 +465,7 @@ export async function POST(
           );
         }
 
-        console.log(`Performed by: ${performedBy.name} (${performedBy.userId})`);
+        console.log(`Performed by: ${enrichedPerformedBy.name} (${enrichedPerformedBy.userId})`);
         console.log(`Reassigning to: ${reassignTo.join(', ')}`);
 
         const atFirstNode = isFirstEmployeeNode(ticket.workflowStage, functionality.workflow);
@@ -458,7 +501,7 @@ export async function POST(
           console.log(`\n📝 NOT AT FIRST NODE - Updating SECONDARY credits`);
           
           ticket.secondaryCredits = ticket.secondaryCredits.filter(
-            c => c.userId !== performedBy.userId
+            c => c.userId !== enrichedPerformedBy.userId
           );
           
           newAssignees.forEach(assignee => {
@@ -483,8 +526,8 @@ export async function POST(
         ticket.workflowHistory.push({
           actionType: 'reassigned',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date(),
           reassignedTo: reassignTo,
@@ -497,8 +540,10 @@ export async function POST(
         // 📧 SEND EMAIL NOTIFICATION
         try {
           const ticketObject = ticket.toObject();
-          await sendTicketReassignedEmail(ticketObject, performedBy, explanation, FormData);
+          await sendTicketReassignedEmail(ticketObject, enrichedPerformedBy, explanation, FormData);
           console.log('✅ Reassignment email sent');
+          
+          await sendToNotificationRecipients(ticket, sendTicketReassignedEmail, ticketObject, enrichedPerformedBy, explanation, FormData);
         } catch (emailError) {
           console.error('❌ Reassignment email failed:', emailError);
         }
@@ -558,17 +603,17 @@ export async function POST(
 
         if (isFirstNode && !ticket.primaryCredit) {
           ticket.primaryCredit = {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           };
-          console.log(`✅ Gave PRIMARY credit to ${performedBy.name}`);
+          console.log(`✅ Gave PRIMARY credit to ${enrichedPerformedBy.name}`);
         } else if (!isFirstNode) {
           ticket.secondaryCredits = addSecondaryCredit(
             ticket.secondaryCredits,
-            performedBy.userId,
-            performedBy.name
+            enrichedPerformedBy.userId,
+            enrichedPerformedBy.name
           );
-          console.log(`✅ Gave SECONDARY credit to ${performedBy.name}`);
+          console.log(`✅ Gave SECONDARY credit to ${enrichedPerformedBy.name}`);
         }
 
         const fromNode = ticket.workflowStage;
@@ -590,8 +635,8 @@ export async function POST(
           const forwardEntry: any = {
             actionType: 'forwarded',
             performedBy: {
-              userId: performedBy.userId,
-              name: performedBy.name
+              userId: enrichedPerformedBy.userId,
+              name: enrichedPerformedBy.name
             },
             performedAt: new Date(),
             fromNode,
@@ -608,8 +653,8 @@ export async function POST(
             {
               actionType: 'resolved',
               performedBy: {
-                userId: performedBy.userId,
-                name: performedBy.name
+                userId: enrichedPerformedBy.userId,
+                name: enrichedPerformedBy.name
               },
               performedAt: new Date()
             }
@@ -621,8 +666,10 @@ export async function POST(
           // 📧 SEND RESOLUTION EMAIL TO CREATOR
           try {
             const ticketObject = ticket.toObject();
-            await sendTicketResolvedEmail(ticketObject, performedBy, FormData);
+            await sendTicketResolvedEmail(ticketObject, enrichedPerformedBy, FormData);
             console.log('✅ Resolution email sent to creator');
+            
+            await sendToNotificationRecipients(ticket, sendTicketResolvedEmail, ticketObject, enrichedPerformedBy, FormData);
           } catch (emailError) {
             console.error('❌ Resolution email failed:', emailError);
           }
@@ -689,8 +736,8 @@ export async function POST(
           const historyEntry: any = {
             actionType: 'forwarded',
             performedBy: {
-              userId: performedBy.userId,
-              name: performedBy.name
+              userId: enrichedPerformedBy.userId,
+              name: enrichedPerformedBy.name
             },
             performedAt: new Date(),
             fromNode,
@@ -735,8 +782,8 @@ export async function POST(
           const historyEntry: any = {
             actionType: 'forwarded',
             performedBy: {
-              userId: performedBy.userId,
-              name: performedBy.name
+              userId: enrichedPerformedBy.userId,
+              name: enrichedPerformedBy.name
             },
             performedAt: new Date(),
             fromNode,
@@ -760,8 +807,10 @@ export async function POST(
         // 📧 SEND FORWARD EMAIL
         try {
           const ticketObject = ticket.toObject();
-          await sendTicketForwardedEmail(ticketObject, performedBy, explanation, FormData);
+          await sendTicketForwardedEmail(ticketObject, enrichedPerformedBy, explanation, FormData);
           console.log('✅ Forward email sent');
+          
+          await sendToNotificationRecipients(ticket, sendTicketForwardedEmail, ticketObject, enrichedPerformedBy, explanation, FormData);
         } catch (emailError) {
           console.error('❌ Forward email failed:', emailError);
         }
@@ -770,8 +819,13 @@ export async function POST(
         break;
       }
 
+      // ========================================
+      // BLOCKER REPORTED ACTION (WITH ATTACHMENTS)
+      // ========================================
       case 'blocker_reported':
       case 'report_blocker': {
+        console.log('\n🚧 ========== BLOCKER REPORTED ACTION START ==========');
+        
         if (!blockerDescription) {
           return NextResponse.json(
             { error: 'blockerDescription is required' },
@@ -779,92 +833,204 @@ export async function POST(
           );
         }
 
+        // Handle blocker attachments
+        let savedBlockerPaths: string[] = [];
+        
+        if (blockerAttachments && Array.isArray(blockerAttachments) && blockerAttachments.length > 0) {
+          console.log(`📎 Processing ${blockerAttachments.length} blocker attachments`);
+          
+          for (const attachment of blockerAttachments) {
+            if (attachment && typeof attachment === 'object' && (attachment.data || attachment.content) && attachment.name) {
+              try {
+                const fileData = attachment.data || attachment.content;
+                const savedPath = saveAttachment(ticket.ticketNumber, {
+                  name: attachment.name,
+                  data: fileData,
+                  type: attachment.type || attachment.mimeType || 'application/octet-stream'
+                });
+                
+                const relativePath = getRelativeAttachmentPath(savedPath);
+                savedBlockerPaths.push(relativePath);
+                
+                console.log(`✅ Saved blocker attachment: ${attachment.name} → ${relativePath}`);
+              } catch (fileError) {
+                console.error(`❌ Failed to save blocker attachment ${attachment.name}:`, fileError);
+              }
+            }
+          }
+        }
+
+        console.log(`📊 Total blocker attachments saved: ${savedBlockerPaths.length}`);
+
         if (isFirstNode && !ticket.primaryCredit) {
           ticket.primaryCredit = {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           };
         } else if (!isFirstNode) {
           ticket.secondaryCredits = addSecondaryCredit(
             ticket.secondaryCredits,
-            performedBy.userId,
-            performedBy.name
+            enrichedPerformedBy.userId,
+            enrichedPerformedBy.name
           );
         }
 
         ticket.status = 'blocked';
-        ticket.blockers.push({
+        
+        const blockerEntry: any = {
           description: blockerDescription,
-          reportedBy: performedBy.userId,
-          reportedByName: performedBy.name,
+          reportedBy: enrichedPerformedBy.userId,
+          reportedByName: enrichedPerformedBy.name,
           reportedAt: new Date(),
           isResolved: false
-        });
+        };
+        
+        if (savedBlockerPaths.length > 0) {
+          blockerEntry.attachments = savedBlockerPaths;
+        }
+        
+        ticket.blockers.push(blockerEntry);
 
-        ticket.workflowHistory.push({
+        const historyEntry: any = {
           actionType: 'blocker_reported',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date(),
           blockerDescription
-        });
+        };
+        
+        if (savedBlockerPaths.length > 0) {
+          historyEntry.attachments = savedBlockerPaths;
+        }
+        
+        ticket.workflowHistory.push(historyEntry);
 
         await ticket.save();
-        console.log(`✅ Blocker reported`);
+        console.log(`✅ Blocker reported with ${savedBlockerPaths.length} attachments`);
+
+        // 📧 SEND BLOCKER EMAIL TO CREATOR
+        try {
+          const ticketObject = ticket.toObject();
+          await sendBlockerReportedEmail(ticketObject, enrichedPerformedBy, blockerDescription, savedBlockerPaths, FormData);
+          console.log('✅ Blocker email sent to creator');
+          
+          await sendToNotificationRecipients(ticket, sendBlockerReportedEmail, ticketObject, enrichedPerformedBy, blockerDescription, savedBlockerPaths, FormData);
+        } catch (emailError) {
+          console.error('❌ Blocker email failed:', emailError);
+        }
+
+        console.log('========== BLOCKER REPORTED ACTION END ==========\n');
         break;
       }
 
+      // ========================================
+      // BLOCKER RESOLVED ACTION (WITH ATTACHMENTS)
+      // ========================================
       case 'blocker_resolved': {
+        console.log('\n✅ ========== BLOCKER RESOLVED ACTION START ==========');
+        
+        // Handle resolution attachments
+        let savedResolutionPaths: string[] = [];
+        
+        if (resolutionAttachments && Array.isArray(resolutionAttachments) && resolutionAttachments.length > 0) {
+          console.log(`📎 Processing ${resolutionAttachments.length} resolution attachments`);
+          
+          for (const attachment of resolutionAttachments) {
+            if (attachment && typeof attachment === 'object' && (attachment.data || attachment.content) && attachment.name) {
+              try {
+                const fileData = attachment.data || attachment.content;
+                const savedPath = saveAttachment(ticket.ticketNumber, {
+                  name: attachment.name,
+                  data: fileData,
+                  type: attachment.type || attachment.mimeType || 'application/octet-stream'
+                });
+                
+                const relativePath = getRelativeAttachmentPath(savedPath);
+                savedResolutionPaths.push(relativePath);
+                
+                console.log(`✅ Saved resolution attachment: ${attachment.name} → ${relativePath}`);
+              } catch (fileError) {
+                console.error(`❌ Failed to save resolution attachment ${attachment.name}:`, fileError);
+              }
+            }
+          }
+        }
+
+        console.log(`📊 Total resolution attachments saved: ${savedResolutionPaths.length}`);
+
         if (isFirstNode && !ticket.primaryCredit) {
           ticket.primaryCredit = {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           };
         } else if (!isFirstNode) {
           ticket.secondaryCredits = addSecondaryCredit(
             ticket.secondaryCredits,
-            performedBy.userId,
-            performedBy.name
+            enrichedPerformedBy.userId,
+            enrichedPerformedBy.name
           );
         }
 
         if (ticket.blockers.length > 0) {
           const latestBlocker = ticket.blockers[ticket.blockers.length - 1];
           latestBlocker.isResolved = true;
-          latestBlocker.resolvedBy = performedBy.userId;
-          latestBlocker.resolvedByName = performedBy.name;
+          latestBlocker.resolvedBy = enrichedPerformedBy.userId;
+          latestBlocker.resolvedByName = enrichedPerformedBy.name;
           latestBlocker.resolvedAt = new Date();
+          
+          if (savedResolutionPaths.length > 0) {
+            latestBlocker.resolutionAttachments = savedResolutionPaths;
+          }
         }
 
         ticket.status = 'in-progress';
 
-        ticket.workflowHistory.push({
+        const historyEntry: any = {
           actionType: 'blocker_resolved',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date()
-        });
+        };
+        
+        if (savedResolutionPaths.length > 0) {
+          historyEntry.attachments = savedResolutionPaths;
+        }
+        
+        ticket.workflowHistory.push(historyEntry);
 
         await ticket.save();
-        console.log(`✅ Blocker resolved`);
+        console.log(`✅ Blocker resolved with ${savedResolutionPaths.length} attachments`);
+
+        // 📧 SEND RESOLUTION EMAIL TO CREATOR AND ASSIGNEE
+        try {
+          const ticketObject = ticket.toObject();
+          await sendBlockerResolvedEmail(ticketObject, enrichedPerformedBy, savedResolutionPaths, FormData);
+          console.log('✅ Blocker resolution email sent');
+          
+          await sendToNotificationRecipients(ticket, sendBlockerResolvedEmail, ticketObject, enrichedPerformedBy, savedResolutionPaths, FormData);
+        } catch (emailError) {
+          console.error('❌ Blocker resolution email failed:', emailError);
+        }
+
+        console.log('========== BLOCKER RESOLVED ACTION END ==========\n');
         break;
       }
 
       case 'resolve': {
         if (isFirstNode && !ticket.primaryCredit) {
           ticket.primaryCredit = {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           };
         } else if (!isFirstNode) {
           ticket.secondaryCredits = addSecondaryCredit(
             ticket.secondaryCredits,
-            performedBy.userId,
-            performedBy.name
+            enrichedPerformedBy.userId,
+            enrichedPerformedBy.name
           );
         }
 
@@ -873,8 +1039,8 @@ export async function POST(
         ticket.workflowHistory.push({
           actionType: 'resolved',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date()
         });
@@ -885,8 +1051,10 @@ export async function POST(
         // 📧 SEND RESOLUTION EMAIL TO CREATOR
         try {
           const ticketObject = ticket.toObject();
-          await sendTicketResolvedEmail(ticketObject, performedBy, FormData);
+          await sendTicketResolvedEmail(ticketObject, enrichedPerformedBy, FormData);
           console.log('✅ Resolution email sent to creator');
+          
+          await sendToNotificationRecipients(ticket, sendTicketResolvedEmail, ticketObject, enrichedPerformedBy, FormData);
         } catch (emailError) {
           console.error('❌ Resolution email failed:', emailError);
         }
@@ -900,8 +1068,8 @@ export async function POST(
         ticket.workflowHistory.push({
           actionType: 'closed',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date()
         });
@@ -934,8 +1102,8 @@ export async function POST(
         ticket.workflowHistory.push({
           actionType: 'reopened',
           performedBy: {
-            userId: performedBy.userId,
-            name: performedBy.name
+            userId: enrichedPerformedBy.userId,
+            name: enrichedPerformedBy.name
           },
           performedAt: new Date(),
           toNode,

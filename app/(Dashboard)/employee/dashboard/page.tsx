@@ -44,7 +44,7 @@ export default function EmployeeDashboard() {
     if (userData) {
       setUser(JSON.parse(userData));
     } else {
-      router.push('/auth/login');
+      router.push('/login');
     }
   }, [router]);
 

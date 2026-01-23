@@ -8,18 +8,13 @@ import {
   Search,
   X,
   Filter,
-  Eye,
   Loader2,
   AlertCircle,
-  Users,
-  Calendar,
-  TrendingUp,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  FolderKanban
+  ArrowLeft,
+  RefreshCw
 } from 'lucide-react';
-import SprintDetailsModal from './SprintDetailsModal';
+import SprintCard from './SprintCard';
+import SprintDetailView from './SprintDetailView';
 
 interface Sprint {
   _id: string;
@@ -30,11 +25,12 @@ interface Sprint {
   projectNumber?: string;
   status: 'active' | 'completed' | 'closed';
   health: 'healthy' | 'at-risk' | 'delayed' | 'critical';
-  members: Array<{ userId: string; name: string; role: string; leftAt?: Date }>;
+  members: Array<{ userId: string; name: string; role: string; leftAt?: Date; joinedAt: Date }>;
   groupLead: string;
   startDate: string;
   endDate: string;
   actions: any[];
+  chat: any[];
   createdAt: string;
 }
 
@@ -51,7 +47,7 @@ export default function SprintsView({
   userName,
   onRefresh 
 }: SprintsViewProps) {
-  const { colors, cardCharacters } = useTheme();
+  const { colors, cardCharacters, showToast } = useTheme();
   const charColors = cardCharacters.interactive;
 
   const [sprints, setSprints] = useState<Sprint[]>([]);
@@ -147,52 +143,26 @@ export default function SprintsView({
     searchQuery
   ].filter(Boolean).length;
 
-  const getHealthIcon = (health: string) => {
-    switch (health) {
-      case 'healthy':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'at-risk':
-        return <Clock className="w-4 h-4" />;
-      case 'delayed':
-        return <TrendingUp className="w-4 h-4" />;
-      case 'critical':
-        return <AlertTriangle className="w-4 h-4" />;
-      default:
-        return <Zap className="w-4 h-4" />;
-    }
+  const handleSprintSelect = (sprint: Sprint) => {
+    setSelectedSprint(sprint);
   };
 
-  const getHealthColors = (health: string) => {
-    switch (health) {
-      case 'healthy':
-        return cardCharacters.completed;
-      case 'at-risk':
-        return cardCharacters.interactive;
-      case 'delayed':
-        return cardCharacters.urgent;
-      case 'critical':
-        return cardCharacters.urgent;
-      default:
-        return cardCharacters.neutral;
-    }
+  const handleBackToList = () => {
+    setSelectedSprint(null);
+    fetchSprints(); // Refresh data
+    onRefresh();
   };
 
-  const getStatusColors = (status: string) => {
-    switch (status) {
-      case 'active':
-        return cardCharacters.informative;
-      case 'completed':
-        return cardCharacters.completed;
-      case 'closed':
-        return cardCharacters.neutral;
-      default:
-        return cardCharacters.neutral;
+  const handleSprintUpdate = async () => {
+    await fetchSprints();
+    // Update the selected sprint with fresh data
+    if (selectedSprint) {
+      const updated = sprints.find(s => s._id === selectedSprint._id);
+      if (updated) {
+        setSelectedSprint(updated);
+      }
     }
-  };
-
-  const getDaysRemaining = (endDate: string) => {
-    const days = Math.ceil((new Date(endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    return days;
+    onRefresh();
   };
 
   if (loading) {
@@ -235,6 +205,39 @@ export default function SprintsView({
     );
   }
 
+  // Show detailed view if a sprint is selected
+  if (selectedSprint) {
+    return (
+      <div className="space-y-4">
+        {/* Back Button */}
+        <button
+          onClick={handleBackToList}
+          className={`group relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-br ${colors.cardBg} border ${colors.border} ${colors.shadowCard} hover:${colors.shadowHover}`}
+        >
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+          <div 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}
+          ></div>
+          <ArrowLeft className={`w-5 h-5 relative z-10 transition-transform duration-300 group-hover:-translate-x-1 ${cardCharacters.informative.iconColor}`} />
+          <span className={`text-sm font-bold relative z-10 ${colors.textPrimary}`}>
+            Back to Sprints
+          </span>
+        </button>
+
+        {/* Sprint Detail View */}
+        <SprintDetailView
+          sprint={selectedSprint}
+          userId={userId}
+          userName={userName}
+          department={department}
+          onUpdate={handleSprintUpdate}
+        />
+      </div>
+    );
+  }
+
+  // Show list view
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -242,9 +245,19 @@ export default function SprintsView({
         <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
         
         <div className="relative space-y-3">
-          <div className="flex items-center space-x-2 mb-2">
-            <Filter className={`h-4 w-4 ${colors.textMuted}`} />
-            <span className={`text-xs font-bold ${colors.textSecondary}`}>Filters</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <Filter className={`h-4 w-4 ${colors.textMuted}`} />
+              <span className={`text-xs font-bold ${colors.textSecondary}`}>Filters</span>
+            </div>
+            
+            <button
+              onClick={fetchSprints}
+              className={`group relative p-2 rounded-lg transition-all overflow-hidden bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText}`}
+            >
+              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+              <RefreshCw className={`w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-180`} />
+            </button>
           </div>
 
           {/* Search */}
@@ -267,8 +280,8 @@ export default function SprintsView({
             )}
           </div>
 
+          {/* Filter Dropdowns */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Status Filter */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -280,7 +293,6 @@ export default function SprintsView({
               <option value="closed">Closed</option>
             </select>
 
-            {/* Health Filter */}
             <select
               value={healthFilter}
               onChange={(e) => setHealthFilter(e.target.value)}
@@ -293,7 +305,6 @@ export default function SprintsView({
               <option value="critical">Critical</option>
             </select>
 
-            {/* Project Filter */}
             <select
               value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
@@ -307,6 +318,7 @@ export default function SprintsView({
             </select>
           </div>
 
+          {/* Clear Filters */}
           {activeFiltersCount > 0 && (
             <div className="flex justify-end">
               <button
@@ -320,7 +332,7 @@ export default function SprintsView({
         </div>
       </div>
 
-      {/* Sprints List */}
+      {/* Sprints Grid */}
       {filteredSprints.length === 0 ? (
         <div className={`relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} p-16 text-center`}>
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
@@ -339,117 +351,15 @@ export default function SprintsView({
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredSprints.map((sprint) => {
-            const healthColors = getHealthColors(sprint.health);
-            const statusColors = getStatusColors(sprint.status);
-            const activeMembers = sprint.members.filter(m => !m.leftAt);
-            const pendingActions = sprint.actions?.filter(a => a.status !== 'done').length || 0;
-            const daysRemaining = getDaysRemaining(sprint.endDate);
-
-            return (
-              <div
-                key={sprint._id}
-                onClick={() => setSelectedSprint(sprint)}
-                className={`group relative overflow-hidden rounded-xl border backdrop-blur-sm bg-gradient-to-br ${cardCharacters.neutral.bg} ${cardCharacters.neutral.border} p-5 ${colors.shadowCard} hover:${colors.shadowHover} transition-all duration-300 cursor-pointer hover:scale-[1.01]`}
-              >
-                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ boxShadow: `inset 0 0 30px ${colors.glowPrimary}` }}
-                ></div>
-
-                <div className="relative z-10 flex items-start justify-between">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div 
-                        className={`p-2 rounded-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-r ${healthColors.bg}`}
-                      >
-                        {getHealthIcon(sprint.health)}
-                      </div>
-                      
-                      <h4 className={`text-lg font-black ${colors.textPrimary}`}>
-                        {sprint.sprintNumber}
-                      </h4>
-                      
-                      {sprint.projectNumber && (
-                        <div className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r ${cardCharacters.creative.bg} ${cardCharacters.creative.text}`}>
-                          <FolderKanban className="w-3 h-3" />
-                          {sprint.projectNumber}
-                        </div>
-                      )}
-                      
-                      <div
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r ${statusColors.bg} ${statusColors.text}`}
-                      >
-                        {sprint.status.toUpperCase()}
-                      </div>
-                      
-                      <div
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r ${healthColors.bg} ${healthColors.text}`}
-                      >
-                        {sprint.health.toUpperCase()}
-                      </div>
-                    </div>
-                    
-                    <p className={`text-base font-bold ${colors.textPrimary}`}>
-                      {sprint.title}
-                    </p>
-                    
-                    <p className={`text-sm ${colors.textSecondary} line-clamp-2`}>
-                      {sprint.description}
-                    </p>
-                    
-                    <div className={`flex items-center gap-4 text-xs font-medium ${colors.textMuted}`}>
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{activeMembers.length} Members</span>
-                      </div>
-                      <span>•</span>
-                      <div className="flex items-center gap-1.5">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        <span>{pendingActions} Pending</span>
-                      </div>
-                      <span>•</span>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>
-                          {daysRemaining > 0 ? `${daysRemaining}d remaining` : `${Math.abs(daysRemaining)}d overdue`}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button
-                    className={`group/btn relative p-3 rounded-xl transition-all duration-300 opacity-0 group-hover:opacity-100 overflow-hidden border-2 ml-4 bg-gradient-to-r ${charColors.bg} ${charColors.border}`}
-                  >
-                    <div 
-                      className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"
-                      style={{ boxShadow: `inset 0 0 20px ${colors.glowPrimary}` }}
-                    ></div>
-                    <Eye className={`w-5 h-5 relative z-10 transition-transform duration-300 group-hover/btn:scale-110 ${charColors.iconColor}`} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredSprints.map((sprint) => (
+            <SprintCard
+              key={sprint._id}
+              sprint={sprint}
+              onClick={() => handleSprintSelect(sprint)}
+            />
+          ))}
         </div>
-      )}
-
-      {/* Sprint Details Modal */}
-      {selectedSprint && (
-        <SprintDetailsModal
-          sprint={selectedSprint}
-          userId={userId}
-          userName={userName}
-          department={department}
-          onClose={() => setSelectedSprint(null)}
-          onUpdate={() => {
-            setSelectedSprint(null);
-            fetchSprints();
-            onRefresh();
-          }}
-        />
       )}
     </div>
   );

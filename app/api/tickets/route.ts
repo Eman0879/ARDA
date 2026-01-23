@@ -1,4 +1,4 @@
-// ===== app/api/tickets/route.ts (UPDATED TO SUPPORT SUPER FUNCTIONALITIES) =====
+// ===== app/api/tickets/route.ts (UPDATED TO SUPPORT SUPER FUNCTIONALITIES + NOTIFICATION RECIPIENTS) =====
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongoose';
 import Ticket from '@/models/Ticket';
@@ -7,6 +7,19 @@ import SuperFunctionality from '@/models/SuperFunctionality';
 import FormData from '@/models/FormData';
 import { sendTicketAssignmentEmail } from '@/app/utils/sendTicketNotification';
 import { saveAttachment } from '@/app/utils/fileUpload';
+import sendEmail from '@/app/utils/sendEmail';
+import { buildTicketDetailsTable, buildEmailTemplate, buildWorkflowHistoryTable } from '@/app/utils/ticketEmailTemplates';
+
+// Helper function to get priority color
+const getPriorityColor = (priority: string): string => {
+  const colors: Record<string, string> = {
+    low: '#10b981',
+    medium: '#f59e0b',
+    high: '#f97316',
+    critical: '#ef4444',
+  };
+  return colors[priority] || '#6b7280';
+};
 
 // GET - Get tickets created by user
 export async function GET(request: NextRequest) {
@@ -109,7 +122,8 @@ export async function POST(request: NextRequest) {
       isSuper,
       raisedBy,
       formDataKeys: Object.keys(formData || {}),
-      attachments: formData?.['default-attachments']
+      attachments: formData?.['default-attachments'],
+      notificationRecipients: formData?.['notification-recipients']?.length || 0
     });
 
     // Validation
@@ -397,7 +411,7 @@ export async function POST(request: NextRequest) {
     console.log(`📋 FormData attachments:`, ticket.formData['default-attachments']);
 
     // ============================================
-    // ✨ SEND EMAIL NOTIFICATION
+    // ✨ SEND EMAIL NOTIFICATIONS
     // ============================================
     try {
       const ticketForEmail = ticket.toObject();
@@ -413,13 +427,92 @@ export async function POST(request: NextRequest) {
               const memberTicket = { ...ticketForEmail, currentAssignee: memberId };
               await sendTicketAssignmentEmail(memberTicket, FormData);
             } catch (err) {
-              // Silent fail for individual group members
+              console.error(`❌ Failed to send email to group member ${memberId}`);
             }
           }
         }
       }
+      
+      // 📧 NEW: Send to notification recipients
+      const notificationRecipients = formData['notification-recipients'];
+      if (notificationRecipients && Array.isArray(notificationRecipients) && notificationRecipients.length > 0) {
+        console.log(`📧 Sending assignment emails to ${notificationRecipients.length} notification recipients`);
+        
+        for (const recipient of notificationRecipients) {
+          try {
+            const recipientName = recipient.name;
+            const recipientEmail = recipient.email;
+            
+            console.log(`📧 Sending to notification recipient: ${recipientName} (${recipientEmail})`);
+            
+            // Build email content
+            const ticketDetailsTable = buildTicketDetailsTable(ticketForEmail, functionality);
+            const workflowHistoryTable = buildWorkflowHistoryTable(ticketForEmail.workflowHistory);
+            
+            const emailHtml = buildEmailTemplate({
+              recipientName: recipientName,
+              subject: `New Ticket Created: ${ticketNumber}`,
+              greeting: `Hi ${recipientName},`,
+              mainMessage: `
+                <p style="margin: 0 0 8px 0;">A new ticket has been created and you've been added to receive updates.</p>
+                <p style="margin: 0;"><strong>${functionality.name}</strong> • Priority: <strong style="color: ${getPriorityColor(priority)};">${priority.toUpperCase()}</strong></p>
+                <p style="margin: 12px 0 0 0; padding: 10px; background: #dbeafe; border-left: 3px solid #3b82f6; border-radius: 4px; color: #1e40af; font-size: 13px;">
+                  ℹ️ You will receive email notifications for all updates on this ticket.
+                </p>
+              `,
+              detailsTable: ticketDetailsTable,
+              workflowHistoryTable: workflowHistoryTable,
+              closingMessage: 'You are receiving this email because you were added as a notification recipient for this ticket.',
+            });
+            
+            // Process attachments
+            const fs = require('fs');
+            const path = require('path');
+            const attachments: Array<{ filename: string; path: string }> = [];
+            
+            if (formData['default-attachments'] && Array.isArray(formData['default-attachments'])) {
+              formData['default-attachments'].forEach((filePath: string) => {
+                if (typeof filePath === 'string' && filePath.trim()) {
+                  let fullPath = filePath;
+                  
+                  // Normalize path
+                  if (!filePath.match(/^[A-Za-z]:\\/)) {
+                    fullPath = filePath.startsWith('D:\\') ? filePath : `D:\\${filePath}`;
+                  }
+                  fullPath = fullPath.replace(/\//g, '\\');
+                  
+                  if (fs.existsSync(fullPath)) {
+                    attachments.push({
+                      filename: path.basename(fullPath),
+                      path: fullPath,
+                    });
+                    console.log(`   📎 Attached: ${path.basename(fullPath)}`);
+                  } else {
+                    console.warn(`   ⚠️  File not found: ${fullPath}`);
+                  }
+                }
+              });
+            }
+            
+            await sendEmail(
+              recipientEmail,
+              `New Ticket Created: ${ticketNumber}`,
+              `New ticket ${ticketNumber} created`,
+              emailHtml,
+              attachments
+            );
+            
+            console.log(`✅ Notification email sent to: ${recipientName} (${recipientEmail})`);
+          } catch (recipientError) {
+            console.error(`❌ Failed to send email to notification recipient ${recipient.name}:`, recipientError);
+          }
+        }
+      } else {
+        console.log('📧 No notification recipients configured for this ticket');
+      }
+      
     } catch (emailError) {
-      console.error(`❌ Email failed: ${ticketNumber}`);
+      console.error(`❌ Email notification failed: ${ticketNumber}`, emailError);
     }
     // ============================================
 
