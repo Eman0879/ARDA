@@ -1,7 +1,7 @@
 // app/components/DeptTickets/DeptTicketsContent.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Ticket as TicketIcon, 
   Loader2, 
@@ -18,6 +18,8 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
+import TimeRangeFilter, { TimeRange } from '@/app/components/employeeticketlogs/TimeRangeFilter';
+import { filterByTimeRange } from '@/app/components/employeeticketlogs/timeRangeUtils';
 
 interface Ticket {
   _id: string;
@@ -76,6 +78,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [timeRange, setTimeRange] = useState<TimeRange>({ type: 'all' });
   
   // Unique functionalities for filter
   const [functionalities, setFunctionalities] = useState<string[]>([]);
@@ -89,7 +92,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
 
   useEffect(() => {
     applyFilters();
-  }, [tickets, statusFilter, searchQuery, priorityFilter, functionalityFilter]);
+  }, [tickets, statusFilter, searchQuery, priorityFilter, functionalityFilter, timeRange]);
 
   const fetchTickets = async () => {
     try {
@@ -127,6 +130,11 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
   const applyFilters = () => {
     let filtered = [...tickets];
 
+    // Apply time range filter first
+    if (timeRange.type !== 'all') {
+      filtered = filterByTimeRange(filtered, timeRange);
+    }
+
     if (statusFilter !== 'all') {
       filtered = filtered.filter(t => t.status === statusFilter);
     }
@@ -160,13 +168,15 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
     setStatusFilter('all');
     setPriorityFilter('all');
     setFunctionalityFilter('all');
+    setTimeRange({ type: 'all' });
   };
 
   const activeFiltersCount = [
     searchQuery,
     statusFilter !== 'all' ? statusFilter : '',
     priorityFilter !== 'all' ? priorityFilter : '',
-    functionalityFilter !== 'all' ? functionalityFilter : ''
+    functionalityFilter !== 'all' ? functionalityFilter : '',
+    timeRange.type !== 'all' ? timeRange.type : ''
   ].filter(Boolean).length;
 
   const getStatusIcon = (status: string) => {
@@ -261,19 +271,25 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
               </div>
             </div>
             
-            <button
-              onClick={fetchTickets}
-              disabled={loading}
-              className={`group relative px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105 overflow-hidden flex items-center gap-2 bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50`}
-            >
-              <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-              <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}
-              ></div>
-              <RefreshCw className={`h-4 w-4 relative z-10 transition-transform duration-300 ${loading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
-              <span className="relative z-10">Refresh</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Time Range Filter */}
+              <TimeRangeFilter value={timeRange} onChange={setTimeRange} />
+              
+              {/* Refresh Button */}
+              <button
+                onClick={fetchTickets}
+                disabled={loading}
+                className={`group relative px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105 overflow-hidden flex items-center gap-2 bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} disabled:opacity-50`}
+              >
+                <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}
+                ></div>
+                <RefreshCw className={`h-4 w-4 relative z-10 transition-transform duration-300 ${loading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+                <span className="relative z-10">Refresh</span>
+              </button>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -461,7 +477,7 @@ export default function DeptTicketsContent({ department }: DeptTicketsContentPro
                       </div>
                     </div>
                     
-                    {/* Assigned To - NEW */}
+                    {/* Assigned To */}
                     {ticket.assignedToName && (
                       <div className="flex items-center justify-between text-xs">
                         <span className={`font-medium ${colors.textMuted} flex items-center gap-1.5`}>

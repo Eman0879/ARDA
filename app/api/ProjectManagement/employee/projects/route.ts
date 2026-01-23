@@ -24,37 +24,39 @@ export async function GET(request: NextRequest) {
     }).sort({ createdAt: -1 });
 
     // Calculate user's role and permissions for each project
-    const projectsWithRole = projects.map(project => {
-      const member = project.members.find(m => 
-        m.username === userId && !m.leftAt
-      );
-      const isLead = member?.role === 'lead';
-      const isDeptHead = member?.role === 'dept-head';
-      
-      // For regular employees: show ALL deliverables (can view all, but only perform actions on assigned ones)
-      // For dept heads: show ALL deliverables (same viewing permissions)
-      const allDeliverables = project.deliverables || [];
-      
-      // Get deliverables assigned to this user (check by userId from member object)
-      const myDeliverables = allDeliverables.filter(d => 
-        d.assignedTo.some((assignedId: string) => assignedId === member?.userId)
-      );
+    const projectsWithRole = projects
+      .filter(project => project.members && Array.isArray(project.members)) // Add this safety check
+      .map(project => {
+        const member = project.members.find(m => 
+          m.username === userId && !m.leftAt
+        );
+        const isLead = member?.role === 'lead';
+        const isDeptHead = member?.role === 'dept-head';
+        
+        // For regular employees: show ALL deliverables (can view all, but only perform actions on assigned ones)
+        // For dept heads: show ALL deliverables (same viewing permissions)
+        const allDeliverables = project.deliverables || [];
+        
+        // Get deliverables assigned to this user (check by userId from member object)
+        const myDeliverables = allDeliverables.filter(d => 
+          d.assignedTo && d.assignedTo.some((assignedId: string) => assignedId === member?.userId)
+        );
 
-      const pendingDeliverables = myDeliverables.filter(d => d.status !== 'done');
+        const pendingDeliverables = myDeliverables.filter(d => d.status !== 'done');
 
-      return {
-        ...project.toObject(),
-        myRole: member?.role || 'member',
-        isLead,
-        isDeptHead,
-        myDeliverables: myDeliverables.length,
-        myPendingDeliverables: pendingDeliverables.length,
-        myUserId: member?.userId, // Pass the ObjectId for action checking
-        myUsername: userId, // Pass username for reference
-        // Include ALL deliverables so employees can see the full project scope
-        deliverables: allDeliverables
-      };
-    });
+        return {
+          ...project.toObject(),
+          myRole: member?.role || 'member',
+          isLead,
+          isDeptHead,
+          myDeliverables: myDeliverables.length,
+          myPendingDeliverables: pendingDeliverables.length,
+          myUserId: member?.userId, // Pass the ObjectId for action checking
+          myUsername: userId, // Pass username for reference
+          // Include ALL deliverables so employees can see the full project scope
+          deliverables: allDeliverables
+        };
+      });
 
     return NextResponse.json({
       success: true,
