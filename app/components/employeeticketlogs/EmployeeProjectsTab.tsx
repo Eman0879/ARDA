@@ -1,13 +1,14 @@
 // app/components/employeeticketlogs/EmployeeProjectsTab.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
 import { FolderKanban, Package, TrendingUp, Clock, Info } from 'lucide-react';
 import DonutChart from './DonutChart';
 import StatusLegend from './StatusLegend';
 import AnalyticsLoadingState from './AnalyticsLoadingState';
 import AnalyticsErrorState from './AnalyticsErrorState';
+import { TimeRange, filterByTimeRange } from './TimeRangeFilter';
 
 interface Project {
   _id: string;
@@ -22,6 +23,7 @@ interface Project {
   myPendingDeliverables: number;
   myUserId: string;
   myUsername: string;
+  createdAt: string;
   deliverables: Deliverable[];
 }
 
@@ -32,6 +34,8 @@ interface Deliverable {
   health: 'healthy' | 'at-risk' | 'overdue';
   dueDate: string;
   assignedTo: string[];
+  blockers?: any[];
+  createdAt: string;
 }
 
 interface ProjectsData {
@@ -40,11 +44,12 @@ interface ProjectsData {
 }
 
 interface EmployeeProjectsTabProps {
-  employeeId: string; // This is MongoDB _id
+  employeeId: string;
   employeeName: string;
+  timeRange: TimeRange;
 }
 
-export default function EmployeeProjectsTab({ employeeId, employeeName }: EmployeeProjectsTabProps) {
+export default function EmployeeProjectsTab({ employeeId, employeeName, timeRange }: EmployeeProjectsTabProps) {
   const { colors, cardCharacters, theme } = useTheme();
   const [data, setData] = useState<ProjectsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,7 +69,6 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
 
   const fetchUsername = async () => {
     try {
-      // Get username by MongoDB _id
       const response = await fetch(`/api/employee/by-id/${encodeURIComponent(employeeId)}`);
       
       if (!response.ok) {
@@ -107,6 +111,105 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
     }
   };
 
+  // Filter projects based on time range
+  const filteredProjects = useMemo(() => {
+    if (!data?.projects) return [];
+    return filterByTimeRange(data.projects, timeRange);
+  }, [data, timeRange]);
+
+  // Calculate statistics from filtered projects
+  const statistics = useMemo(() => {
+    const allDeliverables = filteredProjects.flatMap(p => {
+      const userIdToCheck = p.myUserId || userId;
+      return p.deliverables.filter(d => d.assignedTo.includes(userIdToCheck));
+    });
+    
+    const deliverableHealthStats = {
+      healthy: allDeliverables.filter(d => {
+        const hasBlockers = d.blockers && d.blockers.some((b: any) => !b.isResolved);
+        const isOverdue = d.dueDate && new Date(d.dueDate) < new Date() && d.status !== 'done';
+        return !hasBlockers && !isOverdue;
+      }).length,
+      atRisk: allDeliverables.filter(d => {
+        const hasBlockers = d.blockers && d.blockers.some((b: any) => !b.isResolved);
+        const isOverdue = d.dueDate && new Date(d.dueDate) < new Date() && d.status !== 'done';
+        return hasBlockers && !isOverdue;
+      }).length,
+      delayed: allDeliverables.filter(d => {
+        const isOverdue = d.dueDate && new Date(d.dueDate) < new Date() && d.status !== 'done';
+        return isOverdue;
+      }).length,
+    };
+
+    const projectHealthStats = {
+      healthy: filteredProjects.filter(p => p.health?.toLowerCase() === 'healthy').length,
+      atRisk: filteredProjects.filter(p => {
+        const health = p.health?.toLowerCase();
+        return health === 'at-risk' || health === 'at risk';
+      }).length,
+      delayed: filteredProjects.filter(p => p.health?.toLowerCase() === 'delayed').length,
+      critical: filteredProjects.filter(p => p.health?.toLowerCase() === 'critical').length,
+    };
+
+    const totalDeliverables = allDeliverables.length;
+    const pendingDeliverables = allDeliverables.filter(d => d.status === 'pending' || d.status === 'in-progress').length;
+
+    const projectHealthChartData = filteredProjects.length > 0 ? [
+      { 
+        status: 'Healthy', 
+        count: projectHealthStats.healthy, 
+        percentage: (projectHealthStats.healthy / filteredProjects.length) * 100, 
+        color: theme === 'dark' ? '#81C784' : '#4CAF50' 
+      },
+      { 
+        status: 'At Risk', 
+        count: projectHealthStats.atRisk, 
+        percentage: (projectHealthStats.atRisk / filteredProjects.length) * 100, 
+        color: theme === 'dark' ? '#FFB74D' : '#FFA500' 
+      },
+      { 
+        status: 'Delayed', 
+        count: projectHealthStats.delayed, 
+        percentage: (projectHealthStats.delayed / filteredProjects.length) * 100, 
+        color: theme === 'dark' ? '#FF9800' : '#FF6F00' 
+      },
+      { 
+        status: 'Critical', 
+        count: projectHealthStats.critical, 
+        percentage: (projectHealthStats.critical / filteredProjects.length) * 100, 
+        color: theme === 'dark' ? '#EF5350' : '#F44336' 
+      },
+    ].filter(item => item.count > 0) : [];
+
+    const deliverableHealthChartData = [
+      { 
+        status: 'Healthy', 
+        count: deliverableHealthStats.healthy, 
+        percentage: totalDeliverables > 0 ? (deliverableHealthStats.healthy / totalDeliverables) * 100 : 0, 
+        color: theme === 'dark' ? '#81C784' : '#4CAF50' 
+      },
+      { 
+        status: 'At Risk', 
+        count: deliverableHealthStats.atRisk, 
+        percentage: totalDeliverables > 0 ? (deliverableHealthStats.atRisk / totalDeliverables) * 100 : 0, 
+        color: theme === 'dark' ? '#FFB74D' : '#FFA500' 
+      },
+      { 
+        status: 'Delayed', 
+        count: deliverableHealthStats.delayed, 
+        percentage: totalDeliverables > 0 ? (deliverableHealthStats.delayed / totalDeliverables) * 100 : 0, 
+        color: theme === 'dark' ? '#EF5350' : '#F44336' 
+      },
+    ].filter(item => item.count > 0);
+
+    return {
+      totalDeliverables,
+      pendingDeliverables,
+      projectHealthChartData,
+      deliverableHealthChartData,
+    };
+  }, [filteredProjects, userId, theme]);
+
   if (loading) {
     return <AnalyticsLoadingState />;
   }
@@ -115,131 +218,20 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
     return <AnalyticsErrorState message={error} onRetry={fetchData} />;
   }
 
-  if (!data || data.projects.length === 0) {
+  if (filteredProjects.length === 0) {
     return (
       <div className={`relative p-8 rounded-xl border-2 overflow-hidden text-center ${colors.cardBg} ${colors.borderSubtle}`}>
         <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
         <FolderKanban className={`h-12 w-12 ${colors.textMuted} mx-auto mb-3 opacity-50`} />
         <p className={`text-sm font-semibold ${colors.textSecondary}`}>
-          {employeeName} is not assigned to any projects yet.
+          {timeRange.type === 'all' 
+            ? `${employeeName} is not assigned to any projects yet.`
+            : `No projects found in the selected time range.`
+          }
         </p>
       </div>
     );
   }
-
-  // Calculate statistics - use myUserId from API response (or fallback to our userId)
-  const allDeliverables = data.projects.flatMap(p => {
-    const userIdToCheck = p.myUserId || userId;
-    return p.deliverables.filter(d => d.assignedTo.includes(userIdToCheck));
-  });
-  
-  // Calculate deliverable HEALTH statistics (not status)
-  // Note: Deliverables don't have health field in schema - calculate from status and blockers
-  const deliverableHealthStats = {
-    healthy: allDeliverables.filter(d => {
-      // Consider healthy if done or no blockers and not overdue
-      const hasBlockers = d.blockers && d.blockers.some((b: any) => !b.isResolved);
-      const isOverdue = d.dueDate && new Date(d.dueDate) < new Date() && d.status !== 'done';
-      return !hasBlockers && !isOverdue;
-    }).length,
-    atRisk: allDeliverables.filter(d => {
-      // At risk if has unresolved blockers but not overdue
-      const hasBlockers = d.blockers && d.blockers.some((b: any) => !b.isResolved);
-      const isOverdue = d.dueDate && new Date(d.dueDate) < new Date() && d.status !== 'done';
-      return hasBlockers && !isOverdue;
-    }).length,
-    delayed: allDeliverables.filter(d => {
-      // Delayed if overdue
-      const isOverdue = d.dueDate && new Date(d.dueDate) < new Date() && d.status !== 'done';
-      return isOverdue;
-    }).length,
-  };
-
-  // Calculate project HEALTH statistics
-  // Normalize health values and handle undefined/null
-  // Schema allows: 'healthy' | 'at-risk' | 'delayed' | 'critical'
-  const projectHealthStats = {
-    healthy: data.projects.filter(p => {
-      const health = p.health?.toLowerCase();
-      return health === 'healthy';
-    }).length,
-    atRisk: data.projects.filter(p => {
-      const health = p.health?.toLowerCase();
-      return health === 'at-risk' || health === 'at risk';
-    }).length,
-    delayed: data.projects.filter(p => {
-      const health = p.health?.toLowerCase();
-      return health === 'delayed';
-    }).length,
-    critical: data.projects.filter(p => {
-      const health = p.health?.toLowerCase();
-      return health === 'critical';
-    }).length,
-  };
-
-  const totalDeliverables = allDeliverables.length;
-  const pendingDeliverables = allDeliverables.filter(d => d.status === 'pending' || d.status === 'in-progress').length;
-
-  // Prepare donut chart data for PROJECT HEALTH
-  const projectHealthChartData = data.projects.length > 0 ? [
-    { 
-      status: 'Healthy', 
-      count: projectHealthStats.healthy, 
-      percentage: (projectHealthStats.healthy / data.projects.length) * 100, 
-      color: theme === 'dark' ? '#81C784' : '#4CAF50' 
-    },
-    { 
-      status: 'At Risk', 
-      count: projectHealthStats.atRisk, 
-      percentage: (projectHealthStats.atRisk / data.projects.length) * 100, 
-      color: theme === 'dark' ? '#FFB74D' : '#FFA500' 
-    },
-    { 
-      status: 'Delayed', 
-      count: projectHealthStats.delayed, 
-      percentage: (projectHealthStats.delayed / data.projects.length) * 100, 
-      color: theme === 'dark' ? '#FF9800' : '#FF6F00' 
-    },
-    { 
-      status: 'Critical', 
-      count: projectHealthStats.critical, 
-      percentage: (projectHealthStats.critical / data.projects.length) * 100, 
-      color: theme === 'dark' ? '#EF5350' : '#F44336' 
-    },
-  ].filter(item => item.count > 0) : [];
-
-  // Prepare donut chart data for DELIVERABLE HEALTH
-  const deliverableHealthChartData = [
-    { 
-      status: 'Healthy', 
-      count: deliverableHealthStats.healthy, 
-      percentage: totalDeliverables > 0 ? (deliverableHealthStats.healthy / totalDeliverables) * 100 : 0, 
-      color: theme === 'dark' ? '#81C784' : '#4CAF50' 
-    },
-    { 
-      status: 'At Risk', 
-      count: deliverableHealthStats.atRisk, 
-      percentage: totalDeliverables > 0 ? (deliverableHealthStats.atRisk / totalDeliverables) * 100 : 0, 
-      color: theme === 'dark' ? '#FFB74D' : '#FFA500' 
-    },
-    { 
-      status: 'Delayed', 
-      count: deliverableHealthStats.delayed, 
-      percentage: totalDeliverables > 0 ? (deliverableHealthStats.delayed / totalDeliverables) * 100 : 0, 
-      color: theme === 'dark' ? '#EF5350' : '#F44336' 
-    },
-  ].filter(item => item.count > 0);
-
-  console.log('Projects Tab Debug:', {
-    totalProjects: data.projects.length,
-    rawProjects: data.projects.map(p => ({ id: p._id, health: p.health, name: p.name })),
-    projectHealthStats,
-    projectHealthChartData,
-    allDeliverables: allDeliverables.map(d => ({ health: d.health, status: d.status })),
-    totalDeliverables,
-    deliverableHealthStats,
-    deliverableHealthChartData
-  });
 
   const infoChar = cardCharacters.informative;
   const completedChar = cardCharacters.completed;
@@ -254,39 +246,36 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
 
   return (
     <div className="space-y-6">
-      {/* Overall Stats - Horizontal Layout (matching Tickets tab) */}
+      {/* Overall Stats - Horizontal Layout */}
       <div className="grid grid-cols-3 gap-4">
-        {/* Total Projects */}
         <div className={`relative p-5 rounded-xl border-2 overflow-hidden bg-gradient-to-br ${authChar.bg} ${authChar.border}`}>
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
           <div className="relative flex items-center justify-between">
             <div>
               <p className={`text-xs font-semibold ${colors.textMuted} mb-1`}>Total Projects</p>
-              <p className={`text-5xl font-black ${authChar.accent}`}>{data.projects.length}</p>
+              <p className={`text-5xl font-black ${authChar.accent}`}>{filteredProjects.length}</p>
             </div>
             <FolderKanban className={`h-16 w-16 ${authChar.iconColor} opacity-30`} />
           </div>
         </div>
 
-        {/* Total Deliverables */}
         <div className={`relative p-5 rounded-xl border-2 overflow-hidden bg-gradient-to-br ${completedChar.bg} ${completedChar.border}`}>
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
           <div className="relative flex items-center justify-between">
             <div>
               <p className={`text-xs font-semibold ${colors.textMuted} mb-1`}>Deliverables</p>
-              <p className={`text-5xl font-black ${completedChar.accent}`}>{totalDeliverables}</p>
+              <p className={`text-5xl font-black ${completedChar.accent}`}>{statistics.totalDeliverables}</p>
             </div>
             <Package className={`h-16 w-16 ${completedChar.iconColor} opacity-30`} />
           </div>
         </div>
 
-        {/* Pending/In Progress */}
         <div className={`relative p-5 rounded-xl border-2 overflow-hidden bg-gradient-to-br ${infoChar.bg} ${infoChar.border}`}>
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
           <div className="relative flex items-center justify-between">
             <div>
               <p className={`text-xs font-semibold ${colors.textMuted} mb-1`}>Pending</p>
-              <p className={`text-5xl font-black ${infoChar.accent}`}>{pendingDeliverables}</p>
+              <p className={`text-5xl font-black ${infoChar.accent}`}>{statistics.pendingDeliverables}</p>
             </div>
             <Clock className={`h-16 w-16 ${infoChar.iconColor} opacity-30`} />
           </div>
@@ -300,7 +289,6 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
           
           <div className="relative p-6 space-y-6">
-            {/* Header */}
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl border-2 ${completedChar.border}`}>
                 <TrendingUp className={`h-6 w-6 ${completedChar.iconColor}`} />
@@ -309,34 +297,29 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
                 <h3 className={`text-lg font-black ${colors.textPrimary} flex items-center gap-2`}>
                   Project Health
                   <span className={`px-2.5 py-1 rounded-lg text-sm font-black border-2 ${completedChar.border} ${completedChar.accent}`}>
-                    {data.projects.length}
+                    {filteredProjects.length}
                   </span>
                 </h3>
                 <p className={`text-xs font-semibold ${colors.textMuted}`}>Overall project status</p>
               </div>
             </div>
 
-            {/* Donut Chart and Legend - Side by Side */}
             <div className={`relative p-4 rounded-xl border-2 overflow-hidden ${colors.cardBg} ${colors.borderSubtle}`}>
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
               
               <div className="relative flex items-center gap-6">
-                {/* Donut Chart */}
-                <DonutChart data={projectHealthChartData} size={180} strokeWidth={30} centerLabel="Projects" />
-                
-                {/* Status Legend */}
-                <StatusLegend data={projectHealthChartData} />
+                <DonutChart data={statistics.projectHealthChartData} size={180} strokeWidth={30} centerLabel="Projects" />
+                <StatusLegend data={statistics.projectHealthChartData} />
               </div>
             </div>
 
-            {/* Recent Projects (limited to 2) */}
             <div className="space-y-3">
               <h4 className={`text-sm font-bold ${colors.textPrimary} flex items-center gap-2`}>
                 <FolderKanban className={`h-4 w-4 ${colors.textAccent}`} />
                 Recent Projects
               </h4>
               <div className="space-y-2">
-                {data.projects.slice(0, 2).map((project) => (
+                {filteredProjects.slice(0, 2).map((project) => (
                   <div
                     key={project._id}
                     className={`group relative p-3 rounded-xl border-2 transition-all duration-200 overflow-hidden ${colors.cardBg} ${colors.borderSubtle} hover:${colors.borderHover} hover:${colors.shadowCard}`}
@@ -391,7 +374,6 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
           <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
           
           <div className="relative p-6 space-y-6">
-            {/* Header */}
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl border-2 ${infoChar.border}`}>
                 <Package className={`h-6 w-6 ${infoChar.iconColor}`} />
@@ -400,24 +382,20 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
                 <h3 className={`text-lg font-black ${colors.textPrimary} flex items-center gap-2`}>
                   Deliverable Health
                   <span className={`px-2.5 py-1 rounded-lg text-sm font-black border-2 ${infoChar.border} ${infoChar.accent}`}>
-                    {totalDeliverables}
+                    {statistics.totalDeliverables}
                   </span>
                 </h3>
                 <p className={`text-xs font-semibold ${colors.textMuted}`}>Work item health breakdown</p>
               </div>
             </div>
 
-            {/* Donut Chart and Legend - Side by Side */}
-            {totalDeliverables > 0 ? (
+            {statistics.totalDeliverables > 0 ? (
               <div className={`relative p-4 rounded-xl border-2 overflow-hidden ${colors.cardBg} ${colors.borderSubtle}`}>
                 <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
                 
                 <div className="relative flex items-center gap-6">
-                  {/* Donut Chart */}
-                  <DonutChart data={deliverableHealthChartData} size={180} strokeWidth={30} centerLabel="Items" />
-                  
-                  {/* Status Legend */}
-                  <StatusLegend data={deliverableHealthChartData} />
+                  <DonutChart data={statistics.deliverableHealthChartData} size={180} strokeWidth={30} centerLabel="Items" />
+                  <StatusLegend data={statistics.deliverableHealthChartData} />
                 </div>
               </div>
             ) : (
@@ -428,7 +406,6 @@ export default function EmployeeProjectsTab({ employeeId, employeeName }: Employ
               </div>
             )}
 
-            {/* Info Box */}
             <div className={`relative p-3 rounded-xl border-2 overflow-hidden flex items-start gap-2 ${colors.cardBg} ${infoChar.border}`}>
               <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
               <Info className={`h-4 w-4 ${infoChar.iconColor} flex-shrink-0 mt-0.5 relative z-10`} />

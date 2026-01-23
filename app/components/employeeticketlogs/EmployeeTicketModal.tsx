@@ -1,7 +1,7 @@
 // app/components/employeeticketlogs/EmployeeTicketModal.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, User, Briefcase, TrendingUp, Award, Users, Ticket, FolderKanban, Zap, BarChart3 } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import { EmployeeTicketModalProps, TicketAnalytics } from './types';
@@ -11,6 +11,8 @@ import AnalyticsErrorState from './AnalyticsErrorState';
 import AnalyticsEmptyState from './AnalyticsEmptyState';
 import EmployeeProjectsTab from './EmployeeProjectsTab';
 import EmployeeSprintsTab from './EmployeeSprintsTab';
+import TimeRangeFilter, { TimeRange, filterByTimeRange } from './TimeRangeFilter';
+import { filterTicketsData } from './timeRangeUtils';
 
 type TabType = 'tickets' | 'projects' | 'sprints';
 
@@ -26,6 +28,7 @@ export default function EmployeeTicketModal({
   const [analytics, setAnalytics] = useState<TicketAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>({ type: 'all' });
 
   useEffect(() => {
     if (isOpen && employeeId) {
@@ -58,6 +61,12 @@ export default function EmployeeTicketModal({
       setLoading(false);
     }
   };
+
+  // Filter analytics data based on time range
+  const filteredAnalytics = useMemo(() => {
+    if (!analytics) return null;
+    return filterTicketsData(analytics, timeRange);
+  }, [analytics, timeRange]);
 
   if (!isOpen) return null;
 
@@ -122,33 +131,39 @@ export default function EmployeeTicketModal({
                 </button>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-2">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`group relative px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 border overflow-hidden ${
-                        isActive 
-                          ? `bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} ${colors.shadowCard} border-transparent` 
-                          : `${colors.borderSubtle} ${colors.textSecondary} hover:${colors.borderHover}`
-                      }`}
-                    >
-                      <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
-                      {isActive && (
-                        <div 
-                          className="absolute inset-0 opacity-100 transition-opacity duration-500"
-                          style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}
-                        />
-                      )}
-                      <Icon className={`h-4 w-4 relative z-10 ${isActive ? 'group-hover:rotate-12' : ''} transition-transform duration-300`} />
-                      <span className="relative z-10">{tab.label}</span>
-                    </button>
-                  );
-                })}
+              {/* Tabs and Time Range Filter */}
+              <div className="flex items-center justify-between gap-4">
+                {/* Tabs */}
+                <div className="flex gap-2">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`group relative px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 border overflow-hidden ${
+                          isActive 
+                            ? `bg-gradient-to-r ${colors.buttonPrimary} ${colors.buttonPrimaryText} ${colors.shadowCard} border-transparent` 
+                            : `${colors.borderSubtle} ${colors.textSecondary} hover:${colors.borderHover}`
+                        }`}
+                      >
+                        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+                        {isActive && (
+                          <div 
+                            className="absolute inset-0 opacity-100 transition-opacity duration-500"
+                            style={{ boxShadow: `inset 0 0 14px ${colors.glowPrimary}` }}
+                          />
+                        )}
+                        <Icon className={`h-4 w-4 relative z-10 ${isActive ? 'group-hover:rotate-12' : ''} transition-transform duration-300`} />
+                        <span className="relative z-10">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Time Range Filter */}
+                <TimeRangeFilter value={timeRange} onChange={setTimeRange} />
               </div>
             </div>
           </div>
@@ -167,20 +182,28 @@ export default function EmployeeTicketModal({
                   <AnalyticsLoadingState />
                 ) : error ? (
                   <AnalyticsErrorState message={error} onRetry={fetchAnalytics} />
-                ) : analytics && analytics.totalTickets === 0 ? (
+                ) : filteredAnalytics && filteredAnalytics.totalTickets === 0 ? (
                   <AnalyticsEmptyState employeeName={employeeName} />
-                ) : analytics ? (
-                  <AnalyticsContent analytics={analytics} />
+                ) : filteredAnalytics ? (
+                  <AnalyticsContent analytics={filteredAnalytics} />
                 ) : null}
               </>
             )}
 
             {activeTab === 'projects' && (
-              <EmployeeProjectsTab employeeId={employeeId} employeeName={employeeName} />
+              <EmployeeProjectsTab 
+                employeeId={employeeId} 
+                employeeName={employeeName}
+                timeRange={timeRange}
+              />
             )}
 
             {activeTab === 'sprints' && (
-              <EmployeeSprintsTab employeeId={employeeId} employeeName={employeeName} />
+              <EmployeeSprintsTab 
+                employeeId={employeeId} 
+                employeeName={employeeName}
+                timeRange={timeRange}
+              />
             )}
           </div>
         </div>
