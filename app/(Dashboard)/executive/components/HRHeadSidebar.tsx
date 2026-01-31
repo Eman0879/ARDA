@@ -143,14 +143,14 @@ export default function HRHeadSidebar({ activeItem, onItemClick, isOpen, onClose
     label: 'Policies',
     icon: <FileText className="h-3.5 w-3.5" />,
     color: theme === 'dark' ? '#64B5F6' : '#2196F3',
-    visible: true
+    visible: false
   },
   {
     id: 'org-info',
     label: 'Org Info',
     icon: <Building2 className="h-3.5 w-3.5" />,
     color: theme === 'dark' ? '#64B5F6' : '#2196F3',
-    visible: true
+    visible: false
   },
   {
     id: 'download-logs',

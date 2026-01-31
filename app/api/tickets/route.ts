@@ -16,7 +16,6 @@ const getPriorityColor = (priority: string): string => {
     low: '#10b981',
     medium: '#f59e0b',
     high: '#f97316',
-    critical: '#ef4444',
   };
   return colors[priority] || '#6b7280';
 };
@@ -358,11 +357,11 @@ export async function POST(request: NextRequest) {
 
     // Determine priority
     let priority = 'medium';
-    if (formData['default-urgency']) {
-      const urgency = formData['default-urgency'].toLowerCase();
+    if (formData['default-priority']) {
+      const urgency = formData['default-priority'].toLowerCase();
       if (urgency === 'low') priority = 'low';
+      else if (urgency === 'medium') priority = 'medium';
       else if (urgency === 'high') priority = 'high';
-      else if (urgency === 'critical') priority = 'critical';
       else priority = 'medium';
     }
 

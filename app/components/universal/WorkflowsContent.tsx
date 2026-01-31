@@ -1,11 +1,11 @@
 // ============================================
-// UPDATED: app/components/universal/WorkflowsContent.tsx
-// Added onToggleActive handler
+// app/components/universal/WorkflowsContent.tsx
+// Added onToggleActive handler and search bar
 // ============================================
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, Search, X } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import FunctionalityCard from './WorkflowComponents/FunctionalityCard';
 import WorkflowModal from './WorkflowComponents/WorkflowModal';
@@ -24,6 +24,9 @@ export default function WorkflowsContent() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<{message: string, count: number} | null>(null);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadData();
@@ -135,6 +138,17 @@ export default function WorkflowsContent() {
     }
   };
 
+  // Filter functionalities based on search
+  const filteredFunctionalities = functionalities.filter((func) => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      func.name.toLowerCase().includes(query) ||
+      func.description?.toLowerCase().includes(query)
+    );
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen p-4 md:p-6 space-y-4">
@@ -189,6 +203,39 @@ export default function WorkflowsContent() {
         </div>
       )}
 
+      {/* Search Bar */}
+      <div className={`relative overflow-hidden rounded-xl border-2 backdrop-blur-sm bg-gradient-to-br ${colors.cardBg} ${colors.borderSubtle} p-4`}>
+        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+        
+        <div className="relative">
+          <div className="relative">
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${colors.textMuted}`} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search workflows by name or description..."
+              className={`w-full pl-12 pr-12 py-3 rounded-xl text-sm transition-all ${colors.inputBg} border-2 ${colors.inputBorder} ${colors.inputText} ${colors.inputPlaceholder}`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 ${colors.textMuted} hover:${cardCharacters.urgent.iconColor} transition-colors`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Results Count */}
+          {searchQuery && (
+            <div className={`mt-3 text-sm ${colors.textSecondary}`}>
+              Showing {filteredFunctionalities.length} of {functionalities.length} workflows
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <button
           onClick={handleCreate}
@@ -214,7 +261,7 @@ export default function WorkflowsContent() {
           </div>
         </button>
 
-        {functionalities.map((func) => (
+        {filteredFunctionalities.map((func) => (
           <FunctionalityCard
             key={func._id}
             functionality={func}
@@ -224,6 +271,22 @@ export default function WorkflowsContent() {
           />
         ))}
       </div>
+
+      {/* Empty State - No Results */}
+      {filteredFunctionalities.length === 0 && functionalities.length > 0 && (
+        <div className={`relative overflow-hidden rounded-2xl border-2 backdrop-blur-sm bg-gradient-to-br ${charColors.bg} ${charColors.border} p-16 text-center`}>
+          <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.03]`}></div>
+          <div className="relative">
+            <Search className={`h-16 w-16 ${colors.textMuted} mx-auto mb-4 opacity-40`} />
+            <p className={`${colors.textPrimary} text-lg font-bold mb-2`}>
+              No workflows found
+            </p>
+            <p className={`${colors.textSecondary} text-sm`}>
+              Try adjusting your search query
+            </p>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <WorkflowModal

@@ -5,7 +5,7 @@
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, AlertCircle, Zap } from 'lucide-react';
+import { Plus, AlertCircle, Zap, Search, Filter } from 'lucide-react';
 import { useTheme } from '@/app/context/ThemeContext';
 import SuperWorkflowModal from './SuperWorkflowModal';
 import SuperDeleteConfirmModal from './SuperDeleteConfirmModal';
@@ -61,6 +61,10 @@ export default function SuperWorkflowsContent() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<{message: string, count: number} | null>(null);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [accessFilter, setAccessFilter] = useState<'all' | 'organization' | 'departments' | 'specific_users'>('all');
 
   useEffect(() => {
     loadData();
@@ -164,6 +168,21 @@ export default function SuperWorkflowsContent() {
     }
   };
 
+  // Filter functionalities based on search and filter
+  const filteredFunctionalities = functionalities.filter((func) => {
+    // Search filter
+    const matchesSearch = 
+      func.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      func.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      func.createdBy.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Access control filter
+    const matchesAccessFilter = 
+      accessFilter === 'all' || func.accessControl.type === accessFilter;
+    
+    return matchesSearch && matchesAccessFilter;
+  });
+
   if (loading) {
     return <WorkflowLoadingState message="Loading Super Workflows..." type="page" />;
   }
@@ -221,6 +240,46 @@ export default function SuperWorkflowsContent() {
         </div>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className={`mb-6 bg-gradient-to-br ${colors.cardBg} backdrop-blur-xl border-2 ${colors.border} rounded-xl p-4`}>
+        <div className={`absolute inset-0 ${colors.paperTexture} opacity-[0.02]`}></div>
+        <div className="relative flex flex-col md:flex-row gap-4">
+          {/* Search Input */}
+          <div className="flex-1 relative">
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${colors.textSecondary}`} />
+            <input
+              type="text"
+              placeholder="Search workflows by name, description, or creator..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full pl-10 pr-4 py-2.5 rounded-lg border-2 ${colors.border} ${colors.inputBg} ${colors.textPrimary} placeholder:${colors.textSecondary} focus:outline-none focus:ring-2 focus:ring-[#64B5F6] focus:border-transparent transition-all`}
+            />
+          </div>
+
+          {/* Access Control Filter */}
+          <div className="relative md:w-64">
+            <Filter className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${colors.textSecondary}`} />
+            <select
+              value={accessFilter}
+              onChange={(e) => setAccessFilter(e.target.value as any)}
+              className={`w-full pl-10 pr-4 py-2.5 rounded-lg border-2 ${colors.border} ${colors.inputBg} ${colors.textPrimary} focus:outline-none focus:ring-2 focus:ring-[#64B5F6] focus:border-transparent transition-all appearance-none cursor-pointer`}
+            >
+              <option value="all">All Access Types</option>
+              <option value="organization">Organization-wide</option>
+              <option value="departments">Department-specific</option>
+              <option value="specific_users">User-specific</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        {(searchQuery || accessFilter !== 'all') && (
+          <div className={`mt-3 text-sm ${colors.textSecondary}`}>
+            Showing {filteredFunctionalities.length} of {functionalities.length} workflows
+          </div>
+        )}
+      </div>
+
       {/* Workflows Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Create New Card */}
@@ -252,7 +311,7 @@ export default function SuperWorkflowsContent() {
         </button>
 
         {/* Existing Functionalities */}
-        {functionalities.map((func) => (
+        {filteredFunctionalities.map((func) => (
           <SuperFunctionalityCard
             key={func._id}
             functionality={func}
@@ -263,6 +322,26 @@ export default function SuperWorkflowsContent() {
       </div>
 
       {/* Empty State */}
+      {filteredFunctionalities.length === 0 && functionalities.length > 0 && (
+        <div className="text-center py-16">
+          <div 
+            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{
+              background: `linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(100, 181, 246, 0.1))`,
+            }}
+          >
+            <Search className="w-12 h-12 text-[#64B5F6]" />
+          </div>
+          <h3 className={`text-2xl font-black ${colors.textPrimary} mb-2`}>
+            No Matching Workflows
+          </h3>
+          <p className={`${colors.textSecondary} mb-6`}>
+            Try adjusting your search or filter criteria
+          </p>
+        </div>
+      )}
+
+      {/* Empty State - No Workflows */}
       {functionalities.length === 0 && (
         <div className="text-center py-16">
           <div 

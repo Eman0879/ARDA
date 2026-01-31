@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const employees = await formdatasCollection
       .find({
         department: department,
-        isDeptHead: { $ne: true } // Exclude department heads from the list
+        //isDeptHead: { $ne: true } // Exclude department heads from the list
       })
       .project({
         _id: 1,
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         // Construct display name from basicDetails
         let displayName = employee.username;
         if (employee.basicDetails) {
-          const title = employee.basicDetails.title || '';
+          const title = '';
           const name = employee.basicDetails.name || '';
           displayName = `${title} ${name}`.trim() || employee.username;
         }

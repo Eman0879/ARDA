@@ -30,7 +30,7 @@ export default function EmployeeCard({
   
   const displayName = employee.displayName || 
     (employee.basicDetails ? 
-      `${employee.basicDetails.title || ''} ${employee.basicDetails.name || ''}`.trim() : 
+      `${employee.basicDetails.name || ''}`.trim() : 
       employee.username) || 'N/A';
 
   const handleCardClick = (e: React.MouseEvent) => {
