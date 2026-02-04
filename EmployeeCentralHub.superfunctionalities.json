@@ -7488,456 +7488,6 @@
 },
 {
   "_id": {
-    "$oid": "697dd64375f4c0e27cd9d0a0"
-  },
-  "name": "Wholesale Discount Verification",
-  "description": "This workflow is used to create wholesale discount verification requests.",
-  "workflow": {
-    "nodes": [
-      {
-        "id": "start",
-        "type": "start",
-        "position": {
-          "x": 80,
-          "y": 240
-        },
-        "data": {
-          "label": "Ticket Raised",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "end",
-        "type": "end",
-        "position": {
-          "x": 880,
-          "y": 240
-        },
-        "data": {
-          "label": "Resolved",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "node-1769854527574",
-        "type": "employee",
-        "position": {
-          "x": 400,
-          "y": 320
-        },
-        "data": {
-          "label": "Areeb Hayat",
-          "employeeId": "697b437085beb14064795243",
-          "employeeName": "Areeb Hayat",
-          "employeeTitle": "Technology Innovation Int",
-          "employeeAvatar": "/default-profile.jpg",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      }
-    ],
-    "edges": [
-      {
-        "id": "edge-1769854528920",
-        "source": "start",
-        "target": "node-1769854527574"
-      },
-      {
-        "id": "edge-1769854530746",
-        "source": "node-1769854527574",
-        "target": "end"
-      }
-    ]
-  },
-  "formSchema": {
-    "fields": [
-      {
-        "id": "field-1769854311911",
-        "type": "dropdown",
-        "label": "Month",
-        "placeholder": "Month",
-        "required": true,
-        "options": [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December"
-        ],
-        "order": 0
-      },
-      {
-        "id": "default-title",
-        "type": "text",
-        "label": "Title",
-        "placeholder": "Enter ticket title",
-        "required": true,
-        "options": [],
-        "order": 1
-      },
-      {
-        "id": "default-description",
-        "type": "textarea",
-        "label": "Description",
-        "placeholder": "Describe the issue in detail",
-        "required": true,
-        "options": [],
-        "order": 2
-      },
-      {
-        "id": "default-attachments",
-        "type": "file",
-        "label": "Attachments",
-        "placeholder": "Upload relevant files",
-        "required": false,
-        "options": [],
-        "order": 3
-      }
-    ],
-    "useDefaultFields": false,
-    "_id": {
-      "$oid": "697dd64375f4c0e27cd9d0a1"
-    }
-  },
-  "accessControl": {
-    "type": "specific_users",
-    "departments": [],
-    "users": [
-      "697b454685beb140647952d5",
-      "697b437085beb14064795254",
-      "697d92cea535d2ea3ef0d193"
-    ]
-  },
-  "createdBy": {
-    "userId": "697b437085beb14064795242",
-    "name": "super.user"
-  },
-  "createdAt": {
-    "$date": "2026-01-31T10:15:31.994Z"
-  },
-  "updatedAt": {
-    "$date": "2026-01-31T10:15:31.994Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "697dd6fc75f4c0e27cd9d0a5"
-  },
-  "name": "LMT Discount Verification",
-  "description": ".",
-  "workflow": {
-    "nodes": [
-      {
-        "id": "start",
-        "type": "start",
-        "position": {
-          "x": 80,
-          "y": 240
-        },
-        "data": {
-          "label": "Ticket Raised",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "end",
-        "type": "end",
-        "position": {
-          "x": 880,
-          "y": 240
-        },
-        "data": {
-          "label": "Resolved",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "node-1769854708957",
-        "type": "employee",
-        "position": {
-          "x": 320,
-          "y": 360
-        },
-        "data": {
-          "label": "Areeb Hayat",
-          "employeeId": "697b437085beb14064795243",
-          "employeeName": "Areeb Hayat",
-          "employeeTitle": "Technology Innovation Int",
-          "employeeAvatar": "/default-profile.jpg",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      }
-    ],
-    "edges": [
-      {
-        "id": "edge-1769854710508",
-        "source": "start",
-        "target": "node-1769854708957"
-      },
-      {
-        "id": "edge-1769854712881",
-        "source": "node-1769854708957",
-        "target": "end"
-      }
-    ]
-  },
-  "formSchema": {
-    "fields": [
-      {
-        "id": "field-1769854637872",
-        "type": "dropdown",
-        "label": "Month",
-        "placeholder": "Month",
-        "required": true,
-        "options": [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December"
-        ],
-        "order": 0
-      },
-      {
-        "id": "default-title",
-        "type": "text",
-        "label": "Title",
-        "placeholder": "Enter ticket title",
-        "required": true,
-        "options": [],
-        "order": 1
-      },
-      {
-        "id": "default-description",
-        "type": "textarea",
-        "label": "Description",
-        "placeholder": "Describe the issue in detail",
-        "required": true,
-        "options": [],
-        "order": 2
-      },
-      {
-        "id": "default-attachments",
-        "type": "file",
-        "label": "Attachments",
-        "placeholder": "Upload relevant files",
-        "required": false,
-        "options": [],
-        "order": 3
-      }
-    ],
-    "useDefaultFields": false,
-    "_id": {
-      "$oid": "697dd6fc75f4c0e27cd9d0a6"
-    }
-  },
-  "accessControl": {
-    "type": "specific_users",
-    "departments": [],
-    "users": [
-      "697d94bba535d2ea3ef0d1ac",
-      "697b437085beb140647952c7",
-      "697b437085beb1406479526e",
-      "697b437085beb14064795255",
-      "697b437085beb14064795273",
-      "697b437085beb1406479528d",
-      "697b437085beb1406479528b",
-      "697c93508d4537cbcfc061c5"
-    ]
-  },
-  "createdBy": {
-    "userId": "697b437085beb14064795242",
-    "name": "super.user"
-  },
-  "createdAt": {
-    "$date": "2026-01-31T10:18:36.456Z"
-  },
-  "updatedAt": {
-    "$date": "2026-01-31T10:18:36.456Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "697dd7d275f4c0e27cd9d0aa"
-  },
-  "name": "Payment Voucher - Employee",
-  "description": ".",
-  "workflow": {
-    "nodes": [
-      {
-        "id": "start",
-        "type": "start",
-        "position": {
-          "x": 80,
-          "y": 240
-        },
-        "data": {
-          "label": "Ticket Raised",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "end",
-        "type": "end",
-        "position": {
-          "x": 880,
-          "y": 240
-        },
-        "data": {
-          "label": "Resolved",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "node-1769854918965",
-        "type": "employee",
-        "position": {
-          "x": 400,
-          "y": 240
-        },
-        "data": {
-          "label": "MUHAMMAD BASHIR",
-          "employeeId": "697b437085beb140647952bc",
-          "employeeName": "MUHAMMAD BASHIR",
-          "employeeTitle": "Senior Finance Manager",
-          "employeeAvatar": "/default-profile.jpg",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      },
-      {
-        "id": "node-1769856697352",
-        "type": "employee",
-        "position": {
-          "x": 560,
-          "y": 520
-        },
-        "data": {
-          "label": "Manzoor Hussain",
-          "employeeId": "697b437085beb14064795248",
-          "employeeName": "Manzoor Hussain",
-          "employeeTitle": "Manager Cash",
-          "employeeAvatar": "/default-profile.jpg",
-          "nodeType": "sequential",
-          "groupMembers": []
-        }
-      }
-    ],
-    "edges": [
-      {
-        "id": "edge-1769854921066",
-        "source": "start",
-        "target": "node-1769854918965"
-      },
-      {
-        "id": "edge-1769856698743",
-        "source": "node-1769854918965",
-        "target": "node-1769856697352"
-      },
-      {
-        "id": "edge-1769856700096",
-        "source": "node-1769856697352",
-        "target": "end"
-      }
-    ]
-  },
-  "formSchema": {
-    "fields": [
-      {
-        "id": "default-title",
-        "type": "text",
-        "label": "Voucher Title",
-        "placeholder": "Enter ticket title",
-        "required": true,
-        "options": [],
-        "order": 0
-      },
-      {
-        "id": "field-1769854796397",
-        "type": "table",
-        "label": "Particulars",
-        "required": true,
-        "options": [],
-        "tableConfig": {
-          "columns": [
-            {
-              "id": "col1",
-              "label": "Date",
-              "type": "date"
-            },
-            {
-              "id": "col2",
-              "label": "Particular",
-              "type": "text"
-            },
-            {
-              "id": "col-1769854828695",
-              "label": "Amount",
-              "type": "number"
-            }
-          ],
-          "minRows": 1,
-          "maxRows": 10
-        },
-        "order": 1
-      },
-      {
-        "id": "default-attachments",
-        "type": "file",
-        "label": "Attachments",
-        "placeholder": "Upload relevant files",
-        "required": false,
-        "options": [],
-        "order": 2
-      }
-    ],
-    "useDefaultFields": false,
-    "_id": {
-      "$oid": "697dd7d275f4c0e27cd9d0ab"
-    }
-  },
-  "accessControl": {
-    "type": "organization",
-    "departments": [],
-    "users": []
-  },
-  "createdBy": {
-    "userId": "697b437085beb14064795242",
-    "name": "super.user"
-  },
-  "createdAt": {
-    "$date": "2026-01-31T10:22:10.847Z"
-  },
-  "updatedAt": {
-    "$date": "2026-01-31T10:51:44.246Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
     "$oid": "6980718ed0ac558f405dc7c3"
   },
   "name": "CSD Complains - Peshawar A",
@@ -9303,6 +8853,7944 @@
   },
   "updatedAt": {
     "$date": "2026-02-02T09:58:09.562Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698185a421dccc20d1cff344"
+  },
+  "name": "Payment Vocher",
+  "description": "Administration - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096014004",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "Atif Iqbal",
+          "employeeId": "697b437085beb1406479527d",
+          "employeeName": "Atif Iqbal",
+          "employeeTitle": "Head of Admin, Sec, Govt & Legal Affairs",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096026332",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 240
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096015582",
+        "source": "start",
+        "target": "node-1770096014004"
+      },
+      {
+        "id": "edge-1770096030025",
+        "source": "node-1770096014004",
+        "target": "node-1770096026332"
+      },
+      {
+        "id": "edge-1770096033436",
+        "source": "node-1770096026332",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096134098",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096160151",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6981862b21dccc20d1cff349"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Administration - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479527d"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:20:36.058Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:22:51.668Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698186b421dccc20d1cff34e"
+  },
+  "name": "Payment Voucher",
+  "description": "Audit - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096253741",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Hammad Matloob",
+          "employeeId": "697b437085beb1406479526d",
+          "employeeName": "Hammad Matloob",
+          "employeeTitle": "Head of Internal Audit",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096260345",
+        "type": "employee",
+        "position": {
+          "x": 640,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096255412",
+        "source": "start",
+        "target": "node-1770096253741"
+      },
+      {
+        "id": "edge-1770096261676",
+        "source": "node-1770096253741",
+        "target": "node-1770096260345"
+      },
+      {
+        "id": "edge-1770096263269",
+        "source": "node-1770096260345",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096275016",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096295206",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "698186b421dccc20d1cff34f"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Audit - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479526d"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:25:08.949Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:25:08.949Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698186ea21dccc20d1cff353"
+  },
+  "name": "Payment Voucher",
+  "description": "Bulk Water - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096352824",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 320
+        },
+        "data": {
+          "label": "Attique Nasir",
+          "employeeId": "697b437085beb14064795275",
+          "employeeName": "Attique Nasir",
+          "employeeTitle": "Business Manager-Bulk Water",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096358627",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 240
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096353903",
+        "source": "start",
+        "target": "node-1770096352824"
+      },
+      {
+        "id": "edge-1770096360159",
+        "source": "node-1770096352824",
+        "target": "node-1770096358627"
+      },
+      {
+        "id": "edge-1770096361269",
+        "source": "node-1770096358627",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770098016975",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770098033527",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818d7e21dccc20d1cff3c3"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Bulk Water - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795275"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:26:02.372Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:54:06.418Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698187a821dccc20d1cff358"
+  },
+  "name": "Payment Voucher",
+  "description": "Cash - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096501725",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 280
+        },
+        "data": {
+          "label": "Manzoor Hussain",
+          "employeeId": "697b437085beb14064795248",
+          "employeeName": "Manzoor Hussain",
+          "employeeTitle": "Manager Cash",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096507389",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 280
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096503214",
+        "source": "start",
+        "target": "node-1770096501725"
+      },
+      {
+        "id": "edge-1770096511676",
+        "source": "node-1770096501725",
+        "target": "node-1770096507389"
+      },
+      {
+        "id": "edge-1770096513501",
+        "source": "node-1770096507389",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096524654",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096538058",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "698187a821dccc20d1cff359"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Cash - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795248"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:29:12.916Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:29:12.916Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6981880421dccc20d1cff35d"
+  },
+  "name": "Payment Voucher",
+  "description": "Finance - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096631149",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 360
+        },
+        "data": {
+          "label": "Muhammad Sohail Iqbal",
+          "employeeId": "697b437085beb1406479524e",
+          "employeeName": "Muhammad Sohail Iqbal",
+          "employeeTitle": "Group Manager Accounts",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096638533",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096634743",
+        "source": "start",
+        "target": "node-1770096631149"
+      },
+      {
+        "id": "edge-1770096640006",
+        "source": "node-1770096631149",
+        "target": "node-1770096638533"
+      },
+      {
+        "id": "edge-1770096642255",
+        "source": "node-1770096638533",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096700077",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particulars",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096747032",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6981887321dccc20d1cff367"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Finance - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479524e",
+      "697b437085beb14064795251"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:30:44.112Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:32:35.097Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6981882b21dccc20d1cff362"
+  },
+  "name": "Payment Voucher",
+  "description": "GTM - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096673345",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "Muhammad Nouman",
+          "employeeId": "697b437085beb14064795252",
+          "employeeName": "Muhammad Nouman",
+          "employeeTitle": "Head of GTM & Capability",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096679901",
+        "type": "employee",
+        "position": {
+          "x": 520,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096674750",
+        "source": "start",
+        "target": "node-1770096673345"
+      },
+      {
+        "id": "edge-1770096681232",
+        "source": "node-1770096673345",
+        "target": "node-1770096679901"
+      },
+      {
+        "id": "edge-1770096682736",
+        "source": "node-1770096679901",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096826709",
+        "type": "table",
+        "label": "Particular",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096844156",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "698188d321dccc20d1cff371"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "GTM - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795252"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:31:24.009Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:34:11.360Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698188a321dccc20d1cff36c"
+  },
+  "name": "Payment Voucher",
+  "description": "Human Resource - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096787638",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "Asra Ummar",
+          "employeeId": "697b437085beb14064795297",
+          "employeeName": "Asra Ummar",
+          "employeeTitle": "Head of Human Resources",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096793459",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 160
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096789188",
+        "source": "start",
+        "target": "node-1770096787638"
+      },
+      {
+        "id": "edge-1770096796597",
+        "source": "node-1770096787638",
+        "target": "node-1770096793459"
+      },
+      {
+        "id": "edge-1770096798325",
+        "source": "node-1770096793459",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096862734",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096880629",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "698188f721dccc20d1cff376"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Human Resource - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795297"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:33:23.900Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:34:47.215Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6981895021dccc20d1cff37b"
+  },
+  "name": "Payment Voucher",
+  "description": "Key Accounts - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096918009",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "Mahwish Shaukat Abbasi",
+          "employeeId": "697b437085beb1406479525c",
+          "employeeName": "Mahwish Shaukat Abbasi",
+          "employeeTitle": "Business Development Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770096923945",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770096919451",
+        "source": "start",
+        "target": "node-1770096918009"
+      },
+      {
+        "id": "edge-1770096927617",
+        "source": "node-1770096918009",
+        "target": "node-1770096923945"
+      },
+      {
+        "id": "edge-1770096929101",
+        "source": "node-1770096923945",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770096945191",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770096960712",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6981895021dccc20d1cff37c"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Key Accounts - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479525c"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:36:16.231Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:36:16.231Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6981897f21dccc20d1cff380"
+  },
+  "name": "Payment Voucher",
+  "description": "Information Technology - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097011736",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 320
+        },
+        "data": {
+          "label": "Ilyas Nawaz",
+          "employeeId": "697b437085beb14064795288",
+          "employeeName": "Ilyas Nawaz",
+          "employeeTitle": "Deputy Manager SAP - PP/PM/QM",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097016931",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097013337",
+        "source": "start",
+        "target": "node-1770097011736"
+      },
+      {
+        "id": "edge-1770097018441",
+        "source": "node-1770097011736",
+        "target": "node-1770097016931"
+      },
+      {
+        "id": "edge-1770097019911",
+        "source": "node-1770097016931",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097040192",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097056074",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "698189a821dccc20d1cff385"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Information Technology - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795288"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:37:03.365Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:37:44.745Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698189d621dccc20d1cff38a"
+  },
+  "name": "Payment Voucher",
+  "description": "MEM - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097093247",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Muhammad Nouman",
+          "employeeId": "697b437085beb14064795252",
+          "employeeName": "Muhammad Nouman",
+          "employeeTitle": "Head of GTM & Capability",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097098995",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097094699",
+        "source": "start",
+        "target": "node-1770097093247"
+      },
+      {
+        "id": "edge-1770097100817",
+        "source": "node-1770097093247",
+        "target": "node-1770097098995"
+      },
+      {
+        "id": "edge-1770097104092",
+        "source": "node-1770097098995",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097167096",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097182192",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818a2521dccc20d1cff394"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "MEM - HBL"
+    ],
+    "users": [],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:38:30.389Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:39:49.839Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818a0321dccc20d1cff38f"
+  },
+  "name": "Payment Voucher",
+  "description": "Market Research Development - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097144029",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 320
+        },
+        "data": {
+          "label": "Hafiz Muhammad Sami Ullah",
+          "employeeId": "697b437085beb14064795246",
+          "employeeName": "Hafiz Muhammad Sami Ullah",
+          "employeeTitle": "Manager MRD & Distribution Settlement",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097150194",
+        "type": "employee",
+        "position": {
+          "x": 640,
+          "y": 160
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097145894",
+        "source": "start",
+        "target": "node-1770097144029"
+      },
+      {
+        "id": "edge-1770097152032",
+        "source": "node-1770097144029",
+        "target": "node-1770097150194"
+      },
+      {
+        "id": "edge-1770097153973",
+        "source": "node-1770097150194",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770098087536",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770098100522",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818dbc21dccc20d1cff3c8"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Market Research Development - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795246"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:39:15.320Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:55:08.728Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818a8221dccc20d1cff399"
+  },
+  "name": "Payment Voucher",
+  "description": "People & Culture",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097236245",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 280
+        },
+        "data": {
+          "label": "Tahreem Fatima",
+          "employeeId": "697b437085beb1406479525b",
+          "employeeName": "Tahreem Fatima",
+          "employeeTitle": "Head of People & Culture",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097247490",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097237803",
+        "source": "start",
+        "target": "node-1770097236245"
+      },
+      {
+        "id": "edge-1770097248919",
+        "source": "node-1770097236245",
+        "target": "node-1770097247490"
+      },
+      {
+        "id": "edge-1770097250650",
+        "source": "node-1770097247490",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097256885",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097274291",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818a8221dccc20d1cff39a"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "People & Culture"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479525b"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:41:22.835Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:41:22.835Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818ab321dccc20d1cff39e"
+  },
+  "name": "Payment Voucher",
+  "description": "Procurement - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097318020",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 280
+        },
+        "data": {
+          "label": "Muhammad Amir Butt",
+          "employeeId": "697b437085beb14064795267",
+          "employeeName": "Muhammad Amir Butt",
+          "employeeTitle": "General Manager Procurement",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097323633",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097319700",
+        "source": "start",
+        "target": "node-1770097318020"
+      },
+      {
+        "id": "edge-1770097325246",
+        "source": "node-1770097318020",
+        "target": "node-1770097323633"
+      },
+      {
+        "id": "edge-1770097327530",
+        "source": "node-1770097323633",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097344326",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097360088",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818ad821dccc20d1cff3a3"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Procurement - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795267"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:42:11.422Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:42:48.459Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818b5d21dccc20d1cff3a8"
+  },
+  "name": "Payment Voucher",
+  "description": "Quality Control - Bplus",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097408187",
+        "type": "employee",
+        "position": {
+          "x": 240,
+          "y": 240
+        },
+        "data": {
+          "label": "Ghulam Rasool",
+          "employeeId": "697b437085beb140647952a2",
+          "employeeName": "Ghulam Rasool",
+          "employeeTitle": "Head Of Quality Assurance",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097419524",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 280
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097412273",
+        "source": "start",
+        "target": "node-1770097408187"
+      },
+      {
+        "id": "edge-1770097421626",
+        "source": "node-1770097408187",
+        "target": "node-1770097419524"
+      },
+      {
+        "id": "edge-1770097423171",
+        "source": "node-1770097419524",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097434538",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097494730",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818b5d21dccc20d1cff3a9"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Quality Control - Bplus"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952a2"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:45:01.668Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:45:01.668Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818bb121dccc20d1cff3ad"
+  },
+  "name": "Payment Voucher",
+  "description": "Quality Control - HBL\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097538145",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Ghulam Rasool",
+          "employeeId": "697b437085beb140647952a2",
+          "employeeName": "Ghulam Rasool",
+          "employeeTitle": "Head Of Quality Assurance",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097548840",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097540817",
+        "source": "start",
+        "target": "node-1770097538145"
+      },
+      {
+        "id": "edge-1770097551750",
+        "source": "node-1770097538145",
+        "target": "node-1770097548840"
+      },
+      {
+        "id": "edge-1770097553419",
+        "source": "node-1770097548840",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097563515",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097576986",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818bb121dccc20d1cff3ae"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Quality Control - HBL"
+    ],
+    "users": [],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:46:25.176Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:46:25.176Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818c5521dccc20d1cff3b2"
+  },
+  "name": "Payment Voucher",
+  "description": "Utilities - HBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097734230",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 320
+        },
+        "data": {
+          "label": "Hassan Tariq Azim",
+          "employeeId": "697b437085beb1406479526a",
+          "employeeName": "Hassan Tariq Azim",
+          "employeeTitle": "Manager Utilities",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097744380",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097735649",
+        "source": "start",
+        "target": "node-1770097734230"
+      },
+      {
+        "id": "edge-1770097746400",
+        "source": "node-1770097734230",
+        "target": "node-1770097744380"
+      },
+      {
+        "id": "edge-1770097748125",
+        "source": "node-1770097744380",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097756432",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097776639",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818c7921dccc20d1cff3b7"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Utilities - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b454685beb140647952d5",
+      "697b437085beb1406479526a"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:49:09.541Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:49:45.297Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69818cc921dccc20d1cff3bc"
+  },
+  "name": "Payment Voucher",
+  "description": "Warehouse & Logistics - HBL\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097817125",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 320
+        },
+        "data": {
+          "label": "Masood Akhtar",
+          "employeeId": "697b437085beb1406479526b",
+          "employeeName": "Masood Akhtar",
+          "employeeTitle": "Group Manager Warehouse & Logistics",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770097824651",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770097818724",
+        "source": "start",
+        "target": "node-1770097817125"
+      },
+      {
+        "id": "edge-1770097826380",
+        "source": "node-1770097817125",
+        "target": "node-1770097824651"
+      },
+      {
+        "id": "edge-1770097827933",
+        "source": "node-1770097824651",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770097835170",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770097852777",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69818cc921dccc20d1cff3bd"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Warehouse & Logistics - HBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479526b"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T05:51:05.247Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T05:51:05.247Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698192d6a3b17f71c4eb6f1d"
+  },
+  "name": "Payment Voucher",
+  "description": "Functional Heads that fall under CFO.",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 160,
+          "y": 120
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1520,
+          "y": 40
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099371131",
+        "type": "employee",
+        "position": {
+          "x": 800,
+          "y": 0
+        },
+        "data": {
+          "label": "Momina Malik",
+          "employeeId": "697b437085beb14064795286",
+          "employeeName": "Momina Malik",
+          "employeeTitle": "Executive Assistant",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099377721",
+        "type": "employee",
+        "position": {
+          "x": 1240,
+          "y": -40
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184265975",
+        "type": "employee",
+        "position": {
+          "x": 520,
+          "y": 160
+        },
+        "data": {
+          "label": "Muhammad Qasim Jaffery",
+          "employeeId": "697b437085beb14064795251",
+          "employeeName": "Muhammad Qasim Jaffery",
+          "employeeTitle": "Senior Group Chief Financial Officer",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770099379703",
+        "source": "node-1770099371131",
+        "target": "node-1770099377721"
+      },
+      {
+        "id": "edge-1770099381556",
+        "source": "node-1770099377721",
+        "target": "end"
+      },
+      {
+        "id": "edge-1770184269867",
+        "source": "start",
+        "target": "node-1770184265975"
+      },
+      {
+        "id": "edge-1770184271598",
+        "source": "node-1770184265975",
+        "target": "node-1770099371131"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770099391865",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770099407152",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "698192d6a3b17f71c4eb6f1e"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb140647952b4",
+      "697b437085beb14064795248",
+      "697b437085beb140647952b0",
+      "697b437085beb14064795246",
+      "697b437085beb14064795267",
+      "697b437085beb140647952bd",
+      "697b437085beb14064795250",
+      "697b437085beb140647952bc"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T06:16:54.972Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:33:22.284Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69819356a3b17f71c4eb6f22"
+  },
+  "name": "Payment Voucher",
+  "description": "Functional Heads that fall under COO.",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1360,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099482007",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 120
+        },
+        "data": {
+          "label": "Syed Ali Navaiz",
+          "employeeId": "697b437085beb1406479525e",
+          "employeeName": "Syed Ali Navaiz",
+          "employeeTitle": "Chief Operating Officer",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099513203",
+        "type": "employee",
+        "position": {
+          "x": 720,
+          "y": 360
+        },
+        "data": {
+          "label": "Momina Malik",
+          "employeeId": "697b437085beb14064795286",
+          "employeeName": "Momina Malik",
+          "employeeTitle": "Executive Assistant",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099530290",
+        "type": "employee",
+        "position": {
+          "x": 1040,
+          "y": 240
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770099483517",
+        "source": "start",
+        "target": "node-1770099482007"
+      },
+      {
+        "id": "edge-1770099532337",
+        "source": "node-1770099513203",
+        "target": "node-1770099530290"
+      },
+      {
+        "id": "edge-1770099534149",
+        "source": "node-1770099530290",
+        "target": "end"
+      },
+      {
+        "id": "edge-1770180508018",
+        "source": "node-1770099482007",
+        "target": "node-1770099513203"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770099453258",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770099470117",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69819356a3b17f71c4eb6f23"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb1406479527d",
+      "697b437085beb14064795275",
+      "697b437085beb14064795280",
+      "697b437085beb14064795252",
+      "697b437085beb14064795288",
+      "697b437085beb1406479525c",
+      "697b437085beb1406479525b",
+      "697b437085beb14064795279",
+      "697b437085beb140647952a2",
+      "697b437085beb1406479526a",
+      "697b437085beb1406479526b",
+      "697b448085beb140647952d3"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T06:19:02.493Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:48:51.974Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698194e1a3b17f71c4eb6f42"
+  },
+  "name": "Payment Voucher",
+  "description": "Executive Level",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099925674",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 320
+        },
+        "data": {
+          "label": "Momina Malik",
+          "employeeId": "697b437085beb14064795286",
+          "employeeName": "Momina Malik",
+          "employeeTitle": "Executive Assistant",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770099932742",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770099927069",
+        "source": "start",
+        "target": "node-1770099925674"
+      },
+      {
+        "id": "edge-1770099934504",
+        "source": "node-1770099925674",
+        "target": "node-1770099932742"
+      },
+      {
+        "id": "edge-1770099936097",
+        "source": "node-1770099932742",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770099948963",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770099974159",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6981950ea3b17f71c4eb6f47"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb14064795251",
+      "697b437085beb1406479525e",
+      "697b437085beb1406479526d",
+      "697b437085beb14064795297"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T06:25:37.347Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:36:32.619Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69819555a3b17f71c4eb6f4c"
+  },
+  "name": "Payment Voucher",
+  "description": "CEO Secretary",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770100009273",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 280
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770100010777",
+        "source": "start",
+        "target": "node-1770100009273"
+      },
+      {
+        "id": "edge-1770100011893",
+        "source": "node-1770100009273",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Voucher Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770100023093",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770100046164",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "69819555a3b17f71c4eb6f4d"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb14064795286"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-03T06:27:33.867Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-03T06:27:33.867Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982d73ca0a8ab6b3921ca2b"
+  },
+  "name": "LMT Discount Verification",
+  "description": "Zahoor Hassan",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1480,
+          "y": 80
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182329644",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 280
+        },
+        "data": {
+          "label": "Zahoor Hassan",
+          "employeeId": "697d92cea535d2ea3ef0d193",
+          "employeeName": "Zahoor Hassan",
+          "employeeTitle": "General Manager Sale",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182369053",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795265",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795265",
+          "groupMembers": [
+            "697b437085beb1406479524e",
+            "697b437085beb14064795246"
+          ]
+        }
+      },
+      {
+        "id": "node-1770182400267",
+        "type": "employee",
+        "position": {
+          "x": 840,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479525a",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479525a",
+          "groupMembers": [
+            "697b437085beb14064795247"
+          ]
+        }
+      },
+      {
+        "id": "node-1770182429198",
+        "type": "employee",
+        "position": {
+          "x": 1160,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479529d",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479529d",
+          "groupMembers": [
+            "697b437085beb14064795252"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770182330819",
+        "source": "start",
+        "target": "node-1770182329644"
+      },
+      {
+        "id": "edge-1770182378180",
+        "source": "node-1770182329644",
+        "target": "node-1770182369053"
+      },
+      {
+        "id": "edge-1770182404352",
+        "source": "node-1770182369053",
+        "target": "node-1770182400267"
+      },
+      {
+        "id": "edge-1770182439737",
+        "source": "node-1770182400267",
+        "target": "node-1770182429198"
+      },
+      {
+        "id": "edge-1770182443660",
+        "source": "node-1770182429198",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 1
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982d73ca0a8ab6b3921ca2c"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697d94bba535d2ea3ef0d1ac",
+      "697b437085beb140647952c7",
+      "697c93508d4537cbcfc061c5",
+      "697b437085beb140647952cc"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:21:00.256Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:21:00.256Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982d824a0a8ab6b3921ca30"
+  },
+  "name": "LMT Discount Verification",
+  "description": "Muhammad Shafqat Ali",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1520,
+          "y": 40
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182529256",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 280
+        },
+        "data": {
+          "label": "Muhammad Shafqat Ali",
+          "employeeId": "697b437085beb14064795254",
+          "employeeName": "Muhammad Shafqat Ali",
+          "employeeTitle": "General Manager Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182661545",
+        "type": "employee",
+        "position": {
+          "x": 960,
+          "y": 160
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479525a",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479525a",
+          "groupMembers": [
+            "697b437085beb14064795247"
+          ]
+        }
+      },
+      {
+        "id": "node-1770182662822",
+        "type": "employee",
+        "position": {
+          "x": 640,
+          "y": 160
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795265",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795265",
+          "groupMembers": [
+            "697b437085beb1406479524e",
+            "697b437085beb14064795246"
+          ]
+        }
+      },
+      {
+        "id": "node-1770182684078",
+        "type": "employee",
+        "position": {
+          "x": 1120,
+          "y": -200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479529d",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479529d",
+          "groupMembers": [
+            "697b437085beb14064795252"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770182531147",
+        "source": "start",
+        "target": "node-1770182529256"
+      },
+      {
+        "id": "edge-1770182665101",
+        "source": "node-1770182529256",
+        "target": "node-1770182662822"
+      },
+      {
+        "id": "edge-1770182669710",
+        "source": "node-1770182662822",
+        "target": "node-1770182661545"
+      },
+      {
+        "id": "edge-1770182686236",
+        "source": "node-1770182661545",
+        "target": "node-1770182684078"
+      },
+      {
+        "id": "edge-1770182689012",
+        "source": "node-1770182684078",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 1
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982d824a0a8ab6b3921ca31"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb14064795255",
+      "697b437085beb1406479528d",
+      "697b437085beb1406479528b"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:24:52.113Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:24:52.113Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982d9050aaa0999c2f57715"
+  },
+  "name": "LMT Discount Verification",
+  "description": "Asim Zafar",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1480,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182837027",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 280
+        },
+        "data": {
+          "label": "Asim Zafar",
+          "employeeId": "697b454685beb140647952d5",
+          "employeeName": "Asim Zafar",
+          "employeeTitle": "General Manager Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182873746",
+        "type": "employee",
+        "position": {
+          "x": 640,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795265",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795265",
+          "groupMembers": [
+            "697b437085beb1406479524e",
+            "697b437085beb14064795246"
+          ]
+        }
+      },
+      {
+        "id": "node-1770182889637",
+        "type": "employee",
+        "position": {
+          "x": 920,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479525a",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479525a",
+          "groupMembers": [
+            "697b437085beb14064795247"
+          ]
+        }
+      },
+      {
+        "id": "node-1770182904290",
+        "type": "employee",
+        "position": {
+          "x": 1200,
+          "y": 160
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479529d",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479529d",
+          "groupMembers": [
+            "697b437085beb14064795252"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770182838711",
+        "source": "start",
+        "target": "node-1770182837027"
+      },
+      {
+        "id": "edge-1770182875476",
+        "source": "node-1770182837027",
+        "target": "node-1770182873746"
+      },
+      {
+        "id": "edge-1770182892915",
+        "source": "node-1770182873746",
+        "target": "node-1770182889637"
+      },
+      {
+        "id": "edge-1770182907770",
+        "source": "node-1770182889637",
+        "target": "node-1770182904290"
+      },
+      {
+        "id": "edge-1770182909575",
+        "source": "node-1770182904290",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 1
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982d9050aaa0999c2f57716"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb14064795273",
+      "697b437085beb1406479526e",
+      "697b437085beb14064795276"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:28:37.786Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:28:37.786Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982d9b80aaa0999c2f5772d"
+  },
+  "name": "Wholesale Discount Verification",
+  "description": "Ansar Abbas",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1320,
+          "y": 280
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770182980833",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "Muhammad Shafqat Ali",
+          "employeeId": "697b437085beb14064795254",
+          "employeeName": "Muhammad Shafqat Ali",
+          "employeeTitle": "General Manager Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770183043216",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795246",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795246",
+          "groupMembers": [
+            "697b437085beb14064795265",
+            "697b437085beb1406479524e"
+          ]
+        }
+      },
+      {
+        "id": "node-1770183080576",
+        "type": "employee",
+        "position": {
+          "x": 880,
+          "y": 120
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795246",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795246",
+          "groupMembers": [
+            "697b437085beb14064795265",
+            "697b437085beb1406479524e"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770182982616",
+        "source": "start",
+        "target": "node-1770182980833"
+      },
+      {
+        "id": "edge-1770183046357",
+        "source": "node-1770182980833",
+        "target": "node-1770183043216"
+      },
+      {
+        "id": "edge-1770183083652",
+        "source": "node-1770183043216",
+        "target": "node-1770183080576"
+      },
+      {
+        "id": "edge-1770183085373",
+        "source": "node-1770183080576",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 1
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982d9b80aaa0999c2f5772e"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb1406479524f"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:31:36.527Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:31:36.527Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982da190aaa0999c2f57732"
+  },
+  "name": "Wholesale Discount Verification",
+  "description": "Khalid Shah",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1520,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770183135862",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 280
+        },
+        "data": {
+          "label": "Asim Zafar",
+          "employeeId": "697b454685beb140647952d5",
+          "employeeName": "Asim Zafar",
+          "employeeTitle": "General Manager Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770183162534",
+        "type": "employee",
+        "position": {
+          "x": 720,
+          "y": 160
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795246",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795246",
+          "groupMembers": [
+            "697b437085beb14064795265",
+            "697b437085beb1406479524e"
+          ]
+        }
+      },
+      {
+        "id": "node-1770183178897",
+        "type": "employee",
+        "position": {
+          "x": 1080,
+          "y": 160
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb1406479525a",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb1406479525a",
+          "groupMembers": [
+            "697b437085beb14064795247"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770183138089",
+        "source": "start",
+        "target": "node-1770183135862"
+      },
+      {
+        "id": "edge-1770183165819",
+        "source": "node-1770183135862",
+        "target": "node-1770183162534"
+      },
+      {
+        "id": "edge-1770183183909",
+        "source": "node-1770183162534",
+        "target": "node-1770183178897"
+      },
+      {
+        "id": "edge-1770183186427",
+        "source": "node-1770183178897",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 1
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982da190aaa0999c2f57733"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb140647952b2"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:33:13.239Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:33:13.239Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982da750aaa0999c2f57737"
+  },
+  "name": "Wholesale Discount Verification",
+  "description": "Abdul Basit",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 1440,
+          "y": 360
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770183234954",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "Zahoor Hassan",
+          "employeeId": "697d92cea535d2ea3ef0d193",
+          "employeeName": "Zahoor Hassan",
+          "employeeTitle": "General Manager Sale",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770183259643",
+        "type": "employee",
+        "position": {
+          "x": 680,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb14064795246",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb14064795246",
+          "groupMembers": [
+            "697b437085beb14064795265",
+            "697b437085beb1406479524e"
+          ]
+        }
+      },
+      {
+        "id": "node-1770183278069",
+        "type": "employee",
+        "position": {
+          "x": 1000,
+          "y": 200
+        },
+        "data": {
+          "label": "Parallel Group",
+          "employeeId": "697b437085beb140647952c1",
+          "nodeType": "parallel",
+          "groupLead": "697b437085beb140647952c1",
+          "groupMembers": [
+            "697b437085beb14064795247"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770183236239",
+        "source": "start",
+        "target": "node-1770183234954"
+      },
+      {
+        "id": "edge-1770183262140",
+        "source": "node-1770183234954",
+        "target": "node-1770183259643"
+      },
+      {
+        "id": "edge-1770183281408",
+        "source": "node-1770183259643",
+        "target": "node-1770183278069"
+      },
+      {
+        "id": "edge-1770183283774",
+        "source": "node-1770183278069",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 1
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982da750aaa0999c2f57738"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697b437085beb140647952c2"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:34:45.372Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:34:45.372Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982df7d0aaa0999c2f5775b"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL Base\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184562790",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 320
+        },
+        "data": {
+          "label": "Asim Zafar",
+          "employeeId": "697b454685beb140647952d5",
+          "employeeName": "Asim Zafar",
+          "employeeTitle": "General Manager Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184568758",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 160
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770184564136",
+        "source": "start",
+        "target": "node-1770184562790"
+      },
+      {
+        "id": "edge-1770184570547",
+        "source": "node-1770184562790",
+        "target": "node-1770184568758"
+      },
+      {
+        "id": "edge-1770184572014",
+        "source": "node-1770184568758",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770184694931",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770184708490",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e00e0aaa0999c2f5776a"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL Base"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b454685beb140647952d5"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:56:13.209Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:58:38.074Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982dfa10aaa0999c2f57760"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL Base - Islamabad\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184598100",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 320
+        },
+        "data": {
+          "label": "Faisal Kabir",
+          "employeeId": "697b437085beb1406479526e",
+          "employeeName": "Faisal Kabir",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184604221",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770184599466",
+        "source": "start",
+        "target": "node-1770184598100"
+      },
+      {
+        "id": "edge-1770184605789",
+        "source": "node-1770184598100",
+        "target": "node-1770184604221"
+      },
+      {
+        "id": "edge-1770184607494",
+        "source": "node-1770184604221",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770184617118",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770184677667",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982dfed0aaa0999c2f57765"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL Base - Islamabad"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479526e"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:56:49.126Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:58:05.745Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e04d0aaa0999c2f5776f"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL Base - RWP OUT\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184744257",
+        "type": "employee",
+        "position": {
+          "x": 400,
+          "y": 320
+        },
+        "data": {
+          "label": "Imran Attaullah",
+          "employeeId": "697b437085beb14064795273",
+          "employeeName": "Imran Attaullah",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184749236",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770184745767",
+        "source": "start",
+        "target": "node-1770184744257"
+      },
+      {
+        "id": "edge-1770184750714",
+        "source": "node-1770184744257",
+        "target": "node-1770184749236"
+      },
+      {
+        "id": "edge-1770184752293",
+        "source": "node-1770184749236",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770184759525",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770184773718",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e04d0aaa0999c2f57770"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL Base - RWP OUT"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795273"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T05:59:41.769Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T05:59:41.769Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e0950aaa0999c2f57774"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL Base - Rawalpindi\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184807509",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 280
+        },
+        "data": {
+          "label": "Tabish Tehseen Anjum",
+          "employeeId": "697b437085beb14064795276",
+          "employeeName": "Tabish Tehseen Anjum",
+          "employeeTitle": "Head of Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770184815147",
+        "type": "employee",
+        "position": {
+          "x": 680,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770184809140",
+        "source": "start",
+        "target": "node-1770184807509"
+      },
+      {
+        "id": "edge-1770184821390",
+        "source": "node-1770184807509",
+        "target": "node-1770184815147"
+      },
+      {
+        "id": "edge-1770184822627",
+        "source": "node-1770184815147",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770184829412",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770184845476",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e0950aaa0999c2f57775"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL Base - Rawalpindi"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795276"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:00:53.138Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:00:53.138Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e16a0aaa0999c2f57779"
+  },
+  "name": "Payment Voucher",
+  "description": "Sale - HBL OUT",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185026605",
+        "type": "employee",
+        "position": {
+          "x": 400,
+          "y": 320
+        },
+        "data": {
+          "label": "Muhammad Shafqat Ali",
+          "employeeId": "697b437085beb14064795254",
+          "employeeName": "Muhammad Shafqat Ali",
+          "employeeTitle": "General Manager Sales",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185031887",
+        "type": "employee",
+        "position": {
+          "x": 640,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185028477",
+        "source": "start",
+        "target": "node-1770185026605"
+      },
+      {
+        "id": "edge-1770185033381",
+        "source": "node-1770185026605",
+        "target": "node-1770185031887"
+      },
+      {
+        "id": "edge-1770185035201",
+        "source": "node-1770185031887",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185041836",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185059383",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e16a0aaa0999c2f5777a"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL OUT"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795254"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:04:26.469Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:04:26.469Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e1b40aaa0999c2f5777e"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL OUT - Abbottabad\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185099378",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "Omair Hussain",
+          "employeeId": "697b437085beb1406479528b",
+          "employeeName": "Omair Hussain",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185104929",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 240
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185100581",
+        "source": "start",
+        "target": "node-1770185099378"
+      },
+      {
+        "id": "edge-1770185106432",
+        "source": "node-1770185099378",
+        "target": "node-1770185104929"
+      },
+      {
+        "id": "edge-1770185110793",
+        "source": "node-1770185104929",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185116684",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185131350",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e1b40aaa0999c2f5777f"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL OUT - Abbottabad"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479528b"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:05:40.335Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:05:40.335Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e1fa0aaa0999c2f57783"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL OUT - Attock",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185174924",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "Ijaz Baig",
+          "employeeId": "697b437085beb14064795255",
+          "employeeName": "Ijaz Baig",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185181600",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185176120",
+        "source": "start",
+        "target": "node-1770185174924"
+      },
+      {
+        "id": "edge-1770185183060",
+        "source": "node-1770185174924",
+        "target": "node-1770185181600"
+      },
+      {
+        "id": "edge-1770185184310",
+        "source": "node-1770185181600",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185191247",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185203328",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e1fa0aaa0999c2f57784"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL OUT - Attock"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb14064795255"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:06:50.129Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:06:50.129Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e2440aaa0999c2f57788"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - HBL OUT - Kashmir",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185245470",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Jahanzaib Awan",
+          "employeeId": "697b437085beb1406479528d",
+          "employeeName": "Jahanzaib Awan",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185253143",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185246825",
+        "source": "start",
+        "target": "node-1770185245470"
+      },
+      {
+        "id": "edge-1770185254502",
+        "source": "node-1770185245470",
+        "target": "node-1770185253143"
+      },
+      {
+        "id": "edge-1770185256279",
+        "source": "node-1770185253143",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185262965",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185276393",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e2440aaa0999c2f57789"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - HBL OUT - Kashmir"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb1406479528d"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:08:04.423Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:08:04.423Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e3060aaa0999c2f5778d"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales Managers",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185467403",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 320
+        },
+        "data": {
+          "label": "Momina Malik",
+          "employeeId": "697b437085beb14064795286",
+          "employeeName": "Momina Malik",
+          "employeeTitle": "Executive Assistant",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185472994",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185468722",
+        "source": "start",
+        "target": "node-1770185467403"
+      },
+      {
+        "id": "edge-1770185474730",
+        "source": "node-1770185467403",
+        "target": "node-1770185472994"
+      },
+      {
+        "id": "edge-1770185477252",
+        "source": "node-1770185472994",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185486589",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185502830",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e3260aaa0999c2f57792"
+    }
+  },
+  "accessControl": {
+    "type": "specific_users",
+    "departments": [],
+    "users": [
+      "697d94bba535d2ea3ef0d1ac",
+      "697d92cea535d2ea3ef0d193",
+      "697b437085beb140647952c7",
+      "697c93508d4537cbcfc061c5",
+      "697b437085beb140647952cc",
+      "697b454685beb140647952d5",
+      "697b437085beb1406479526e",
+      "697b437085beb14064795273",
+      "697b437085beb14064795276",
+      "697b437085beb14064795255",
+      "697b437085beb1406479528d",
+      "697b437085beb1406479528b",
+      "697b437085beb14064795254"
+    ],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:11:18.605Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:11:50.234Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e44f0aaa0999c2f57797"
+  },
+  "name": "Payment Voucher",
+  "description": "Administration - NBL\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185767966",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Izhar Ahmad",
+          "employeeId": "697b437085beb140647952b4",
+          "employeeName": "Izhar Ahmad",
+          "employeeTitle": "Head of Tax,Admin(NBL)&Govt. Affairs Grp",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185773065",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185769362",
+        "source": "start",
+        "target": "node-1770185767966"
+      },
+      {
+        "id": "edge-1770185774682",
+        "source": "node-1770185767966",
+        "target": "node-1770185773065"
+      },
+      {
+        "id": "edge-1770185776029",
+        "source": "node-1770185773065",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185781268",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185797590",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e44f0aaa0999c2f57798"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Administration - NBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952b4"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:16:47.987Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:16:47.987Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e4a30aaa0999c2f5779c"
+  },
+  "name": "Payment Voucher",
+  "description": "Audit - NBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185838666",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "Muhammad Azam",
+          "employeeId": "697b437085beb14064795247",
+          "employeeName": "Muhammad Azam",
+          "employeeTitle": "Deputy Head of Internal Audit",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185848991",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185840111",
+        "source": "start",
+        "target": "node-1770185838666"
+      },
+      {
+        "id": "edge-1770185850633",
+        "source": "node-1770185838666",
+        "target": "node-1770185848991"
+      },
+      {
+        "id": "edge-1770185853078",
+        "source": "node-1770185848991",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185858853",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185874604",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e4a30aaa0999c2f5779d"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Audit - NBL"
+    ],
+    "users": [],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:18:11.122Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:18:11.122Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e4e90aaa0999c2f577a1"
+  },
+  "name": "Payment Voucher",
+  "description": "Cash - NBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185922102",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "ABDUL KHALIQ",
+          "employeeId": "697b437085beb140647952b0",
+          "employeeName": "ABDUL KHALIQ",
+          "employeeTitle": "Chief Cashier",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770185927150",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 240
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770185923611",
+        "source": "start",
+        "target": "node-1770185922102"
+      },
+      {
+        "id": "edge-1770185928631",
+        "source": "node-1770185922102",
+        "target": "node-1770185927150"
+      },
+      {
+        "id": "edge-1770185930333",
+        "source": "node-1770185927150",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770185937608",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770185952401",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e4e90aaa0999c2f577a2"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Cash - NBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952b0"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:19:21.838Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:19:21.838Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e53b0aaa0999c2f577a6"
+  },
+  "name": "Payment Voucher",
+  "description": "Finance - NBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186004935",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "MEHMOOD SIDDIQUE",
+          "employeeId": "697b437085beb140647952b3",
+          "employeeName": "MEHMOOD SIDDIQUE",
+          "employeeTitle": "Deputy Manager Finance & Accounts",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186010713",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 240
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186006117",
+        "source": "start",
+        "target": "node-1770186004935"
+      },
+      {
+        "id": "edge-1770186012255",
+        "source": "node-1770186004935",
+        "target": "node-1770186010713"
+      },
+      {
+        "id": "edge-1770186016009",
+        "source": "node-1770186010713",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186022971",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186037033",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e53b0aaa0999c2f577a7"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Finance - NBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952b3"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:20:43.747Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:20:43.747Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e5890aaa0999c2f577ab"
+  },
+  "name": "Payment Voucher",
+  "description": "Procurement - NBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186084190",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Muhammad Amir Butt",
+          "employeeId": "697b437085beb14064795267",
+          "employeeName": "Muhammad Amir Butt",
+          "employeeTitle": "General Manager Procurement",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186090729",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186085276",
+        "source": "start",
+        "target": "node-1770186084190"
+      },
+      {
+        "id": "edge-1770186092095",
+        "source": "node-1770186084190",
+        "target": "node-1770186090729"
+      },
+      {
+        "id": "edge-1770186094787",
+        "source": "node-1770186090729",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186100423",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186113696",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e5890aaa0999c2f577ac"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Procurement - NBL"
+    ],
+    "users": [],
+    "excludedUsers": []
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:22:01.409Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:22:01.409Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e5c00aaa0999c2f577b0"
+  },
+  "name": "Payment Voucher",
+  "description": "Production - NBL\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186157923",
+        "type": "employee",
+        "position": {
+          "x": 240,
+          "y": 240
+        },
+        "data": {
+          "label": "Munir Ahmed",
+          "employeeId": "697b448085beb140647952d3",
+          "employeeName": "Munir Ahmed",
+          "employeeTitle": "General Manager Operation",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186170501",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186159440",
+        "source": "start",
+        "target": "node-1770186157923"
+      },
+      {
+        "id": "edge-1770186174144",
+        "source": "node-1770186157923",
+        "target": "node-1770186170501"
+      },
+      {
+        "id": "edge-1770186175237",
+        "source": "node-1770186170501",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "default-description",
+        "type": "textarea",
+        "label": "Description",
+        "placeholder": "Describe the issue in detail",
+        "required": true,
+        "options": [],
+        "order": 1
+      },
+      {
+        "id": "default-priority",
+        "type": "dropdown",
+        "label": "Priority",
+        "required": true,
+        "options": [
+          "Low",
+          "Medium",
+          "High"
+        ],
+        "order": 2
+      },
+      {
+        "id": "default-priority-reason",
+        "type": "textarea",
+        "label": "Reason for High Priority",
+        "placeholder": "Explain why this is high priority",
+        "required": true,
+        "options": [],
+        "order": 3
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 4
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e5c00aaa0999c2f577b1"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Production - NBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b448085beb140647952d3"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:22:56.498Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:22:56.498Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e60d0aaa0999c2f577b5"
+  },
+  "name": "Payment Voucher",
+  "description": "Quality Control - NBL",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186218209",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "SHAHZAD KHALIL",
+          "employeeId": "697b437085beb140647952b6",
+          "employeeName": "SHAHZAD KHALIL",
+          "employeeTitle": "Manager Food Safety",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186223426",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 200
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186219513",
+        "source": "start",
+        "target": "node-1770186218209"
+      },
+      {
+        "id": "edge-1770186224813",
+        "source": "node-1770186218209",
+        "target": "node-1770186223426"
+      },
+      {
+        "id": "edge-1770186226242",
+        "source": "node-1770186223426",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186231382",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186245599",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e60d0aaa0999c2f577b6"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Quality Control - NBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952b6"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:24:13.864Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:24:13.864Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e6ba0aaa0999c2f577ba"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - NBL\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186331665",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 280
+        },
+        "data": {
+          "label": "Zahoor Hassan",
+          "employeeId": "697d92cea535d2ea3ef0d193",
+          "employeeName": "Zahoor Hassan",
+          "employeeTitle": "General Manager Sale",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186337750",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186332986",
+        "source": "start",
+        "target": "node-1770186331665"
+      },
+      {
+        "id": "edge-1770186339320",
+        "source": "node-1770186331665",
+        "target": "node-1770186337750"
+      },
+      {
+        "id": "edge-1770186340728",
+        "source": "node-1770186337750",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186345811",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186367399",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e6ba0aaa0999c2f577bb"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - NBL"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697d92cea535d2ea3ef0d193"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:27:06.056Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:27:06.056Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e7140aaa0999c2f577bf"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - NBL - Base\n\n",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186451897",
+        "type": "employee",
+        "position": {
+          "x": 320,
+          "y": 320
+        },
+        "data": {
+          "label": "Zain Ul Abideen",
+          "employeeId": "697c93508d4537cbcfc061c5",
+          "employeeName": "Zain Ul Abideen",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186456253",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 120
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186452988",
+        "source": "start",
+        "target": "node-1770186451897"
+      },
+      {
+        "id": "edge-1770186457936",
+        "source": "node-1770186451897",
+        "target": "node-1770186456253"
+      },
+      {
+        "id": "edge-1770186459427",
+        "source": "node-1770186456253",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186493135",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186507130",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e7140aaa0999c2f577c0"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - NBL - Base"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697c93508d4537cbcfc061c5"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:28:36.137Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:28:36.137Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e76a0aaa0999c2f577c4"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - NBL - Central",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186566777",
+        "type": "employee",
+        "position": {
+          "x": 280,
+          "y": 240
+        },
+        "data": {
+          "label": "Babar Qamar",
+          "employeeId": "697b437085beb140647952c7",
+          "employeeName": "Babar Qamar",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186575035",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 160
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186569846",
+        "source": "start",
+        "target": "node-1770186566777"
+      },
+      {
+        "id": "edge-1770186576490",
+        "source": "node-1770186566777",
+        "target": "node-1770186575035"
+      },
+      {
+        "id": "edge-1770186577878",
+        "source": "node-1770186575035",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186583080",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186596219",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e76a0aaa0999c2f577c5"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - NBL - Central"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952c7"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:30:02.588Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:30:02.588Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e7af0aaa0999c2f577c9"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - NBL - North",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186635917",
+        "type": "employee",
+        "position": {
+          "x": 240,
+          "y": 280
+        },
+        "data": {
+          "label": "Abdul Hameed Khan",
+          "employeeId": "697d94bba535d2ea3ef0d1ac",
+          "employeeName": "Abdul Hameed Khan",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186640362",
+        "type": "employee",
+        "position": {
+          "x": 600,
+          "y": 320
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186636895",
+        "source": "start",
+        "target": "node-1770186635917"
+      },
+      {
+        "id": "edge-1770186641739",
+        "source": "node-1770186635917",
+        "target": "node-1770186640362"
+      },
+      {
+        "id": "edge-1770186643336",
+        "source": "node-1770186640362",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186649094",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186664126",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e7af0aaa0999c2f577ca"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - NBL - North"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697d94bba535d2ea3ef0d1ac"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:31:11.044Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:31:11.044Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6982e8060aaa0999c2f577ce"
+  },
+  "name": "Payment Voucher",
+  "description": "Sales - NBL - South",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "position": {
+          "x": 80,
+          "y": 240
+        },
+        "data": {
+          "label": "Ticket Raised",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "end",
+        "type": "end",
+        "position": {
+          "x": 880,
+          "y": 240
+        },
+        "data": {
+          "label": "Resolved",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186703449",
+        "type": "employee",
+        "position": {
+          "x": 360,
+          "y": 320
+        },
+        "data": {
+          "label": "Abu Hurairah",
+          "employeeId": "697b437085beb140647952cc",
+          "employeeName": "Abu Hurairah",
+          "employeeTitle": "Regional Sales Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      },
+      {
+        "id": "node-1770186731130",
+        "type": "employee",
+        "position": {
+          "x": 560,
+          "y": 160
+        },
+        "data": {
+          "label": "MUHAMMAD BASHIR",
+          "employeeId": "697b437085beb140647952bc",
+          "employeeName": "MUHAMMAD BASHIR",
+          "employeeTitle": "Senior Finance Manager",
+          "employeeAvatar": "/default-profile.jpg",
+          "nodeType": "sequential",
+          "groupMembers": []
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1770186704802",
+        "source": "start",
+        "target": "node-1770186703449"
+      },
+      {
+        "id": "edge-1770186732453",
+        "source": "node-1770186703449",
+        "target": "node-1770186731130"
+      },
+      {
+        "id": "edge-1770186733822",
+        "source": "node-1770186731130",
+        "target": "end"
+      }
+    ]
+  },
+  "formSchema": {
+    "fields": [
+      {
+        "id": "default-title",
+        "type": "text",
+        "label": "Title",
+        "placeholder": "Enter ticket title",
+        "required": true,
+        "options": [],
+        "order": 0
+      },
+      {
+        "id": "field-1770186739482",
+        "type": "table",
+        "label": "Particulars",
+        "required": true,
+        "options": [],
+        "tableConfig": {
+          "columns": [
+            {
+              "id": "col1",
+              "label": "Date",
+              "type": "date"
+            },
+            {
+              "id": "col2",
+              "label": "Particular",
+              "type": "text"
+            },
+            {
+              "id": "col-1770186751951",
+              "label": "Amount",
+              "type": "number"
+            }
+          ],
+          "minRows": 1,
+          "maxRows": 10
+        },
+        "order": 1
+      },
+      {
+        "id": "default-attachments",
+        "type": "file",
+        "label": "Attachments",
+        "placeholder": "Upload relevant files",
+        "required": false,
+        "options": [],
+        "order": 2
+      }
+    ],
+    "useDefaultFields": false,
+    "_id": {
+      "$oid": "6982e8060aaa0999c2f577cf"
+    }
+  },
+  "accessControl": {
+    "type": "departments",
+    "departments": [
+      "Sales - NBL - South"
+    ],
+    "users": [],
+    "excludedUsers": [
+      "697b437085beb140647952cc"
+    ]
+  },
+  "createdBy": {
+    "userId": "697b437085beb14064795242",
+    "name": "super.user"
+  },
+  "createdAt": {
+    "$date": "2026-02-04T06:32:38.466Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-04T06:32:38.466Z"
   },
   "__v": 0
 }]
