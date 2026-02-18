@@ -46,6 +46,8 @@ const sendEmail = async (
       throw new Error('Recipient email and subject are required');
     }
 
+   // to: "eman.hassan@pepsiisb.com" // recently added.
+
     // Prepare mail options
     const mailOptions = {
       from: `"ARDA" <${process.env.EMAIL || 'arda@pepsiisb.com'}>`,

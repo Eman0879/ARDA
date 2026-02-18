@@ -254,7 +254,8 @@ export const sendTicketAssignmentEmail = async (ticket: any, FormDataModel: Mode
     const attachments = processAllAttachments(ticket.formData, enrichedHistory);
 
     await sendEmail(
-      assigneeData.email,
+      //assigneeData.email,
+      "eman.hassan@pepsiisb.com",
       `New Ticket Assigned: ${ticket.ticketNumber}`,
       `You have been assigned ticket ${ticket.ticketNumber}`,
       emailHtml,
