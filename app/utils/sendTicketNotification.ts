@@ -260,7 +260,7 @@ export const sendTicketAssignmentEmail = async (ticket: any, FormDataModel: Mode
       //assigneeData.email,
       "eman.hassan@pepsiisb.com",
       //`New Ticket Assigned: ${ticket.ticketNumber}`,
-      `New ticket Assigned for ${functionality ? functionality.name : "a functionality"}`,
+      `Ticket for ${functionality ? functionality.name : "a functionality"}`,
       `You have been assigned ticket ${ticket.ticketNumber}`,
       emailHtml,
       attachments
