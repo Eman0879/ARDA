@@ -237,9 +237,12 @@ export const sendTicketAssignmentEmail = async (ticket: any, FormDataModel: Mode
     const ticketDetailsTable = buildTicketDetailsTable(ticket, functionality);
     const workflowHistoryTable = buildWorkflowHistoryTable(enrichedHistory);
     
+    console.log("Super Functionality name: ", functionality?.name || "Unknown");
+
     const emailHtml = buildEmailTemplate({
       recipientName: assigneeData.name,
       subject: `New Ticket Assigned: ${ticket.ticketNumber}`,
+      //subject: `New ticket Assigned for ${functionality ? functionality.name : "a functionality"}`,
       greeting: `Hi ${assigneeData.name},`,
       mainMessage: `
         <p style="margin: 0 0 8px 0;">You've been assigned a new ticket.</p>
@@ -256,7 +259,8 @@ export const sendTicketAssignmentEmail = async (ticket: any, FormDataModel: Mode
     await sendEmail(
       //assigneeData.email,
       "eman.hassan@pepsiisb.com",
-      `New Ticket Assigned: ${ticket.ticketNumber}`,
+      //`New Ticket Assigned: ${ticket.ticketNumber}`,
+      `New ticket Assigned for ${functionality ? functionality.name : "a functionality"}`,
       `You have been assigned ticket ${ticket.ticketNumber}`,
       emailHtml,
       attachments
