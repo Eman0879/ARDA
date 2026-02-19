@@ -93,10 +93,11 @@ export default function WorkflowNode({
   };
 
   const getGroupMembers = () => 
-    node.data.groupMembers?.map(id => employees.find(emp => emp._id === id)).filter(Boolean) as Employee[] || [];
-  
+   //node.data.groupMembers?.map(id => employees.find(emp => emp._id === id)).filter(Boolean) as Employee[] || [];
+   node.data.groupMembers ?.map(id => employees.find(emp => emp._id === id)).filter((emp): emp is Employee => Boolean(emp && emp.basicDetails)) || [];
   const getGroupLead = () => 
-    node.data.groupLead ? employees.find(emp => emp._id === node.data.groupLead) : null;
+   //node.data.groupLead ? employees.find(emp => emp._id === node.data.groupLead) : null;
+   node.data.groupLead ? employees.find(emp => emp._id === node.data.groupLead) ?? null : null;
 
   // START NODE
   if (node.type === 'start') {
@@ -198,7 +199,7 @@ export default function WorkflowNode({
                 </div>
               </div>
               
-              {groupLead && (
+              {groupLead && groupLead.basicDetails && (
                 <div>
                   <p className={`text-[10px] font-bold ${colors.textMuted} mb-2 uppercase`}>Lead</p>
                   <div className="flex items-center gap-2">

@@ -52,6 +52,7 @@ export default function TodaysEventsWidget({ onViewAll, dayHealth = 'good' }: To
   }, []);
 
   const fetchTodaysEvents = async () => {
+
     try {
       const userData = localStorage.getItem('user');
       if (!userData) {
